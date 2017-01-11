@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
-import java.nio.charset.Charset;
 import java.security.*;
 
 import static io.pivotal.security.constants.EncryptionConstants.NONCE_BYTES;
@@ -21,7 +20,16 @@ public class EncryptionServiceImpl implements EncryptionService {
   }
 
   @Override
-  public Encryption encrypt(String value) throws InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
+  public Encryption encrypt(String value) throws Exception {
+    try {
+      return tryEncrypt(value);
+    } catch (Exception e) {
+      encryptionConfiguration.reconnect();
+      return tryEncrypt(value);
+    }
+  }
+
+  private Encryption tryEncrypt(String value) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
     byte[] nonce = new byte[NONCE_BYTES];
     encryptionConfiguration.getSecureRandom().nextBytes(nonce);
 
@@ -35,7 +43,16 @@ public class EncryptionServiceImpl implements EncryptionService {
   }
 
   @Override
-  public String decrypt(byte[] nonce, byte[] encryptedValue) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+  public String decrypt(byte[] nonce, byte[] encryptedValue) throws Exception {
+    try {
+      return tryDecrypt(nonce, encryptedValue);
+    } catch (Exception e) {
+      encryptionConfiguration.reconnect();
+      return tryDecrypt(nonce, encryptedValue);
+    }
+  }
+
+  private String tryDecrypt(byte[] nonce, byte[] encryptedValue) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
     Cipher decryptionCipher = Cipher.getInstance("AES/GCM/NoPadding", encryptionConfiguration.getProvider());
     IvParameterSpec ivSpec = new IvParameterSpec(nonce);
     decryptionCipher.init(Cipher.DECRYPT_MODE, encryptionConfiguration.getKey(), ivSpec);

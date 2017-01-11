@@ -10,4 +10,6 @@ public interface EncryptionConfiguration {
   SecureRandom getSecureRandom();
 
   Key getKey();
+
+  void reconnect() throws Exception;
 }

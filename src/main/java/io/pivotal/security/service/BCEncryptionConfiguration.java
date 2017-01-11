@@ -6,6 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -14,11 +18,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
-
-import javax.annotation.PostConstruct;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 @Component
 @ConditionalOnProperty(value = "encryption.provider", havingValue = "dev_internal")
@@ -55,5 +54,10 @@ public class BCEncryptionConfiguration implements EncryptionConfiguration {
       key = new SecretKeySpec(DatatypeConverter.parseHexBinary(devKeyProvider.getDevKey()), 0, 16, "AES");
     }
     return key;
+  }
+
+  @Override
+  public void reconnect() throws Exception {
+    // nothing to do
   }
 }

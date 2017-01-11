@@ -4,15 +4,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
-
-import javax.annotation.PostConstruct;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 
 @SuppressWarnings("unused")
 @Component
@@ -68,5 +67,12 @@ public class LunaEncryptionConfiguration implements EncryptionConfiguration {
   @Override
   public Key getKey() {
     return key;
+  }
+
+  @Override
+  public void reconnect() throws Exception {
+    Object lunaSlotManager = Class.forName("com.safenetinc.luna.LunaSlotManager").getDeclaredMethod("getInstance").invoke(null);
+    lunaSlotManager.getClass().getMethod("reinitialize").invoke(lunaSlotManager);
+    getEncryptionKey();
   }
 }

@@ -14,7 +14,7 @@ public class FakeEncryptionService implements EncryptionService {
   private int encryptionCount = 0;
 
   @Override
-  public Encryption encrypt(String value) {
+  public Encryption encrypt(String value) throws Exception {
     encryptionCount++;
     return new Encryption(
         String.valueOf(encryptionCount).getBytes(),
@@ -23,7 +23,7 @@ public class FakeEncryptionService implements EncryptionService {
   }
 
   @Override
-  public String decrypt(byte[] nonce, byte[] encryptedValue) {
+  public String decrypt(byte[] nonce, byte[] encryptedValue) throws Exception {
     Assert.notNull(nonce, "nonce is required");
     return new String(encryptedValue).substring(6);
   }
