@@ -1,5 +1,6 @@
 package io.pivotal.security.service;
 
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -8,15 +9,18 @@ import javax.crypto.spec.IvParameterSpec;
 import java.security.*;
 
 import static io.pivotal.security.constants.EncryptionConstants.NONCE_BYTES;
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 @Service
 public class EncryptionServiceImpl implements EncryptionService {
 
   private final EncryptionConfiguration encryptionConfiguration;
+  private final Logger logger;
 
   @Autowired
   public EncryptionServiceImpl(EncryptionConfiguration encryptionConfiguration) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
     this.encryptionConfiguration = encryptionConfiguration;
+    this.logger = getLogger(this.getClass());
   }
 
   @Override
@@ -24,7 +28,10 @@ public class EncryptionServiceImpl implements EncryptionService {
     try {
       return tryEncrypt(value);
     } catch (Exception e) {
+      logger.info("Failed to encrypt secret. Trying to log in.");
+      logger.info("Exception thrown: " + e.getMessage());
       encryptionConfiguration.reconnect();
+      logger.info("Reconnected to the HSM");
       return tryEncrypt(value);
     }
   }
@@ -47,7 +54,10 @@ public class EncryptionServiceImpl implements EncryptionService {
     try {
       return tryDecrypt(nonce, encryptedValue);
     } catch (Exception e) {
+      logger.info("Failed to decrypt secret. Trying to log in.");
+      logger.info("Exception thrown: " + e.getMessage());
       encryptionConfiguration.reconnect();
+      logger.info("Reconnected to the HSM");
       return tryDecrypt(nonce, encryptedValue);
     }
   }
