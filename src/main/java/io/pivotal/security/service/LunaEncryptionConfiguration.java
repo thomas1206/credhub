@@ -70,7 +70,7 @@ public class LunaEncryptionConfiguration implements EncryptionConfiguration {
   }
 
   @Override
-  public void reconnect() throws Exception {
+  synchronized public void reconnect() throws Exception {
     Object lunaSlotManager = Class.forName("com.safenetinc.luna.LunaSlotManager").getDeclaredMethod("getInstance").invoke(null);
     lunaSlotManager.getClass().getMethod("reinitialize").invoke(lunaSlotManager);
     getEncryptionKey();

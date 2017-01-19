@@ -4,9 +4,16 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 
 import static io.pivotal.security.constants.EncryptionConstants.NONCE_BYTES;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -24,7 +31,7 @@ public class EncryptionServiceImpl implements EncryptionService {
   }
 
   @Override
-  public Encryption encrypt(String value) throws Exception {
+  synchronized public Encryption encrypt(String value) throws Exception {
     try {
       return tryEncrypt(value);
     } catch (Exception e) {
@@ -50,7 +57,7 @@ public class EncryptionServiceImpl implements EncryptionService {
   }
 
   @Override
-  public String decrypt(byte[] nonce, byte[] encryptedValue) throws Exception {
+  synchronized public String decrypt(byte[] nonce, byte[] encryptedValue) throws Exception {
     try {
       return tryDecrypt(nonce, encryptedValue);
     } catch (Exception e) {
