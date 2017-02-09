@@ -6,8 +6,8 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.PasswordGenerationParameters;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.secret.Password;
-import io.pivotal.security.entity.NamedPasswordSecret;
-import io.pivotal.security.entity.NamedSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
 import io.pivotal.security.service.AuditRecordBuilder;
@@ -112,11 +112,11 @@ public class SecretsControllerGenerateTest {
         uuid = UUID.randomUUID();
 
         doAnswer(invocation -> {
-          NamedSecret secret = invocation.getArgumentAt(0, NamedSecret.class);
+          NamedSecretData secret = invocation.getArgumentAt(0, NamedSecretData.class);
           secret.setUuid(uuid);
           secret.setVersionCreatedAt(frozenTime);
           return secret;
-        }).when(secretDataService).save(any(NamedSecret.class));
+        }).when(secretDataService).save(any(NamedSecretData.class));
       });
 
       it("for a new value secret should return an error message", () -> {
@@ -169,10 +169,10 @@ public class SecretsControllerGenerateTest {
         });
 
         it("asks the data service to persist the secret", () -> {
-          ArgumentCaptor<NamedPasswordSecret> argumentCaptor = ArgumentCaptor.forClass(NamedPasswordSecret.class);
+          ArgumentCaptor<NamedPasswordSecretData> argumentCaptor = ArgumentCaptor.forClass(NamedPasswordSecretData.class);
           verify(secretDataService, times(1)).save(argumentCaptor.capture());
 
-          NamedPasswordSecret newPassword = argumentCaptor.getValue();
+          NamedPasswordSecretData newPassword = argumentCaptor.getValue();
 
           assertThat(newPassword.getGenerationParameters().isExcludeNumber(), equalTo(true));
           assertThat(newPassword.getValue(), equalTo(fakePassword));
@@ -189,7 +189,7 @@ public class SecretsControllerGenerateTest {
       describe("with an existing secret", () -> {
         beforeEach(() -> {
           uuid = UUID.randomUUID();
-          final NamedPasswordSecret expectedSecret = new NamedPasswordSecret(secretName);
+          final NamedPasswordSecretData expectedSecret = new NamedPasswordSecretData(secretName);
           expectedSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
           expectedSecret.setValue(fakePassword);
           doReturn(expectedSecret
@@ -227,7 +227,7 @@ public class SecretsControllerGenerateTest {
           });
 
           it("asks the data service to persist the secret", () -> {
-            final NamedPasswordSecret namedSecret = (NamedPasswordSecret) secretDataService.findMostRecent(secretName);
+            final NamedPasswordSecretData namedSecret = (NamedPasswordSecretData) secretDataService.findMostRecent(secretName);
             assertThat(namedSecret.getValue(), equalTo(fakePassword));
           });
 
@@ -263,7 +263,7 @@ public class SecretsControllerGenerateTest {
           });
 
           it("should not persist the secret", () -> {
-            verify(secretDataService, times(0)).save(any(NamedSecret.class));
+            verify(secretDataService, times(0)).save(any(NamedSecretData.class));
           });
 
           it("persists an audit entry", () -> {

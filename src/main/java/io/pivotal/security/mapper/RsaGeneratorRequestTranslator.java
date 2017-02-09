@@ -4,7 +4,7 @@ import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.security.controller.v1.RsaSecretParameters;
 import io.pivotal.security.controller.v1.RsaSecretParametersFactory;
 import io.pivotal.security.secret.RsaKey;
-import io.pivotal.security.entity.NamedRsaSecret;
+import io.pivotal.security.entity.NamedRsaSecretData;
 import io.pivotal.security.generator.RsaGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import static com.google.common.collect.ImmutableSet.of;
 
 @Component
 public class RsaGeneratorRequestTranslator
-    implements RequestTranslator<NamedRsaSecret>, SecretGeneratorRequestTranslator<RsaSecretParameters, NamedRsaSecret> {
+    implements RequestTranslator<NamedRsaSecretData>, SecretGeneratorRequestTranslator<RsaSecretParameters, NamedRsaSecretData> {
 
   @Autowired
   RsaGenerator rsaGenerator;
@@ -25,7 +25,7 @@ public class RsaGeneratorRequestTranslator
   RsaSecretParametersFactory rsaSecretParametersFactory;
 
   @Override
-  public RsaSecretParameters validRequestParameters(DocumentContext parsed, NamedRsaSecret entity) {
+  public RsaSecretParameters validRequestParameters(DocumentContext parsed, NamedRsaSecretData entity) {
     RsaSecretParameters rsaSecretParameters = rsaSecretParametersFactory.get();
 
     Boolean regenerate = parsed.read("$.regenerate", Boolean.class);
@@ -42,7 +42,7 @@ public class RsaGeneratorRequestTranslator
   }
 
   @Override
-  public void populateEntityFromJson(NamedRsaSecret namedRsaSecret, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedRsaSecretData namedRsaSecret, DocumentContext documentContext) {
     RsaSecretParameters rsaSecretParameters = validRequestParameters(documentContext, namedRsaSecret);
     final RsaKey rsaSecret = rsaGenerator.generateSecret(rsaSecretParameters);
 

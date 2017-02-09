@@ -28,13 +28,13 @@ public class NamedCertificateSecretTest {
   @Autowired
   JdbcTemplate jdbcTemplate;
 
-  private NamedCertificateSecret subject;
+  private NamedCertificateSecretData subject;
 
   {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedCertificateSecret("Foo")
+      subject = new NamedCertificateSecretData("Foo")
           .setCa("my-ca")
           .setCertificate("my-cert")
           .setPrivateKey("my-priv");
@@ -61,7 +61,7 @@ public class NamedCertificateSecretTest {
         UUID uuid = UUID.randomUUID();
         UUID encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedCertificateSecret("name");
+        subject = new NamedCertificateSecretData("name");
         subject.setCa("fake-ca");
         subject.setCertificate("fake-certificate");
         subject.setEncryptedValue("fake-private-key".getBytes());
@@ -71,7 +71,7 @@ public class NamedCertificateSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedCertificateSecret copy = new NamedCertificateSecret();
+        NamedCertificateSecretData copy = new NamedCertificateSecretData();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("name"));

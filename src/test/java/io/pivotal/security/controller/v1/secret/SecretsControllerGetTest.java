@@ -3,7 +3,7 @@ package io.pivotal.security.controller.v1.secret;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.entity.SecretEncryptionHelper;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
@@ -96,10 +96,10 @@ public class SecretsControllerGetTest {
 
       beforeEach(() -> {
         uuid = UUID.randomUUID();
-        NamedValueSecret valueSecret = new NamedValueSecret(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
+        NamedValueSecretData valueSecret = new NamedValueSecretData(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
         valueSecret.setEncryptedValue("fake-encrypted-value1".getBytes());
         valueSecret.setEncryptedValue("fake-encrypted-value2".getBytes());
-        NamedValueSecret valueSecret2 = new NamedValueSecret(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
+        NamedValueSecretData valueSecret2 = new NamedValueSecretData(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
         valueSecret2.setEncryptedValue("fake-encrypted-value2".getBytes());
         valueSecret2.setNonce("fake-nonce2".getBytes());
 

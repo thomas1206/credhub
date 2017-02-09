@@ -8,7 +8,7 @@ import io.pivotal.security.controller.v1.secret.SecretsController;
 import io.pivotal.security.data.EncryptionKeyCanaryDataService;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.entity.EncryptionKeyCanary;
-import io.pivotal.security.entity.NamedPasswordSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
 import io.pivotal.security.service.Encryption;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.service.EncryptionService;
@@ -79,7 +79,7 @@ public class PasswordRotationTest {
       when(encryptionKeyCanaryMapper.getKeyForUuid(oldCanary.getUuid())).thenReturn(oldKey);
 
       passwordName = "/test-password";
-      NamedPasswordSecret password = new NamedPasswordSecret(passwordName);
+      NamedPasswordSecretData password = new NamedPasswordSecretData(passwordName);
       final Encryption secretEncryption = encryptionService.encrypt(oldKey, "test-password-plaintext");
       password.setEncryptedValue(secretEncryption.encryptedValue);
       password.setNonce(secretEncryption.nonce);

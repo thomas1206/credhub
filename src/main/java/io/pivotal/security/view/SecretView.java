@@ -1,11 +1,11 @@
 package io.pivotal.security.view;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pivotal.security.entity.NamedCertificateSecret;
-import io.pivotal.security.entity.NamedRsaSecret;
-import io.pivotal.security.entity.NamedSecret;
-import io.pivotal.security.entity.NamedSshSecret;
-import io.pivotal.security.entity.NamedStringSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.entity.NamedSshSecretData;
+import io.pivotal.security.entity.NamedStringSecretData;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -45,16 +45,16 @@ public class SecretView extends BaseView {
     return value;
   }
 
-  public static SecretView fromEntity(NamedSecret namedSecret) {
+  public static SecretView fromEntity(NamedSecretData namedSecret) {
     SecretView result;
-    if (NamedStringSecret.class.isInstance(namedSecret)) {
-      result =  new StringView((NamedStringSecret) namedSecret);
-    } else if (NamedCertificateSecret.class.isInstance(namedSecret)) {
-      result = new CertificateView((NamedCertificateSecret) namedSecret);
-    } else if (NamedSshSecret.class.isInstance(namedSecret)) {
-      result = new SshView((NamedSshSecret) namedSecret);
-    } else if (NamedRsaSecret.class.isInstance(namedSecret)) {
-      result = new RsaView((NamedRsaSecret) namedSecret);
+    if (NamedStringSecretData.class.isInstance(namedSecret)) {
+      result =  new StringView((NamedStringSecretData) namedSecret);
+    } else if (NamedCertificateSecretData.class.isInstance(namedSecret)) {
+      result = new CertificateView((NamedCertificateSecretData) namedSecret);
+    } else if (NamedSshSecretData.class.isInstance(namedSecret)) {
+      result = new SshView((NamedSshSecretData) namedSecret);
+    } else if (NamedRsaSecretData.class.isInstance(namedSecret)) {
+      result = new RsaView((NamedRsaSecretData) namedSecret);
     } else {
       throw new IllegalArgumentException();
     }

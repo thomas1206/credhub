@@ -26,13 +26,13 @@ public class NamedRsaSecretTest {
   @Autowired
   SecretEncryptionHelper secretEncryptionHelper;
 
-  private NamedRsaSecret subject;
+  private NamedRsaSecretData subject;
 
   {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedRsaSecret("Foo");
+      subject = new NamedRsaSecretData("Foo");
     });
 
     it("returns type rsa", () -> {
@@ -71,7 +71,7 @@ public class NamedRsaSecretTest {
         UUID uuid = UUID.randomUUID();
         UUID encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedRsaSecret("foo");
+        subject = new NamedRsaSecretData("foo");
         subject.setPublicKey("fake-public-key");
         subject.setEncryptedValue("fake-private-key".getBytes());
         subject.setNonce("fake-nonce".getBytes());
@@ -79,7 +79,7 @@ public class NamedRsaSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedRsaSecret copy = new NamedRsaSecret();
+        NamedRsaSecretData copy = new NamedRsaSecretData();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));

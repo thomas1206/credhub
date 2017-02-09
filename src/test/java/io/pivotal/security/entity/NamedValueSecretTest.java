@@ -25,13 +25,13 @@ public class NamedValueSecretTest {
   @Autowired
   public ObjectMapper objectMapper;
 
-  NamedStringSecret subject;
+  NamedStringSecretData subject;
 
   {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedValueSecret("Foo");
+      subject = new NamedValueSecretData("Foo");
     });
 
     it("returns type value", () -> {
@@ -40,7 +40,7 @@ public class NamedValueSecretTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new NamedValueSecret("foo");
+        subject = new NamedValueSecretData("foo");
       });
 
       it("sets the nonce and the encrypted value", () -> {

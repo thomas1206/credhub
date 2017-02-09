@@ -4,7 +4,7 @@ import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.security.controller.v1.SshSecretParameters;
 import io.pivotal.security.controller.v1.SshSecretParametersFactory;
 import io.pivotal.security.secret.SshKey;
-import io.pivotal.security.entity.NamedSshSecret;
+import io.pivotal.security.entity.NamedSshSecretData;
 import io.pivotal.security.generator.SshGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import static com.google.common.collect.ImmutableSet.of;
 
 @Component
 public class SshGeneratorRequestTranslator
-    implements RequestTranslator<NamedSshSecret>, SecretGeneratorRequestTranslator<SshSecretParameters, NamedSshSecret> {
+    implements RequestTranslator<NamedSshSecretData>, SecretGeneratorRequestTranslator<SshSecretParameters, NamedSshSecretData> {
 
   @Autowired
   SshGenerator sshGenerator;
@@ -25,7 +25,7 @@ public class SshGeneratorRequestTranslator
   SshSecretParametersFactory sshSecretParametersFactory;
 
   @Override
-  public SshSecretParameters validRequestParameters(DocumentContext parsed, NamedSshSecret entity) {
+  public SshSecretParameters validRequestParameters(DocumentContext parsed, NamedSshSecretData entity) {
     SshSecretParameters sshSecretParameters = sshSecretParametersFactory.get();
 
     Boolean regenerate = parsed.read("$.regenerate", Boolean.class);
@@ -47,7 +47,7 @@ public class SshGeneratorRequestTranslator
   }
 
   @Override
-  public void populateEntityFromJson(NamedSshSecret namedSshSecret, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedSshSecretData namedSshSecret, DocumentContext documentContext) {
     SshSecretParameters sshSecretParameters = validRequestParameters(documentContext, namedSshSecret);
     final SshKey sshSecret = sshGenerator.generateSecret(sshSecretParameters);
 

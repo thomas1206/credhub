@@ -3,7 +3,7 @@ package io.pivotal.security.mapper;
 import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.security.controller.v1.CertificateSecretParameters;
 import io.pivotal.security.controller.v1.CertificateSecretParametersFactory;
-import io.pivotal.security.entity.NamedCertificateSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
 import io.pivotal.security.generator.SecretGenerator;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.view.ParameterizedValidationException;
@@ -18,7 +18,7 @@ import static io.pivotal.security.util.StringUtil.INTERNAL_SYMBOL_FOR_ALLOW_ARRA
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Component
-public class CertificateGeneratorRequestTranslator implements RequestTranslator<NamedCertificateSecret>, SecretGeneratorRequestTranslator<CertificateSecretParameters, NamedCertificateSecret> {
+public class CertificateGeneratorRequestTranslator implements RequestTranslator<NamedCertificateSecretData>, SecretGeneratorRequestTranslator<CertificateSecretParameters, NamedCertificateSecretData> {
 
   private SecretGenerator<CertificateSecretParameters, Certificate> certificateSecretGenerator;
   private CertificateSecretParametersFactory parametersFactory;
@@ -32,7 +32,7 @@ public class CertificateGeneratorRequestTranslator implements RequestTranslator<
   }
 
   @Override
-  public CertificateSecretParameters validRequestParameters(DocumentContext parsed, NamedCertificateSecret entity) {
+  public CertificateSecretParameters validRequestParameters(DocumentContext parsed, NamedCertificateSecretData entity) {
     Boolean regenerate = parsed.read("$.regenerate", Boolean.class);
 
     if (Boolean.TRUE.equals(regenerate)) {
@@ -79,7 +79,7 @@ public class CertificateGeneratorRequestTranslator implements RequestTranslator<
   }
 
   @Override
-  public void populateEntityFromJson(NamedCertificateSecret entity, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedCertificateSecretData entity, DocumentContext documentContext) {
     CertificateSecretParameters requestParameters = validRequestParameters(documentContext, entity);
 
     Certificate secret = certificateSecretGenerator.generateSecret(requestParameters);
@@ -116,7 +116,7 @@ public class CertificateGeneratorRequestTranslator implements RequestTranslator<
     );
   }
 
-  private void assignDefaults(NamedCertificateSecret entity, CertificateSecretParameters requestParameters) {
+  private void assignDefaults(NamedCertificateSecretData entity, CertificateSecretParameters requestParameters) {
     if (requestParameters.getIsCA() && requestParameters.getCaName().equals("default")) {
       requestParameters.setSelfSign(true);
     }

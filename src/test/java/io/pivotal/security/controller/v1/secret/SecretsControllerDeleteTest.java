@@ -4,7 +4,7 @@ package io.pivotal.security.controller.v1.secret;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -142,9 +142,9 @@ public class SecretsControllerDeleteTest {
 
       describe("when there are multiple secrets with that name", () -> {
         beforeEach(() -> {
-          NamedValueSecret value1 = new NamedValueSecret(secretName);
+          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecret value2 = new NamedValueSecret(secretName);
+          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L).when(secretDataService).delete(secretName);
 
@@ -170,9 +170,9 @@ public class SecretsControllerDeleteTest {
 
       describe("name can come as a request parameter", () -> {
         beforeEach(() -> {
-          NamedValueSecret value1 = new NamedValueSecret(secretName);
+          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecret value2 = new NamedValueSecret(secretName);
+          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L).when(secretDataService).delete(secretName.toUpperCase());
         });
@@ -197,9 +197,9 @@ public class SecretsControllerDeleteTest {
 
       describe("when name has a leading slash", () -> {
         it("should strip the leading slash and delete credential(s)", () -> {
-          NamedValueSecret value1 = new NamedValueSecret(secretName);
+          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecret value2 = new NamedValueSecret(secretName);
+          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L)
               .when(secretDataService).delete(secretName.toUpperCase());

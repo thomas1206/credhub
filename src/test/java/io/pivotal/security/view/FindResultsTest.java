@@ -2,10 +2,10 @@ package io.pivotal.security.view;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.entity.NamedCertificateSecret;
-import io.pivotal.security.entity.NamedPasswordSecret;
-import io.pivotal.security.entity.NamedSecret;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +29,7 @@ public class FindResultsTest {
   {
     describe("FindResultsTest", () -> {
       describe("#fromEntity", () -> {
-        List<NamedSecret> namedSecretList = newArrayList();
+        List<NamedSecretData> namedSecretList = newArrayList();
 
         it("creates an object with a list of results containing credential names and updated times", () -> {
           Instant versionCreatedAt1 = Instant.ofEpochSecond(10000L, 0);
@@ -39,9 +39,9 @@ public class FindResultsTest {
           String valueName = "valueSecret";
           String passwordName = "passwordSecret";
           String certificateName = "certificateSecret";
-          namedSecretList.add(new NamedValueSecret(valueName).setVersionCreatedAt(versionCreatedAt2));
-          namedSecretList.add(new NamedPasswordSecret(passwordName).setVersionCreatedAt(versionCreatedAt1));
-          namedSecretList.add(new NamedCertificateSecret(certificateName).setVersionCreatedAt(versionCreatedAt3));
+          namedSecretList.add(new NamedValueSecretData(valueName).setVersionCreatedAt(versionCreatedAt2));
+          namedSecretList.add(new NamedPasswordSecretData(passwordName).setVersionCreatedAt(versionCreatedAt1));
+          namedSecretList.add(new NamedCertificateSecretData(certificateName).setVersionCreatedAt(versionCreatedAt3));
 
           expectedResults = new FindCredentialResults(newArrayList(
               new Credential(certificateName, versionCreatedAt3),

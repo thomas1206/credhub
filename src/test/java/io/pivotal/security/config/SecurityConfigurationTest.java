@@ -5,7 +5,7 @@ import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.secret.SecretsController;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedPasswordSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -89,7 +89,7 @@ public class SecurityConfigurationTest {
     describe("with a token accepted by our security config", () -> {
       it("allows access", () -> {
         when(secretDataService.save(any())).thenAnswer(invocation -> {
-          NamedPasswordSecret namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
+          NamedPasswordSecretData namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecretData.class);
           namedPasswordSecret.setUuid(UUID.randomUUID());
           namedPasswordSecret.setVersionCreatedAt(Instant.now());
           return namedPasswordSecret;

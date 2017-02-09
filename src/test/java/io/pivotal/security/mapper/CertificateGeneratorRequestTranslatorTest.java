@@ -7,7 +7,7 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.config.JsonContextFactory;
 import io.pivotal.security.controller.v1.CertificateSecretParameters;
 import io.pivotal.security.controller.v1.CertificateSecretParametersFactory;
-import io.pivotal.security.entity.NamedCertificateSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
 import io.pivotal.security.generator.BCCertificateGenerator;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -142,7 +142,7 @@ public class CertificateGeneratorRequestTranslatorTest {
           "}";
 
         DocumentContext parsed = jsonPath.parse(json);
-        NamedCertificateSecret entity = new NamedCertificateSecret("my-secret");
+        NamedCertificateSecretData entity = new NamedCertificateSecretData("my-secret");
         CertificateSecretParameters params = subject.validRequestParameters(parsed, entity);
         assertThat(params.getIsCA(), equalTo(true));
         assertThat(params.getSelfSign(), equalTo(true));
@@ -161,7 +161,7 @@ public class CertificateGeneratorRequestTranslatorTest {
           "}";
 
         DocumentContext parsed = jsonPath.parse(json);
-        NamedCertificateSecret entity = new NamedCertificateSecret("my-secret");
+        NamedCertificateSecretData entity = new NamedCertificateSecretData("my-secret");
         CertificateSecretParameters params = subject.validRequestParameters(parsed, entity);
         assertThat(params.getIsCA(), equalTo(true));
         assertThat(params.getSelfSign(), equalTo(false));
@@ -237,7 +237,7 @@ public class CertificateGeneratorRequestTranslatorTest {
     });
 
     describe("populating an entity from JSON", () -> {
-      final NamedCertificateSecret secret = new NamedCertificateSecret("abc");
+      final NamedCertificateSecretData secret = new NamedCertificateSecretData("abc");
 
       beforeEach(() -> {
         doReturn(new Certificate("my-root", "my-cert", "my-priv"))
@@ -264,7 +264,7 @@ public class CertificateGeneratorRequestTranslatorTest {
       });
 
       it("can creates correct parameters from entity from the entity", () -> {
-        NamedCertificateSecret certificateSecret = new NamedCertificateSecret("my-cert")
+        NamedCertificateSecretData certificateSecret = new NamedCertificateSecretData("my-cert")
             .setCertificate(BIG_TEST_CERT)
             .setCaName("my-ca");
         CertificateSecretParameters expectedParameters = new CertificateSecretParameters(certificateSecret.getCertificate(), certificateSecret.getCaName());
@@ -273,7 +273,7 @@ public class CertificateGeneratorRequestTranslatorTest {
       });
 
       itThrowsWithMessage("regeneration is not allowed if caName is not present", ParameterizedValidationException.class, "error.cannot_regenerate_non_generated_credentials", () -> {
-        NamedCertificateSecret entity = new NamedCertificateSecret("foo");
+        NamedCertificateSecretData entity = new NamedCertificateSecretData("foo");
         subject.validRequestParameters(jsonPath.parse("{\"regenerate\":true}"), entity);
       });
     });
@@ -299,7 +299,7 @@ public class CertificateGeneratorRequestTranslatorTest {
             .setSelfSign(true)
             .setCaName("My Name");
 
-        NamedCertificateSecret entity = new NamedCertificateSecret("My Name");
+        NamedCertificateSecretData entity = new NamedCertificateSecretData("My Name");
         CertificateSecretParameters parameters = subject.validRequestParameters(parsed, entity);
         assertThat(parameters, samePropertyValuesAs(expectedParameters));
       });

@@ -4,7 +4,7 @@ import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.entity.NamedRsaSecret;
+import io.pivotal.security.entity.NamedRsaSecretData;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.junit.runner.RunWith;
@@ -29,7 +29,7 @@ public class RsaSshSetRequestTranslatorTest {
 
   private RsaSshSetRequestTranslator subject;
 
-  private NamedRsaSecret entity;
+  private NamedRsaSecretData entity;
 
   {
     wireAndUnwire(this, false);
@@ -38,7 +38,7 @@ public class RsaSshSetRequestTranslatorTest {
 
       beforeEach(() -> {
         subject = new RsaSshSetRequestTranslator();
-        entity = new NamedRsaSecret("Foo");
+        entity = new NamedRsaSecretData("Foo");
       });
 
       it("creates an entity when all fields are present", () -> {

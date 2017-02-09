@@ -1,6 +1,6 @@
 package io.pivotal.security.data;
 
-import io.pivotal.security.entity.NamedSecret;
+import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.entity.NamedSecretImpl;
 import io.pivotal.security.entity.SecretName;
 import io.pivotal.security.repository.SecretNameRepository;
@@ -15,12 +15,11 @@ import org.springframework.data.domain.Slice;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static io.pivotal.security.repository.SecretRepository.BATCH_SIZE;
 
 @Service
@@ -56,7 +55,7 @@ public class SecretDataService {
     this.encryptionKeyCanaryMapper = encryptionKeyCanaryMapper;
   }
 
-  public <Z extends NamedSecret> Z save(Z namedSecret) {
+  public <Z extends NamedSecretData> Z save(Z namedSecret) {
     namedSecret.getSecretName().setName(addLeadingSlashIfMissing(namedSecret.getName()));
     if (namedSecret.getEncryptionKeyUuid() == null) {
       namedSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
@@ -75,7 +74,7 @@ public class SecretDataService {
     return secretRepository.findAllPaths(true);
   }
 
-  public NamedSecret findMostRecent(String name) {
+  public NamedSecretData findMostRecent(String name) {
     SecretName secretName = secretNameRepository.findOneByNameIgnoreCase(addLeadingSlashIfMissing(name));
 
     if (secretName == null) {
@@ -85,19 +84,19 @@ public class SecretDataService {
     }
   }
 
-  public NamedSecret findByUuid(String uuid) {
+  public NamedSecretData findByUuid(String uuid) {
     return secretRepository.findOneByUuid(UUID.fromString(uuid));
   }
 
-  public NamedSecret findByUuid(UUID uuid) {
+  public NamedSecretData findByUuid(UUID uuid) {
     return secretRepository.findOneByUuid(uuid);
   }
 
-  public List<NamedSecret> findContainingName(String name) {
+  public List<NamedSecretData> findContainingName(String name) {
     return findMatchingName("%" + name + "%");
   }
 
-  public List<NamedSecret> findStartingWithPath(String path) {
+  public List<NamedSecretData> findStartingWithPath(String path) {
     path = addLeadingSlashIfMissing(path);
     path = !path.endsWith("/") ? path + "/" : path;
 
@@ -116,7 +115,7 @@ public class SecretDataService {
 
   public void deleteAll() { secretRepository.deleteAll(); }
 
-  public List<NamedSecret> findAllByName(String name) {
+  public List<NamedSecretData> findAllByName(String name) {
     SecretName secretName = secretNameRepository.findOneByNameIgnoreCase(addLeadingSlashIfMissing(name));
 
     return secretName != null ? secretRepository.findAllBySecretNameUuid(secretName.getUuid()) : newArrayList();
@@ -136,7 +135,7 @@ public class SecretDataService {
     return secretRepository.countByEncryptionKeyUuidIn(uuids);
   }
 
-  public Slice<NamedSecret> findEncryptedWithAvailableInactiveKey() {
+  public Slice<NamedSecretData> findEncryptedWithAvailableInactiveKey() {
     return secretRepository.findByEncryptionKeyUuidIn(
       encryptionKeyCanaryMapper.getCanaryUuidsWithKnownAndInactiveKeys(),
       new PageRequest(0, BATCH_SIZE)
@@ -151,13 +150,13 @@ public class SecretDataService {
     }
   }
 
-  private List<NamedSecret> findMatchingName(String nameLike) {
+  private List<NamedSecretData> findMatchingName(String nameLike) {
     return jdbcTemplate.query(
         FIND_MATCHING_NAME_QUERY,
         new Object[]{nameLike},
         (rowSet, rowNum) -> {
           SecretName secretName = new SecretName(rowSet.getString("name"));
-          NamedSecret secret = new NamedSecretImpl();
+          NamedSecretData secret = new NamedSecretImpl();
           secret.setSecretName(secretName);
           secret.setVersionCreatedAt(Instant.ofEpochMilli(rowSet.getLong("version_created_at")));
           return secret;

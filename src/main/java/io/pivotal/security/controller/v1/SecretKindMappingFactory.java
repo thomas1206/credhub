@@ -1,7 +1,7 @@
 package io.pivotal.security.controller.v1;
 
 import com.jayway.jsonpath.DocumentContext;
-import io.pivotal.security.entity.NamedSecret;
+import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.mapper.RequestTranslator;
 import io.pivotal.security.view.SecretKind;
 
@@ -9,9 +9,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.function.Function;
 
 public interface SecretKindMappingFactory {
-  SecretKind.CheckedMapping<NamedSecret, NoSuchAlgorithmException> make(String secretPath, DocumentContext parsedRequest);
+  SecretKind.CheckedMapping<NamedSecretData, NoSuchAlgorithmException> make(String secretPath, DocumentContext parsedRequest);
 
-  default <Z extends NamedSecret> Z createNewSecret(
+  default <Z extends NamedSecretData> Z createNewSecret(
       Z existingNamedSecret,
       Function<String, Z> secretConstructor,
       String secretPath,

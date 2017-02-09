@@ -1,10 +1,10 @@
 package io.pivotal.security.view;
 
-import io.pivotal.security.entity.NamedCertificateSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
 import io.pivotal.security.secret.Certificate;
 
 class CertificateView extends SecretView {
-  CertificateView(NamedCertificateSecret namedCertificateSecret) {
+  CertificateView(NamedCertificateSecretData namedCertificateSecret) {
     super(
         namedCertificateSecret.getVersionCreatedAt(),
         namedCertificateSecret.getUuid(),

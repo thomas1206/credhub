@@ -35,7 +35,7 @@ import javax.persistence.Table;
 @Inheritance(strategy = InheritanceType.JOINED)
 @EntityListeners(AuditingEntityListener.class)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
-abstract public class NamedSecret<Z extends NamedSecret> implements EncryptedValueContainer {
+abstract public class NamedSecretData<Z extends NamedSecretData> implements EncryptedValueContainer {
   static String SECRET_TYPE;
   // Use VARBINARY to make all 3 DB types happy.
   // H2 doesn't distinguish between "binary" and "varbinary" - see
@@ -72,18 +72,18 @@ abstract public class NamedSecret<Z extends NamedSecret> implements EncryptedVal
   @JoinColumn(name="secret_name_uuid", nullable=false)
   private SecretName secretName;
 
-  public NamedSecret(SecretName name) {
+  public NamedSecretData(SecretName name) {
     setSecretName(name);
   }
 
-  public NamedSecret(String name) {
+  public NamedSecretData(String name) {
     if (this.getSecretName() == null) {
       SecretName secretName = new SecretName(name);
       this.setSecretName(secretName);
     }
   }
 
-  public NamedSecret() { /* yay Hibernate */ }
+  public NamedSecretData() { /* yay Hibernate */ }
 
   public UUID getUuid() {
     return uuid;

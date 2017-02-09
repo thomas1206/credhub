@@ -26,7 +26,7 @@ public class NamedSshSecretTest {
   @Autowired
   SecretEncryptionHelper secretEncryptionHelper;
 
-  private NamedSshSecret subject;
+  private NamedSshSecretData subject;
 
   private UUID encryptionKeyUuid;
 
@@ -34,7 +34,7 @@ public class NamedSshSecretTest {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedSshSecret("Foo");
+      subject = new NamedSshSecretData("Foo");
     });
 
     it("returns type ssh", () -> {
@@ -95,7 +95,7 @@ public class NamedSshSecretTest {
         UUID uuid = UUID.randomUUID();
         encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedSshSecret("foo");
+        subject = new NamedSshSecretData("foo");
         subject.setPublicKey("fake-public-key");
         subject.setEncryptedValue("fake-private-key".getBytes());
         subject.setNonce("fake-nonce".getBytes());
@@ -103,7 +103,7 @@ public class NamedSshSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedSshSecret copy = new NamedSshSecret();
+        NamedSshSecretData copy = new NamedSshSecretData();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));

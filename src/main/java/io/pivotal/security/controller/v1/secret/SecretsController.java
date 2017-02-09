@@ -7,7 +7,7 @@ import io.pivotal.security.controller.v1.ResponseErrorType;
 import io.pivotal.security.controller.v1.SecretKindMappingFactory;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.entity.AuditingOperationCode;
-import io.pivotal.security.entity.NamedSecret;
+import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.util.CurrentTimeProvider;
@@ -171,7 +171,7 @@ public class SecretsController {
     return secretName;
   }
 
-  private Function<String, List<NamedSecret>> selectLookupFunction(boolean current) {
+  private Function<String, List<NamedSecretData>> selectLookupFunction(boolean current) {
     if (current) {
       return findAsList(secretDataService::findMostRecent);
     } else {
@@ -179,24 +179,24 @@ public class SecretsController {
     }
   }
 
-  private Function<String, List<NamedSecret>> findAsList(Function<String, NamedSecret> finder) {
+  private Function<String, List<NamedSecretData>> findAsList(Function<String, NamedSecretData> finder) {
     return (toFind) -> {
-      NamedSecret namedSecret = finder.apply(toFind);
+      NamedSecretData namedSecret = finder.apply(toFind);
       return namedSecret != null ? newArrayList(namedSecret) : newArrayList();
     };
   }
 
   private ResponseEntity retrieveSecretWithAuditing(String identifier,
-                                                    Function<String, List<NamedSecret>> finder,
+                                                    Function<String, List<NamedSecretData>> finder,
                                                     HttpServletRequest request,
                                                     Authentication authentication,
-                                                    Function<List<NamedSecret>, Object> secretPresenter) throws Exception {
+                                                    Function<List<NamedSecretData>, Object> secretPresenter) throws Exception {
     final AuditRecordBuilder auditRecordBuilder = new AuditRecordBuilder(null, request, authentication);
     return auditLogService.performWithAuditing(auditRecordBuilder, () -> {
       if (StringUtils.isEmpty(identifier)) {
         return createErrorResponse("error.missing_name", HttpStatus.BAD_REQUEST);
       }
-      List<NamedSecret> namedSecrets = finder.apply(identifier);
+      List<NamedSecretData> namedSecrets = finder.apply(identifier);
       if (namedSecrets.isEmpty()) {
         return createErrorResponse("error.credential_not_found", HttpStatus.NOT_FOUND);
       } else {
@@ -228,12 +228,12 @@ public class SecretsController {
   }
 
   private ResponseEntity findWithAuditing(String nameSubstring,
-                                          Function<String, List<NamedSecret>> finder,
+                                          Function<String, List<NamedSecretData>> finder,
                                           HttpServletRequest request,
                                           Authentication authentication) throws Exception {
     AuditRecordBuilder auditParams = new AuditRecordBuilder(CREDENTIAL_FIND, null, request, authentication);
     return auditLogService.performWithAuditing(auditParams, () -> {
-      List<NamedSecret> namedSecrets = finder.apply(nameSubstring);
+      List<NamedSecretData> namedSecrets = finder.apply(nameSubstring);
       return new ResponseEntity<>(FindCredentialResults.fromEntity(namedSecrets), HttpStatus.OK);
     });
   }
@@ -255,7 +255,7 @@ public class SecretsController {
     if (StringUtils.isEmpty(secretName)) {
       return createErrorResponse("error.missing_name", HttpStatus.BAD_REQUEST);
     }
-    NamedSecret existingNamedSecret = secretDataService.findMostRecent(secretName);
+    NamedSecretData existingNamedSecret = secretDataService.findMostRecent(secretName);
 
     boolean willBeCreated = existingNamedSecret == null;
     boolean overwrite = BooleanUtils.isTrue(parsedRequestBody.read("$.overwrite", Boolean.class));
@@ -279,7 +279,7 @@ public class SecretsController {
   private ResponseEntity<?> storeSecret(String secretPath,
                                         SecretKindMappingFactory namedSecretHandler,
                                         DocumentContext parsed,
-                                        NamedSecret existingNamedSecret,
+                                        NamedSecretData existingNamedSecret,
                                         boolean willWrite) {
     try {
       String requestedSecretType = parsed.read("$.type");
@@ -290,7 +290,7 @@ public class SecretsController {
         throw new ParameterizedValidationException("error.type_mismatch");
       secretPath = existingNamedSecret == null ? secretPath : existingNamedSecret.getName();
 
-      NamedSecret storedNamedSecret;
+      NamedSecretData storedNamedSecret;
       if (willWrite) {
         storedNamedSecret = secretKind.lift(namedSecretHandler.make(secretPath, parsed)).apply(existingNamedSecret);
         storedNamedSecret = secretDataService.save(storedNamedSecret);

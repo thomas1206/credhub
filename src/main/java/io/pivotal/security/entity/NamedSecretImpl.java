@@ -2,7 +2,7 @@ package io.pivotal.security.entity;
 
 import io.pivotal.security.view.SecretKind;
 
-public class NamedSecretImpl extends NamedSecret<NamedSecretImpl> {
+public class NamedSecretImpl extends NamedSecretData<NamedSecretImpl> {
   @Override
   public SecretKind getKind() {
     return null;

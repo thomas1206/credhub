@@ -2,7 +2,7 @@ package io.pivotal.security.view;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.entity.NamedSshSecret;
+import io.pivotal.security.entity.NamedSshSecretData;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +26,7 @@ public class SshViewTest {
 
   private static final JsonExpectationsHelper jsonExpectationsHelper = new JsonExpectationsHelper();
 
-  private NamedSshSecret entity;
+  private NamedSshSecretData entity;
 
   private String secretName;
 
@@ -38,7 +38,7 @@ public class SshViewTest {
     beforeEach(() -> {
       secretName = "foo";
       uuid = UUID.randomUUID();
-      entity = new NamedSshSecret(secretName)
+      entity = new NamedSshSecretData(secretName)
           .setPublicKey("my-public-key")
           .setPrivateKey("my-private-key");
       entity.setUuid(uuid);

@@ -18,18 +18,18 @@ public class EncryptionKeyRotatorTest {
   private SecretEncryptionHelper secretEncryptionHelper;
   private SecretDataService secretDataService;
 
-  private NamedSecret certificateSecret;
-  private NamedSecret passwordSecret;
-  private NamedSshSecret sshSecret;
+  private NamedSecretData certificateSecret;
+  private NamedSecretData passwordSecret;
+  private NamedSshSecretData sshSecret;
 
   {
     beforeEach(() -> {
       secretEncryptionHelper = mock(SecretEncryptionHelper.class);
       secretDataService = mock(SecretDataService.class);
 
-      certificateSecret = new NamedCertificateSecret();
-      passwordSecret = new NamedPasswordSecret();
-      sshSecret = new NamedSshSecret();
+      certificateSecret = new NamedCertificateSecretData();
+      passwordSecret = new NamedPasswordSecretData();
+      sshSecret = new NamedSshSecretData();
 
       when(secretDataService.findEncryptedWithAvailableInactiveKey())
           .thenReturn(new SliceImpl<>(asList(certificateSecret, passwordSecret)))

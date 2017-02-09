@@ -2,7 +2,7 @@ package io.pivotal.security.controller.v1;
 
 import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.DocumentContext;
-import io.pivotal.security.entity.NamedPasswordSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
 import io.pivotal.security.mapper.RequestTranslator;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 public class SecretKindMappingFactoryTest {
 
   @Mock
-  private RequestTranslator<NamedPasswordSecret> requestTranslator;
+  private RequestTranslator<NamedPasswordSecretData> requestTranslator;
 
   @Mock
   private DocumentContext parsedRequest;
@@ -37,8 +37,8 @@ public class SecretKindMappingFactoryTest {
 
     describe("when there is no existing entity", () -> {
       it("creates a new object", () -> {
-        Function<String, NamedPasswordSecret> constructor = mock(Function.class);
-        NamedPasswordSecret constructedObject = new NamedPasswordSecret("name");
+        Function<String, NamedPasswordSecretData> constructor = mock(Function.class);
+        NamedPasswordSecretData constructedObject = new NamedPasswordSecretData("name");
         when(constructor.apply("name")).thenReturn(constructedObject);
 
         Assert.assertThat(subject.createNewSecret(null, constructor, "name", requestTranslator, parsedRequest), sameInstance(constructedObject));
@@ -50,10 +50,10 @@ public class SecretKindMappingFactoryTest {
 
     describe("when there is an existing entity", () -> {
       it("should create a copy of the original", () -> {
-        NamedPasswordSecret existingObject = spy(new NamedPasswordSecret("name"));
+        NamedPasswordSecretData existingObject = spy(new NamedPasswordSecretData("name"));
 
-        Function<String, NamedPasswordSecret> constructor = mock(Function.class);
-        NamedPasswordSecret constructedObject = new NamedPasswordSecret("name");
+        Function<String, NamedPasswordSecretData> constructor = mock(Function.class);
+        NamedPasswordSecretData constructedObject = new NamedPasswordSecretData("name");
         when(constructor.apply("name")).thenReturn(constructedObject);
 
         Assert.assertThat(subject.createNewSecret(existingObject, constructor, "name", requestTranslator, parsedRequest), sameInstance(constructedObject));
@@ -66,12 +66,12 @@ public class SecretKindMappingFactoryTest {
 
     describe("validation", () -> {
       it("calls the request translator to validate JSON keys", () -> {
-        subject.createNewSecret(null, NamedPasswordSecret::new, "name", requestTranslator, parsedRequest);
+        subject.createNewSecret(null, NamedPasswordSecretData::new, "name", requestTranslator, parsedRequest);
         verify(requestTranslator).validateJsonKeys(parsedRequest);
       });
 
       it("calls the request translator to validate path", () -> {
-        subject.createNewSecret(null, NamedPasswordSecret::new, "/dont//do//this/", requestTranslator, parsedRequest);
+        subject.createNewSecret(null, NamedPasswordSecretData::new, "/dont//do//this/", requestTranslator, parsedRequest);
         verify(requestTranslator).validatePathName(any(String.class));
       });
     });

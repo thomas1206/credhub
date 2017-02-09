@@ -4,12 +4,12 @@ import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.AbstractNamedSecretHandlerTestingUtil;
-import io.pivotal.security.entity.NamedCertificateSecret;
-import io.pivotal.security.entity.NamedPasswordSecret;
-import io.pivotal.security.entity.NamedRsaSecret;
-import io.pivotal.security.entity.NamedSecret;
-import io.pivotal.security.entity.NamedSshSecret;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.entity.NamedSshSecretData;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.mapper.CertificateSetRequestTranslator;
 import io.pivotal.security.mapper.RsaSshSetRequestTranslator;
 import io.pivotal.security.mapper.StringSetRequestTranslator;
@@ -62,9 +62,9 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
           behavesLikeMapper(() -> subject,
               () -> subject.stringSetRequestTranslator,
               SecretKind.VALUE,
-              NamedValueSecret.class,
-              new NamedValueSecret(),
-              mock(NamedValueSecret.class))
+              NamedValueSecretData.class,
+              new NamedValueSecretData(),
+              mock(NamedValueSecretData.class))
       );
 
       describe(
@@ -72,9 +72,9 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
           behavesLikeMapper(() -> subject,
               () -> subject.stringSetRequestTranslator,
               SecretKind.PASSWORD,
-              NamedPasswordSecret.class,
-              new NamedPasswordSecret(),
-              mock(NamedPasswordSecret.class))
+              NamedPasswordSecretData.class,
+              new NamedPasswordSecretData(),
+              mock(NamedPasswordSecretData.class))
       );
 
       describe(
@@ -82,9 +82,9 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
           behavesLikeMapper(() -> subject,
               () -> subject.certificateSetRequestTranslator,
               SecretKind.CERTIFICATE,
-              NamedCertificateSecret.class,
-              new NamedCertificateSecret(),
-              mock(NamedCertificateSecret.class))
+              NamedCertificateSecretData.class,
+              new NamedCertificateSecretData(),
+              mock(NamedCertificateSecretData.class))
       );
 
       describe(
@@ -92,9 +92,9 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
           behavesLikeMapper(() -> subject,
               () -> subject.rsaSshSetRequestTranslator,
               SecretKind.SSH,
-              NamedSshSecret.class,
-              new NamedSshSecret(),
-              mock(NamedSshSecret.class))
+              NamedSshSecretData.class,
+              new NamedSshSecretData(),
+              mock(NamedSshSecretData.class))
       );
 
       describe(
@@ -102,9 +102,9 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
           behavesLikeMapper(() -> subject,
               () -> subject.rsaSshSetRequestTranslator,
               SecretKind.RSA,
-              NamedRsaSecret.class,
-              new NamedRsaSecret(),
-              mock(NamedRsaSecret.class))
+              NamedRsaSecretData.class,
+              new NamedRsaSecretData(),
+              mock(NamedRsaSecretData.class))
       );
     });
 
@@ -146,7 +146,7 @@ public class NamedSecretSetHandlerTest extends AbstractNamedSecretHandlerTesting
   }
 
   @Override
-  protected void verifyExistingSecretCopying(NamedSecret mockExistingSecret) {
+  protected void verifyExistingSecretCopying(NamedSecretData mockExistingSecret) {
     verify(mockExistingSecret, never()).copyInto(any());
   }
 }

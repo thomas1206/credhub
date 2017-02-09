@@ -30,7 +30,7 @@ public class NamedPasswordSecretTest {
   @Autowired
   ObjectMapper objectMapper;
 
-  NamedPasswordSecret subject;
+  NamedPasswordSecretData subject;
 
   PasswordGenerationParameters generationParameters;
 
@@ -38,7 +38,7 @@ public class NamedPasswordSecretTest {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedPasswordSecret("Foo");
+      subject = new NamedPasswordSecretData("Foo");
 
       generationParameters = new PasswordGenerationParameters();
       generationParameters.setExcludeLower(true);
@@ -52,7 +52,7 @@ public class NamedPasswordSecretTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new NamedPasswordSecret("foo");
+        subject = new NamedPasswordSecretData("foo");
       });
 
       it("sets the nonce and the encrypted value", () -> {
@@ -98,7 +98,7 @@ public class NamedPasswordSecretTest {
 
         String stringifiedParameters = new ObjectMapper().writeValueAsString(parameters);
 
-        subject = new NamedPasswordSecret("foo");
+        subject = new NamedPasswordSecretData("foo");
         subject.setEncryptedValue("value".getBytes());
         subject.setNonce("nonce".getBytes());
         subject.setEncryptedGenerationParameters(stringifiedParameters.getBytes());
@@ -106,7 +106,7 @@ public class NamedPasswordSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedPasswordSecret copy = new NamedPasswordSecret();
+        NamedPasswordSecretData copy = new NamedPasswordSecretData();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));

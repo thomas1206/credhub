@@ -8,7 +8,7 @@ import io.pivotal.security.controller.v1.RsaSecretParameters;
 import io.pivotal.security.controller.v1.RsaSecretParametersFactory;
 import io.pivotal.security.entity.SecretName;
 import io.pivotal.security.secret.RsaKey;
-import io.pivotal.security.entity.NamedRsaSecret;
+import io.pivotal.security.entity.NamedRsaSecretData;
 import io.pivotal.security.generator.RsaGenerator;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
@@ -94,7 +94,7 @@ public class RsaGeneratorRequestTranslatorTest {
         String json = "{\"type\":\"rsa\"}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
+        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(secretGenerator).generateSecret(mockParams);
@@ -107,7 +107,7 @@ public class RsaGeneratorRequestTranslatorTest {
         String json = "{\"type\":\"rsa\"}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
+        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(mockParams, times(1)).validate();
@@ -122,7 +122,7 @@ public class RsaGeneratorRequestTranslatorTest {
           "}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
+        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(mockParams).setKeyLength(3072);
@@ -131,7 +131,7 @@ public class RsaGeneratorRequestTranslatorTest {
       });
 
       it("can regenerate using the existing entity and JSON", () -> {
-        NamedRsaSecret secret = spy(NamedRsaSecret.class);
+        NamedRsaSecretData secret = spy(NamedRsaSecretData.class);
         SecretName secretName = new SecretName("test");
         secret.setSecretName(secretName);
         when(secret.getKeyLength()).thenReturn(3072);

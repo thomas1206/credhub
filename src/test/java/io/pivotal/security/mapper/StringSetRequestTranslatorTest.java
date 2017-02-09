@@ -4,7 +4,7 @@ import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ public class StringSetRequestTranslatorTest {
 
   private StringSetRequestTranslator subject;
 
-  private NamedValueSecret entity;
+  private NamedValueSecretData entity;
 
   {
     wireAndUnwire(this, false);
@@ -38,7 +38,7 @@ public class StringSetRequestTranslatorTest {
     describe("populating entity from JSON", () -> {
       beforeEach(() -> {
         subject = new StringSetRequestTranslator();
-        entity = new NamedValueSecret("rick");
+        entity = new NamedValueSecretData("rick");
       });
 
       it("fills in entity with values from JSON", () -> {

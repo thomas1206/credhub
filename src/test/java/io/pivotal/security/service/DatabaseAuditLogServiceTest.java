@@ -3,8 +3,8 @@ package io.pivotal.security.service;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.config.NoExpirationSymmetricKeySecurityConfiguration;
 import io.pivotal.security.data.OperationAuditRecordDataService;
-import io.pivotal.security.entity.NamedStringSecret;
-import io.pivotal.security.entity.NamedValueSecret;
+import io.pivotal.security.entity.NamedStringSecretData;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.entity.OperationAuditRecord;
 import io.pivotal.security.fake.FakeSecretRepository;
 import io.pivotal.security.fake.FakeTransactionManager;
@@ -108,9 +108,9 @@ public class DatabaseAuditLogServiceTest {
         describe("when the audit succeeds", () -> {
           beforeEach(() -> {
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
-              final NamedStringSecret secret = secretRepository.save(entity);
+              final NamedStringSecretData secret = secretRepository.save(entity);
               return new ResponseEntity<>(secret, HttpStatus.OK);
             });
           });
@@ -137,9 +137,9 @@ public class DatabaseAuditLogServiceTest {
             doThrow(new RuntimeException()).when(operationAuditRecordDataService).save(any(OperationAuditRecord.class));
 
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
-              final NamedStringSecret secret = secretRepository.save(entity);
+              final NamedStringSecretData secret = secretRepository.save(entity);
               return new ResponseEntity<>(secret, HttpStatus.OK);
             });
           });
@@ -168,7 +168,7 @@ public class DatabaseAuditLogServiceTest {
             exception.set(null);
             try {
               subject.performWithAuditing(auditRecordBuilder, () -> {
-                NamedValueSecret entity = new NamedValueSecret("keyName");
+                NamedValueSecretData entity = new NamedValueSecretData("keyName");
                 entity.setEncryptedValue("value".getBytes());
                 secretRepository.save(entity);
                 throw re;
@@ -197,7 +197,7 @@ public class DatabaseAuditLogServiceTest {
             doThrow(new RuntimeException()).when(operationAuditRecordDataService).save(any(OperationAuditRecord.class));
 
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
               secretRepository.save(entity);
               throw new RuntimeException("controller method failed");
@@ -223,7 +223,7 @@ public class DatabaseAuditLogServiceTest {
         describe("when the audit succeeds", () -> {
           beforeEach(() -> {
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
               secretRepository.save(entity);
               return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
@@ -249,7 +249,7 @@ public class DatabaseAuditLogServiceTest {
             doThrow(new RuntimeException()).when(operationAuditRecordDataService).save(any(OperationAuditRecord.class));
 
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
               secretRepository.save(entity);
               return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
@@ -275,7 +275,7 @@ public class DatabaseAuditLogServiceTest {
           beforeEach(() -> {
             transactionManager.failOnCommit();
             responseEntity = subject.performWithAuditing(auditRecordBuilder, () -> {
-              NamedValueSecret entity = new NamedValueSecret("keyName");
+              NamedValueSecretData entity = new NamedValueSecretData("keyName");
               entity.setEncryptedValue("value".getBytes());
               secretRepository.save(entity);
               return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);

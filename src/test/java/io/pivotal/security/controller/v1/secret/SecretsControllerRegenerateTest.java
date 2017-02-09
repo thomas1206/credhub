@@ -5,7 +5,7 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.PasswordGenerationParameters;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.secret.Password;
-import io.pivotal.security.entity.NamedPasswordSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
 import io.pivotal.security.service.AuditRecordBuilder;
@@ -103,7 +103,7 @@ public class SecretsControllerRegenerateTest {
 
     describe("regenerating a password", () -> {
       beforeEach(() -> {
-        NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
+        NamedPasswordSecretData originalSecret = new NamedPasswordSecretData("my-password");
         originalSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
         originalSecret.setValue("original-password");
         PasswordGenerationParameters generationParameters = new PasswordGenerationParameters();
@@ -114,12 +114,12 @@ public class SecretsControllerRegenerateTest {
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 
         doAnswer(invocation -> {
-          NamedPasswordSecret newSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
+          NamedPasswordSecretData newSecret = invocation.getArgumentAt(0, NamedPasswordSecretData.class);
           uuid = UUID.randomUUID();
           newSecret.setUuid(uuid);
           newSecret.setVersionCreatedAt(frozenTime.plusSeconds(10));
           return newSecret;
-        }).when(secretDataService).save(any(NamedPasswordSecret.class));
+        }).when(secretDataService).save(any(NamedPasswordSecretData.class));
 
         resetAuditLogMock();
 
@@ -138,10 +138,10 @@ public class SecretsControllerRegenerateTest {
             .andExpect(jsonPath("$.id").value(uuid.toString()))
             .andExpect(jsonPath("$.version_created_at").value(frozenTime.plusSeconds(10).toString()));
 
-        ArgumentCaptor<NamedPasswordSecret> argumentCaptor = ArgumentCaptor.forClass(NamedPasswordSecret.class);
+        ArgumentCaptor<NamedPasswordSecretData> argumentCaptor = ArgumentCaptor.forClass(NamedPasswordSecretData.class);
         verify(secretDataService, times(1)).save(argumentCaptor.capture());
 
-        NamedPasswordSecret newPassword = argumentCaptor.getValue();
+        NamedPasswordSecretData newPassword = argumentCaptor.getValue();
 
         assertThat(newPassword.getValue(), equalTo("generated-secret"));
         assertThat(newPassword.getGenerationParameters().isExcludeNumber(), equalTo(true));
@@ -186,7 +186,7 @@ public class SecretsControllerRegenerateTest {
 
     describe("when attempting to regenerate a non-regenerated password", () -> {
       beforeEach(() -> {
-        NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
+        NamedPasswordSecretData originalSecret = new NamedPasswordSecretData("my-password");
         originalSecret.setValue("abcde");
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 

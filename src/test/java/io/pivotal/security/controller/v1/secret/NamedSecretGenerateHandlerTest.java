@@ -6,11 +6,11 @@ import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.AbstractNamedSecretHandlerTestingUtil;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedCertificateSecret;
-import io.pivotal.security.entity.NamedPasswordSecret;
-import io.pivotal.security.entity.NamedRsaSecret;
-import io.pivotal.security.entity.NamedSecret;
-import io.pivotal.security.entity.NamedSshSecret;
+import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.entity.NamedSshSecretData;
 import io.pivotal.security.mapper.CertificateGeneratorRequestTranslator;
 import io.pivotal.security.mapper.PasswordGeneratorRequestTranslator;
 import io.pivotal.security.mapper.RsaGeneratorRequestTranslator;
@@ -75,7 +75,7 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
         });
 
         itThrowsWithMessage("ignores type mismatches and gives the can't generate message", ParameterizedValidationException.class, "error.invalid_generate_type", () -> {
-          SecretKind.VALUE.lift(subject.make("secret-path", documentContext)).apply(new NamedPasswordSecret());
+          SecretKind.VALUE.lift(subject.make("secret-path", documentContext)).apply(new NamedPasswordSecretData());
         });
       });
 
@@ -84,9 +84,9 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
           behavesLikeMapper(() -> subject,
               () -> subject.passwordGeneratorRequestTranslator,
               SecretKind.PASSWORD,
-              NamedPasswordSecret.class,
-              new NamedPasswordSecret(),
-              mock(NamedPasswordSecret.class))
+              NamedPasswordSecretData.class,
+              new NamedPasswordSecretData(),
+              mock(NamedPasswordSecretData.class))
       );
 
       describe(
@@ -94,9 +94,9 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
           behavesLikeMapper(() -> subject,
               () -> subject.certificateGeneratorRequestTranslator,
               SecretKind.CERTIFICATE,
-              NamedCertificateSecret.class,
-              new NamedCertificateSecret(),
-              mock(NamedCertificateSecret.class))
+              NamedCertificateSecretData.class,
+              new NamedCertificateSecretData(),
+              mock(NamedCertificateSecretData.class))
       );
 
       describe(
@@ -104,9 +104,9 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
           behavesLikeMapper(() -> subject,
               () -> subject.sshGeneratorRequestTranslator,
               SecretKind.SSH,
-              NamedSshSecret.class,
-              new NamedSshSecret(),
-              mock(NamedSshSecret.class))
+              NamedSshSecretData.class,
+              new NamedSshSecretData(),
+              mock(NamedSshSecretData.class))
       );
 
       describe(
@@ -114,9 +114,9 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
           behavesLikeMapper(() -> subject,
               () -> subject.rsaGeneratorRequestTranslator,
               SecretKind.RSA,
-              NamedRsaSecret.class,
-              new NamedRsaSecret(),
-              mock(NamedRsaSecret.class))
+              NamedRsaSecretData.class,
+              new NamedRsaSecretData(),
+              mock(NamedRsaSecretData.class))
       );
     });
 
@@ -180,7 +180,7 @@ public class NamedSecretGenerateHandlerTest extends AbstractNamedSecretHandlerTe
   }
 
   @Override
-  protected void verifyExistingSecretCopying(NamedSecret mockExistingSecret) {
+  protected void verifyExistingSecretCopying(NamedSecretData mockExistingSecret) {
     verify(mockExistingSecret).copyInto(any());
   }
 }
