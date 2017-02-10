@@ -1,11 +1,11 @@
 package io.pivotal.security.data;
 
 import io.pivotal.security.entity.NamedSecretData;
-import io.pivotal.security.entity.NamedSecretImpl;
 import io.pivotal.security.entity.SecretName;
 import io.pivotal.security.repository.SecretNameRepository;
 import io.pivotal.security.repository.SecretRepository;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
+import io.pivotal.security.view.SecretView;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,11 +92,11 @@ public class SecretDataService {
     return secretRepository.findOneByUuid(uuid);
   }
 
-  public List<NamedSecretData> findContainingName(String name) {
+  public List<SecretView> findContainingName(String name) {
     return findMatchingName("%" + name + "%");
   }
 
-  public List<NamedSecretData> findStartingWithPath(String path) {
+  public List<SecretView> findStartingWithPath(String path) {
     path = addLeadingSlashIfMissing(path);
     path = !path.endsWith("/") ? path + "/" : path;
 
@@ -150,16 +150,14 @@ public class SecretDataService {
     }
   }
 
-  private List<NamedSecretData> findMatchingName(String nameLike) {
+  private List<SecretView> findMatchingName(String nameLike) {
     return jdbcTemplate.query(
         FIND_MATCHING_NAME_QUERY,
         new Object[]{nameLike},
         (rowSet, rowNum) -> {
-          SecretName secretName = new SecretName(rowSet.getString("name"));
-          NamedSecretData secret = new NamedSecretImpl();
-          secret.setSecretName(secretName);
-          secret.setVersionCreatedAt(Instant.ofEpochMilli(rowSet.getLong("version_created_at")));
-          return secret;
+          final Instant versionCreatedAt = Instant.ofEpochMilli(rowSet.getLong("version_created_at"));
+          final String name = rowSet.getString("name");
+          return new SecretView(versionCreatedAt, name);
         }
     );
   }
