@@ -6,16 +6,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import static io.pivotal.security.constants.EncryptionConstants.ENCRYPTED_BYTES;
-import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
-import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
-
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.DiscriminatorColumn;
@@ -29,6 +19,15 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static io.pivotal.security.constants.EncryptionConstants.ENCRYPTED_BYTES;
+import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
+import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
 
 @Entity
 @Table(name = "NamedSecret")
@@ -69,21 +68,24 @@ abstract public class NamedSecretData<Z extends NamedSecretData> implements Encr
   private UUID encryptionKeyUuid;
 
   @ManyToOne
-  @JoinColumn(name="secret_name_uuid", nullable=false)
+  @JoinColumn(name = "secret_name_uuid", nullable = false)
   private SecretName secretName;
 
   public NamedSecretData(SecretName name) {
-    setSecretName(name);
-  }
-
-  public NamedSecretData(String name) {
-    if (this.getSecretName() == null) {
-      SecretName secretName = new SecretName(name);
-      this.setSecretName(secretName);
+    if (this.secretName != null) {
+      this.secretName.setName(name.getName());
+    } else {
+      setSecretName(name);
     }
   }
 
-  public NamedSecretData() { /* yay Hibernate */ }
+  public NamedSecretData(String name) {
+    this(new SecretName(name));
+  }
+
+  public NamedSecretData() {
+    this((String) null);
+  }
 
   public UUID getUuid() {
     return uuid;

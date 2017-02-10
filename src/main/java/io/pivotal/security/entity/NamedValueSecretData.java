@@ -26,7 +26,7 @@ public class NamedValueSecretData extends NamedStringSecretData<NamedValueSecret
   }
 
   @Override
-  void copyIntoImpl(NamedValueSecretData copy) {
+  public void copyIntoImpl(NamedValueSecretData copy) {
   }
 
   @Override

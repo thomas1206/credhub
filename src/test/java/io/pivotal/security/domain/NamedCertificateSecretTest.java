@@ -1,4 +1,4 @@
-package io.pivotal.security.entity;
+package io.pivotal.security.domain;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
@@ -28,13 +28,13 @@ public class NamedCertificateSecretTest {
   @Autowired
   JdbcTemplate jdbcTemplate;
 
-  private NamedCertificateSecretData subject;
+  private NamedCertificateSecret subject;
 
   {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedCertificateSecretData("Foo")
+      subject = new NamedCertificateSecret("Foo")
           .setCa("my-ca")
           .setCertificate("my-cert")
           .setPrivateKey("my-priv");
@@ -61,7 +61,7 @@ public class NamedCertificateSecretTest {
         UUID uuid = UUID.randomUUID();
         UUID encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedCertificateSecretData("name");
+        subject = new NamedCertificateSecret("name");
         subject.setCa("fake-ca");
         subject.setCertificate("fake-certificate");
         subject.setEncryptedValue("fake-private-key".getBytes());
@@ -71,7 +71,7 @@ public class NamedCertificateSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedCertificateSecretData copy = new NamedCertificateSecretData();
+        NamedCertificateSecret copy = new NamedCertificateSecret();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("name"));

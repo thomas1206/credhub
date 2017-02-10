@@ -36,7 +36,7 @@ public abstract class NamedRsaSshSecretData extends NamedSecretData<NamedRsaSshS
   public abstract SecretKind getKind();
 
   @Override
-  void copyIntoImpl(NamedRsaSshSecretData copy) {
+  public void copyIntoImpl(NamedRsaSshSecretData copy) {
     copy.setPublicKey(getPublicKey());
   }
 }

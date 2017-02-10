@@ -1,12 +1,16 @@
-package io.pivotal.security.entity;
+package io.pivotal.security.domain;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.entity.SecretEncryptionHelper;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.time.Instant;
+import java.util.UUID;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -16,9 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = {"unit-test"}, resolver = DatabaseProfileResolver.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
@@ -26,7 +27,7 @@ public class NamedSshSecretTest {
   @Autowired
   SecretEncryptionHelper secretEncryptionHelper;
 
-  private NamedSshSecretData subject;
+  private NamedSshSecret subject;
 
   private UUID encryptionKeyUuid;
 
@@ -34,7 +35,7 @@ public class NamedSshSecretTest {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedSshSecretData("Foo");
+      subject = new NamedSshSecret("Foo");
     });
 
     it("returns type ssh", () -> {
@@ -95,7 +96,7 @@ public class NamedSshSecretTest {
         UUID uuid = UUID.randomUUID();
         encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedSshSecretData("foo");
+        subject = new NamedSshSecret("foo");
         subject.setPublicKey("fake-public-key");
         subject.setEncryptedValue("fake-private-key".getBytes());
         subject.setNonce("fake-nonce".getBytes());
@@ -103,7 +104,7 @@ public class NamedSshSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedSshSecretData copy = new NamedSshSecretData();
+        NamedSshSecret copy = new NamedSshSecret();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));

@@ -64,7 +64,7 @@ public class NamedPasswordSecretData extends NamedStringSecretData<NamedPassword
   }
 
   @Override
-  void copyIntoImpl(NamedPasswordSecretData copy) {
+  public void copyIntoImpl(NamedPasswordSecretData copy) {
     copy.setEncryptedGenerationParameters(encryptedGenerationParameters);
     copy.setParametersNonce(parametersNonce);
   }

@@ -1,4 +1,4 @@
-package io.pivotal.security.entity;
+package io.pivotal.security.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greghaskins.spectrum.Spectrum;
@@ -30,7 +30,7 @@ public class NamedPasswordSecretTest {
   @Autowired
   ObjectMapper objectMapper;
 
-  NamedPasswordSecretData subject;
+  NamedPasswordSecret subject;
 
   PasswordGenerationParameters generationParameters;
 
@@ -38,7 +38,7 @@ public class NamedPasswordSecretTest {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedPasswordSecretData("Foo");
+      subject = new NamedPasswordSecret("Foo");
 
       generationParameters = new PasswordGenerationParameters();
       generationParameters.setExcludeLower(true);
@@ -52,7 +52,7 @@ public class NamedPasswordSecretTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new NamedPasswordSecretData("foo");
+        subject = new NamedPasswordSecret("foo");
       });
 
       it("sets the nonce and the encrypted value", () -> {
@@ -98,7 +98,7 @@ public class NamedPasswordSecretTest {
 
         String stringifiedParameters = new ObjectMapper().writeValueAsString(parameters);
 
-        subject = new NamedPasswordSecretData("foo");
+        subject = new NamedPasswordSecret("foo");
         subject.setEncryptedValue("value".getBytes());
         subject.setNonce("nonce".getBytes());
         subject.setEncryptedGenerationParameters(stringifiedParameters.getBytes());
@@ -106,7 +106,7 @@ public class NamedPasswordSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedPasswordSecretData copy = new NamedPasswordSecretData();
+        NamedPasswordSecret copy = new NamedPasswordSecret();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));

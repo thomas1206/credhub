@@ -1,12 +1,16 @@
-package io.pivotal.security.entity;
+package io.pivotal.security.domain;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.entity.SecretEncryptionHelper;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.time.Instant;
+import java.util.UUID;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -16,9 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = {"unit-test"}, resolver = DatabaseProfileResolver.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
@@ -26,13 +27,13 @@ public class NamedRsaSecretTest {
   @Autowired
   SecretEncryptionHelper secretEncryptionHelper;
 
-  private NamedRsaSecretData subject;
+  private NamedRsaSecret subject;
 
   {
     wireAndUnwire(this, false);
 
     beforeEach(() -> {
-      subject = new NamedRsaSecretData("Foo");
+      subject = new NamedRsaSecret("Foo");
     });
 
     it("returns type rsa", () -> {
@@ -71,7 +72,7 @@ public class NamedRsaSecretTest {
         UUID uuid = UUID.randomUUID();
         UUID encryptionKeyUuid = UUID.randomUUID();
 
-        subject = new NamedRsaSecretData("foo");
+        subject = new NamedRsaSecret("foo");
         subject.setPublicKey("fake-public-key");
         subject.setEncryptedValue("fake-private-key".getBytes());
         subject.setNonce("fake-nonce".getBytes());
@@ -79,7 +80,7 @@ public class NamedRsaSecretTest {
         subject.setVersionCreatedAt(frozenTime);
         subject.setEncryptionKeyUuid(encryptionKeyUuid);
 
-        NamedRsaSecretData copy = new NamedRsaSecretData();
+        NamedRsaSecret copy = new NamedRsaSecret();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("foo"));
