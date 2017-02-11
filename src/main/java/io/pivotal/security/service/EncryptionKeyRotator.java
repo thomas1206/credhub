@@ -1,7 +1,7 @@
 package io.pivotal.security.service;
 
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.entity.SecretEncryptionHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,9 +30,9 @@ public class EncryptionKeyRotator {
 
     final long startingNotRotatedRecordCount = secretDataService.countAllNotEncryptedByActiveKey();
 
-    Slice<NamedSecretData> secretsEncryptedByOldKey = secretDataService.findEncryptedWithAvailableInactiveKey();
+    Slice<NamedSecret> secretsEncryptedByOldKey = secretDataService.findEncryptedWithAvailableInactiveKey();
     while (secretsEncryptedByOldKey.hasContent()) {
-      for (NamedSecretData secret : secretsEncryptedByOldKey.getContent()) {
+      for (NamedSecret secret : secretsEncryptedByOldKey.getContent()) {
         secretEncryptionHelper.rotate(secret);
         secretDataService.save(secret);
         rotatedRecordCount++;

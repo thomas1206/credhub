@@ -3,6 +3,7 @@ package io.pivotal.security.domain;
 import io.pivotal.security.entity.EncryptedValueContainer;
 import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.entity.SecretName;
+import io.pivotal.security.repository.SecretRepository;
 import io.pivotal.security.view.SecretKind;
 
 import java.time.Instant;
@@ -77,5 +78,9 @@ public abstract class NamedSecret<Z extends NamedSecret>  implements EncryptedVa
 
   public void copyInto(Z copy) {
     delegate.copyInto(copy.delegate);
+  }
+
+  public NamedSecretData saveAndFlush(SecretRepository secretRepository) {
+    return secretRepository.saveAndFlush(delegate);
   }
 }

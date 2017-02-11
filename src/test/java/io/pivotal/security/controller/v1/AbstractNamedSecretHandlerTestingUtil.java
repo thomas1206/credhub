@@ -2,7 +2,7 @@ package io.pivotal.security.controller.v1;
 
 import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.DocumentContext;
-import io.pivotal.security.entity.NamedSecretData;
+import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.mapper.RequestTranslator;
 import io.pivotal.security.util.CheckedFunction;
 import io.pivotal.security.view.SecretKind;
@@ -30,17 +30,17 @@ public abstract class AbstractNamedSecretHandlerTestingUtil {
 
   RequestTranslator expectedTranslator;
 
-  CheckedFunction<NamedSecretData, NoSuchAlgorithmException> mapFunction;
+  CheckedFunction<NamedSecret, NoSuchAlgorithmException> mapFunction;
 
-  protected abstract void verifyExistingSecretCopying(NamedSecretData mockExistingSecret);
+  protected abstract void verifyExistingSecretCopying(NamedSecret mockExistingSecret);
 
   protected Spectrum.Block behavesLikeMapper(
       Supplier<SecretKindMappingFactory> subject,
       Supplier<RequestTranslator> translatorSupplier,
       SecretKind secretKind,
-      Class<? extends NamedSecretData> clazz,
-      NamedSecretData existingEntity,
-      NamedSecretData mockExistingSecret) {
+      Class<? extends NamedSecret> clazz,
+      NamedSecret existingEntity,
+      NamedSecret mockExistingSecret) {
     return () -> {
       beforeEach(() -> {
         mapFunction = secretKind.lift(subject.get().make("secret-path", documentContext));
@@ -48,14 +48,14 @@ public abstract class AbstractNamedSecretHandlerTestingUtil {
       });
 
       it("creates the secret", () -> {
-        NamedSecretData namedSecret = mapFunction.apply(null);
+        NamedSecret namedSecret = mapFunction.apply(null);
         verify(expectedTranslator).populateEntityFromJson(isA(clazz), eq(documentContext));
         assertThat(namedSecret, instanceOf(clazz));
         assertThat(namedSecret.getName(), equalTo("secret-path"));
       });
 
       it("updates the secret", () -> {
-        NamedSecretData namedSecret = mapFunction.apply(existingEntity);
+        NamedSecret namedSecret = mapFunction.apply(existingEntity);
         verify(expectedTranslator).populateEntityFromJson(same(namedSecret), same(documentContext));
         assertThat(namedSecret, not(sameInstance(existingEntity)));
         assertThat(namedSecret, instanceOf(clazz));

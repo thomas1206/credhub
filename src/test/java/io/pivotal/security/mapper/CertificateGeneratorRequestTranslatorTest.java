@@ -7,7 +7,7 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.config.JsonContextFactory;
 import io.pivotal.security.controller.v1.CertificateSecretParameters;
 import io.pivotal.security.controller.v1.CertificateSecretParametersFactory;
-import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.domain.NamedCertificateSecret;
 import io.pivotal.security.generator.BCCertificateGenerator;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -20,7 +20,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.security.Security;
 
-import static com.greghaskins.spectrum.Spectrum.*;
+import static com.greghaskins.spectrum.Spectrum.beforeEach;
+import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.controller.v1.CertificateSecretParametersTest.BIG_TEST_CERT;
 import static io.pivotal.security.helper.SpectrumHelper.itThrows;
 import static io.pivotal.security.helper.SpectrumHelper.itThrowsWithMessage;
@@ -142,7 +144,7 @@ public class CertificateGeneratorRequestTranslatorTest {
           "}";
 
         DocumentContext parsed = jsonPath.parse(json);
-        NamedCertificateSecretData entity = new NamedCertificateSecretData("my-secret");
+        NamedCertificateSecret entity = new NamedCertificateSecret("my-secret");
         CertificateSecretParameters params = subject.validRequestParameters(parsed, entity);
         assertThat(params.getIsCA(), equalTo(true));
         assertThat(params.getSelfSign(), equalTo(true));
@@ -161,7 +163,7 @@ public class CertificateGeneratorRequestTranslatorTest {
           "}";
 
         DocumentContext parsed = jsonPath.parse(json);
-        NamedCertificateSecretData entity = new NamedCertificateSecretData("my-secret");
+        NamedCertificateSecret entity = new NamedCertificateSecret("my-secret");
         CertificateSecretParameters params = subject.validRequestParameters(parsed, entity);
         assertThat(params.getIsCA(), equalTo(true));
         assertThat(params.getSelfSign(), equalTo(false));
@@ -237,7 +239,7 @@ public class CertificateGeneratorRequestTranslatorTest {
     });
 
     describe("populating an entity from JSON", () -> {
-      final NamedCertificateSecretData secret = new NamedCertificateSecretData("abc");
+      final NamedCertificateSecret secret = new NamedCertificateSecret("abc");
 
       beforeEach(() -> {
         doReturn(new Certificate("my-root", "my-cert", "my-priv"))
@@ -264,7 +266,7 @@ public class CertificateGeneratorRequestTranslatorTest {
       });
 
       it("can creates correct parameters from entity from the entity", () -> {
-        NamedCertificateSecretData certificateSecret = new NamedCertificateSecretData("my-cert")
+        NamedCertificateSecret certificateSecret = new NamedCertificateSecret("my-cert")
             .setCertificate(BIG_TEST_CERT)
             .setCaName("my-ca");
         CertificateSecretParameters expectedParameters = new CertificateSecretParameters(certificateSecret.getCertificate(), certificateSecret.getCaName());
@@ -273,7 +275,7 @@ public class CertificateGeneratorRequestTranslatorTest {
       });
 
       itThrowsWithMessage("regeneration is not allowed if caName is not present", ParameterizedValidationException.class, "error.cannot_regenerate_non_generated_credentials", () -> {
-        NamedCertificateSecretData entity = new NamedCertificateSecretData("foo");
+        NamedCertificateSecret entity = new NamedCertificateSecret("foo");
         subject.validRequestParameters(jsonPath.parse("{\"regenerate\":true}"), entity);
       });
     });
@@ -299,7 +301,7 @@ public class CertificateGeneratorRequestTranslatorTest {
             .setSelfSign(true)
             .setCaName("My Name");
 
-        NamedCertificateSecretData entity = new NamedCertificateSecretData("My Name");
+        NamedCertificateSecret entity = new NamedCertificateSecret("My Name");
         CertificateSecretParameters parameters = subject.validRequestParameters(parsed, entity);
         assertThat(parameters, samePropertyValuesAs(expectedParameters));
       });

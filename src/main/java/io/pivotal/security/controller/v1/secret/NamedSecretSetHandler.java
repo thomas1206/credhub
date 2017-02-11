@@ -2,12 +2,12 @@ package io.pivotal.security.controller.v1.secret;
 
 import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.security.controller.v1.SecretKindMappingFactory;
-import io.pivotal.security.entity.NamedCertificateSecretData;
-import io.pivotal.security.entity.NamedPasswordSecretData;
-import io.pivotal.security.entity.NamedRsaSecretData;
-import io.pivotal.security.entity.NamedSecretData;
-import io.pivotal.security.entity.NamedSshSecretData;
-import io.pivotal.security.entity.NamedValueSecretData;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedRsaSecret;
+import io.pivotal.security.domain.NamedSecret;
+import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.mapper.CertificateSetRequestTranslator;
 import io.pivotal.security.mapper.RsaSshSetRequestTranslator;
 import io.pivotal.security.mapper.StringSetRequestTranslator;
@@ -30,31 +30,31 @@ class NamedSecretSetHandler implements SecretKindMappingFactory {
   RsaSshSetRequestTranslator rsaSshSetRequestTranslator;
 
   @Override
-  public SecretKind.CheckedMapping<NamedSecretData, NoSuchAlgorithmException> make(String secretPath, DocumentContext parsedRequest) {
-    return new SecretKind.CheckedMapping<NamedSecretData, NoSuchAlgorithmException>() {
+  public SecretKind.CheckedMapping<NamedSecret, NoSuchAlgorithmException> make(String secretPath, DocumentContext parsedRequest) {
+    return new SecretKind.CheckedMapping<NamedSecret, NoSuchAlgorithmException>() {
       @Override
-      public NamedSecretData value(NamedSecretData namedSecret) throws NoSuchAlgorithmException {
-        return createNewSecret(null, NamedValueSecretData::new, secretPath, stringSetRequestTranslator, parsedRequest);
+      public NamedSecret value(NamedSecret namedSecret) throws NoSuchAlgorithmException {
+        return createNewSecret(null, NamedValueSecret::new, secretPath, stringSetRequestTranslator, parsedRequest);
       }
 
       @Override
-      public NamedSecretData password(NamedSecretData namedSecret) throws NoSuchAlgorithmException {
-        return createNewSecret(null, NamedPasswordSecretData::new, secretPath, stringSetRequestTranslator, parsedRequest);
+      public NamedSecret password(NamedSecret namedSecret) throws NoSuchAlgorithmException {
+        return createNewSecret(null, NamedPasswordSecret::new, secretPath, stringSetRequestTranslator, parsedRequest);
       }
 
       @Override
-      public NamedSecretData certificate(NamedSecretData namedSecret) throws NoSuchAlgorithmException {
-        return createNewSecret(null, NamedCertificateSecretData::new, secretPath, certificateSetRequestTranslator, parsedRequest);
+      public NamedSecret certificate(NamedSecret namedSecret) throws NoSuchAlgorithmException {
+        return createNewSecret(null, NamedCertificateSecret::new, secretPath, certificateSetRequestTranslator, parsedRequest);
       }
 
       @Override
-      public NamedSecretData ssh(NamedSecretData namedSecret) throws NoSuchAlgorithmException {
-        return createNewSecret(null, NamedSshSecretData::new, secretPath, rsaSshSetRequestTranslator, parsedRequest);
+      public NamedSecret ssh(NamedSecret namedSecret) throws NoSuchAlgorithmException {
+        return createNewSecret(null, NamedSshSecret::new, secretPath, rsaSshSetRequestTranslator, parsedRequest);
       }
 
       @Override
-      public NamedSecretData rsa(NamedSecretData namedSecret) throws NoSuchAlgorithmException {
-        return createNewSecret(null, NamedRsaSecretData::new, secretPath, rsaSshSetRequestTranslator, parsedRequest);
+      public NamedSecret rsa(NamedSecret namedSecret) throws NoSuchAlgorithmException {
+        return createNewSecret(null, NamedRsaSecret::new, secretPath, rsaSshSetRequestTranslator, parsedRequest);
       }
     };
   }

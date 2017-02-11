@@ -2,6 +2,7 @@ package io.pivotal.security.view;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.entity.SecretEncryptionHelper;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -19,6 +20,7 @@ import static io.pivotal.security.helper.SpectrumHelper.json;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(Spectrum.class)
@@ -28,7 +30,7 @@ public class StringViewTest {
   @MockBean
   SecretEncryptionHelper secretEncryptionHelper;
 
-  private NamedValueSecretData entity;
+  private NamedValueSecret entity;
 
   private UUID uuid;
 
@@ -37,12 +39,12 @@ public class StringViewTest {
 
     beforeEach(() -> {
       uuid = UUID.randomUUID();
-      entity = new NamedValueSecretData("foo")
+      entity = new NamedValueSecret("foo")
         .setUuid(uuid);
       entity.setEncryptedValue("fake-encrypted-value".getBytes());
       entity.setNonce("fake-nonce".getBytes());
 
-      when(secretEncryptionHelper.retrieveClearTextValue(entity)).thenReturn("fake-plaintext-value");
+      when(secretEncryptionHelper.retrieveClearTextValue(any(NamedValueSecretData.class))).thenReturn("fake-plaintext-value");
     });
 
     it("can create view from entity", () -> {

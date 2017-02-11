@@ -3,6 +3,8 @@ package io.pivotal.security.entity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.controller.v1.PasswordGenerationParameters;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.service.Encryption;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.service.RetryingEncryptionService;
@@ -11,10 +13,14 @@ import org.junit.runner.RunWith;
 import java.security.Key;
 import java.util.UUID;
 
-import static com.greghaskins.spectrum.Spectrum.*;
+import static com.greghaskins.spectrum.Spectrum.beforeEach;
+import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.it;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(Spectrum.class)
 public class SecretEncryptionHelperTest {
@@ -59,7 +65,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when there is no plaintext value", () -> {
         it("should only set the encryption key", () -> {
-          NamedCertificateSecretData valueContainer = new NamedCertificateSecretData("my-ca");
+          NamedCertificateSecret valueContainer = new NamedCertificateSecret("my-ca");
           subject.refreshEncryptedValue(valueContainer, null);
           assertThat(valueContainer.getNonce(), equalTo(null));
           assertThat(valueContainer.getEncryptedValue(), equalTo(null));
@@ -69,7 +75,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when setting the encrypted value for the first time", () -> {
         it("encrypts the value and updates the EncryptedValueContainer", () -> {
-          NamedCertificateSecretData valueContainer = new NamedCertificateSecretData("my-ca");
+          NamedCertificateSecret valueContainer = new NamedCertificateSecret("my-ca");
 
           subject.refreshEncryptedValue(valueContainer, "fake-plaintext");
 
@@ -81,7 +87,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when updating the encrypted value", () -> {
         it("encrypts the value and updates the EncryptedValueContainer", () -> {
-          NamedCertificateSecretData valueContainer = new NamedCertificateSecretData("my-ca");
+          NamedCertificateSecret valueContainer = new NamedCertificateSecret("my-ca");
           valueContainer.setEncryptedValue("fake-encrypted-value".getBytes());
           valueContainer.setNonce("fake-nonce".getBytes());
           valueContainer.setEncryptionKeyUuid(activeEncryptionKeyUuid);
@@ -98,7 +104,7 @@ public class SecretEncryptionHelperTest {
     describe("#retrieveClearTextValue", () -> {
       describe("when there is no encrypted value", () -> {
         it("should return null", () -> {
-          NamedCertificateSecretData valueContainer = new NamedCertificateSecretData("my-ca");
+          NamedCertificateSecret valueContainer = new NamedCertificateSecret("my-ca");
 
           assertThat(subject.retrieveClearTextValue(valueContainer), equalTo(null));
         });
@@ -111,7 +117,7 @@ public class SecretEncryptionHelperTest {
         });
 
         it("should return the plaintext value", () -> {
-          NamedCertificateSecretData secret = new NamedCertificateSecretData("some-name");
+          NamedCertificateSecret secret = new NamedCertificateSecret("some-name");
           secret.setEncryptionKeyUuid(oldEncryptionKeyUuid);
           secret.setEncryptedValue("fake-encrypted-value".getBytes());
           secret.setNonce("fake-nonce".getBytes());
@@ -142,7 +148,7 @@ public class SecretEncryptionHelperTest {
       });
 
       describe("when setting parameters for the first time", () -> {
-        it("should encrypt the parameters and update the NamedPasswordSecret", () -> {
+        it("should encrypt the parameters and update the NamedPasswordSecretData", () -> {
           NamedPasswordSecretData valueContainer = new NamedPasswordSecretData("my-password");
           valueContainer.setEncryptionKeyUuid(activeEncryptionKeyUuid);
 
@@ -154,7 +160,7 @@ public class SecretEncryptionHelperTest {
       });
 
       describe("when updating the parameters", () -> {
-        it("should encrypt the parameters and update the NamedPasswordSecret", () -> {
+        it("should encrypt the parameters and update the NamedPasswordSecretData", () -> {
           NamedPasswordSecretData valueContainer = new NamedPasswordSecretData("my-password");
           valueContainer.setEncryptionKeyUuid(activeEncryptionKeyUuid);
           valueContainer.setEncryptedValue("fake-encrypted-value".getBytes());
@@ -181,7 +187,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when the secret was already encrypted with the active key", () -> {
         it("should do nothing", () -> {
-          NamedSecretData secret = new NamedCertificateSecretData("some-name");
+          NamedSecret secret = new NamedCertificateSecret("some-name");
           secret.setEncryptionKeyUuid(activeEncryptionKeyUuid);
           secret.setEncryptedValue("fake-encrypted-value".getBytes());
           secret.setNonce("fake-nonce".getBytes());
@@ -193,7 +199,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when the secret does not contain an encrypted value", () -> {
         it("should only update the encryption key UUID", () -> {
-          NamedSecretData secret = new NamedCertificateSecretData("some-name");
+          NamedSecret secret = new NamedCertificateSecret("some-name");
           secret.setEncryptionKeyUuid(oldEncryptionKeyUuid);
 
           subject.rotate(secret);
@@ -206,7 +212,7 @@ public class SecretEncryptionHelperTest {
 
       describe("when the secret contains an encrypted value", () -> {
         it("should re-encrypt with the active encryption key", () -> {
-          NamedSecretData secret = new NamedCertificateSecretData("some-name");
+          NamedSecret secret = new NamedCertificateSecret("some-name");
           secret.setEncryptionKeyUuid(oldEncryptionKeyUuid);
           secret.setEncryptedValue("old-encrypted-value".getBytes());
           secret.setNonce("old-nonce".getBytes());
@@ -219,7 +225,7 @@ public class SecretEncryptionHelperTest {
         });
       });
 
-      describe("when the secret is a NamedPasswordSecret", () -> {
+      describe("when the secret is a NamedPasswordSecretData", () -> {
         it("should re-encrypt the password and the parameters with the active encryption key", () -> {
           NamedPasswordSecretData password = new NamedPasswordSecretData("some-name");
 

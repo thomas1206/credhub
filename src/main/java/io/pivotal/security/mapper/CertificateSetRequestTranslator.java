@@ -1,20 +1,20 @@
 package io.pivotal.security.mapper;
 
 import com.jayway.jsonpath.DocumentContext;
-import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.domain.NamedCertificateSecret;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static io.pivotal.security.util.StringUtil.emptyToNull;
 
-import java.util.Set;
-
 @Component
-public class CertificateSetRequestTranslator implements RequestTranslator<NamedCertificateSecretData> {
+public class CertificateSetRequestTranslator implements RequestTranslator<NamedCertificateSecret> {
 
   @Override
-  public void populateEntityFromJson(NamedCertificateSecretData namedCertificateSecret, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedCertificateSecret namedCertificateSecret, DocumentContext documentContext) {
     String root = emptyToNull(documentContext.read("$.value.ca"));
     String certificate = emptyToNull(documentContext.read("$.value.certificate"));
     String privateKey = emptyToNull(documentContext.read("$.value.private_key"));

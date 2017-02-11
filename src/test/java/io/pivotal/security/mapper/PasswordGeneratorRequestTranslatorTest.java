@@ -6,9 +6,9 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.PasswordGenerationParameters;
-import io.pivotal.security.secret.Password;
-import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.domain.NamedPasswordSecret;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
+import io.pivotal.security.secret.Password;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
@@ -88,7 +88,7 @@ public class PasswordGeneratorRequestTranslatorTest {
 
 
     it("can populate an entity from JSON", () -> {
-      final NamedPasswordSecretData secret = new NamedPasswordSecretData("abc");
+      final NamedPasswordSecret secret = new NamedPasswordSecret("abc");
 
       String requestJson = "{" +
           "  \"type\":\"password\"," +
@@ -107,7 +107,7 @@ public class PasswordGeneratorRequestTranslatorTest {
 
 
     it("can populate a hex-only entity from JSON", () -> {
-      final NamedPasswordSecretData secret = new NamedPasswordSecretData("abc");
+      final NamedPasswordSecret secret = new NamedPasswordSecret("abc");
       secret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
 
       String requestJson = "{" +
@@ -127,7 +127,7 @@ public class PasswordGeneratorRequestTranslatorTest {
     it("can regenerate using the existing entity and json", () -> {
       PasswordGenerationParameters generationParameters = new PasswordGenerationParameters();
 
-      NamedPasswordSecretData secret = new NamedPasswordSecretData("test");
+      NamedPasswordSecret secret = new NamedPasswordSecret("test");
       secret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
       secret.setValue("old-password");
       secret.setGenerationParameters(generationParameters);
@@ -170,7 +170,7 @@ public class PasswordGeneratorRequestTranslatorTest {
     });
 
     itThrowsWithMessage("rejects generation unless generation parameters are present in the existing entity", ParameterizedValidationException.class, "error.cannot_regenerate_non_generated_credentials", () -> {
-      NamedPasswordSecretData secretWithoutGenerationParameters = new NamedPasswordSecretData("test");
+      NamedPasswordSecret secretWithoutGenerationParameters = new NamedPasswordSecret("test");
       secretWithoutGenerationParameters.setValue("old-password");
 
       subject.validRequestParameters(jsonPath.parse("{\"regenerate\":true}"), secretWithoutGenerationParameters);

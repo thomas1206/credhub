@@ -5,8 +5,8 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.secret.SecretsController;
 import io.pivotal.security.data.OperationAuditRecordDataService;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedPasswordSecretData;
-import io.pivotal.security.entity.NamedValueSecretData;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.entity.OperationAuditRecord;
 import io.pivotal.security.service.DatabaseAuditLogService;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -22,6 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import javax.servlet.Filter;
+import java.util.Arrays;
+import java.util.UUID;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -44,11 +48,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Arrays;
-import java.util.UUID;
-
-import javax.servlet.Filter;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(profiles = {"unit-test", "ControllerAuditLogTest", "NoExpirationSymmetricKeySecurityConfiguration"}, resolver = DatabaseProfileResolver.class)
@@ -88,7 +87,7 @@ public class SecretsControllerAuditLogTest {
     describe("when getting a credential", () -> {
       describe("by name", () -> {
         it("makes a credential_access audit log entry", () -> {
-          doReturn(Arrays.asList(new NamedPasswordSecretData("foo")))
+          doReturn(Arrays.asList(new NamedPasswordSecret("foo")))
               .when(secretDataService).findAllByName(eq("foo"));
 
           mockMvc.perform(get(API_V1_DATA + "?name=foo")
@@ -109,7 +108,7 @@ public class SecretsControllerAuditLogTest {
 
       describe("by id", () -> {
         it("makes a credential_access audit log entry", () -> {
-          doReturn(new NamedPasswordSecretData("foo"))
+          doReturn(new NamedPasswordSecret("foo"))
               .when(secretDataService).findByUuid(eq("foo-id"));
 
           mockMvc.perform(get(API_V1_DATA + "/foo-id")
@@ -132,7 +131,7 @@ public class SecretsControllerAuditLogTest {
     describe("when a request to set credential is served", () -> {
       beforeEach(() -> {
         when(secretDataService.save(any())).thenAnswer(invocation -> {
-          NamedValueSecretData namedValueSecret = invocation.getArgumentAt(0, NamedValueSecretData.class);
+          NamedValueSecret namedValueSecret = invocation.getArgumentAt(0, NamedValueSecret.class);
           namedValueSecret.setUuid(UUID.randomUUID());
           return namedValueSecret;
         });
@@ -170,7 +169,7 @@ public class SecretsControllerAuditLogTest {
     describe("when a request to generate a credential is served", () -> {
       beforeEach(() -> {
         when(secretDataService.save(any())).thenAnswer(invocation -> {
-          NamedPasswordSecretData namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecretData.class);
+          NamedPasswordSecret namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
           namedPasswordSecret.setUuid(UUID.randomUUID());
           return namedPasswordSecret;
         });
@@ -257,7 +256,7 @@ public class SecretsControllerAuditLogTest {
     describe("when a request has multiple X-Forwarded-For headers set", () -> {
       beforeEach(() -> {
         when(secretDataService.save(any())).thenAnswer(invocation -> {
-          NamedValueSecretData namedValueSecret = invocation.getArgumentAt(0, NamedValueSecretData.class);
+          NamedValueSecret namedValueSecret = invocation.getArgumentAt(0, NamedValueSecret.class);
           namedValueSecret.setUuid(UUID.randomUUID());
           return namedValueSecret;
         });

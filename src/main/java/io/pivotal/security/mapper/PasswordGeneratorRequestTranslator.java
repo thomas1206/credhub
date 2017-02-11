@@ -2,9 +2,9 @@ package io.pivotal.security.mapper;
 
 import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.security.controller.v1.PasswordGenerationParameters;
-import io.pivotal.security.secret.Password;
-import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.domain.NamedPasswordSecret;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
+import io.pivotal.security.secret.Password;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,13 +16,13 @@ import java.util.Set;
 import static com.google.common.collect.ImmutableSet.of;
 
 @Component
-public class PasswordGeneratorRequestTranslator implements RequestTranslator<NamedPasswordSecretData>, SecretGeneratorRequestTranslator<PasswordGenerationParameters, NamedPasswordSecretData> {
+public class PasswordGeneratorRequestTranslator implements RequestTranslator<NamedPasswordSecret>, SecretGeneratorRequestTranslator<PasswordGenerationParameters, NamedPasswordSecret> {
 
   @Autowired
   PassayStringSecretGenerator stringSecretGenerator;
 
   @Override
-  public PasswordGenerationParameters validRequestParameters(DocumentContext parsed, NamedPasswordSecretData entity) {
+  public PasswordGenerationParameters validRequestParameters(DocumentContext parsed, NamedPasswordSecret entity) {
     PasswordGenerationParameters secretParameters;
 
     Boolean regenerate = parsed.read("$.regenerate", Boolean.class);
@@ -58,7 +58,7 @@ public class PasswordGeneratorRequestTranslator implements RequestTranslator<Nam
   }
 
   @Override
-  public void populateEntityFromJson(NamedPasswordSecretData entity, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedPasswordSecret entity, DocumentContext documentContext) {
     PasswordGenerationParameters requestParameters = validRequestParameters(documentContext, entity);
     Password secret = stringSecretGenerator.generateSecret(requestParameters);
     entity.setGenerationParameters(requestParameters);

@@ -1,10 +1,10 @@
 package io.pivotal.security.view;
 
-import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.domain.NamedRsaSecret;
 import io.pivotal.security.secret.RsaKey;
 
 public class RsaView extends SecretView {
-  RsaView(NamedRsaSecretData namedRsaSecret) {
+  RsaView(NamedRsaSecret namedRsaSecret) {
     super(
         namedRsaSecret.getVersionCreatedAt(),
         namedRsaSecret.getUuid(),

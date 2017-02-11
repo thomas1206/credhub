@@ -4,7 +4,7 @@ package io.pivotal.security.controller.v1.secret;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedValueSecretData;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -20,6 +20,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.time.Instant;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -40,10 +44,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.Instant;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = {"unit-test"}, resolver = DatabaseProfileResolver.class)
@@ -142,9 +142,9 @@ public class SecretsControllerDeleteTest {
 
       describe("when there are multiple secrets with that name", () -> {
         beforeEach(() -> {
-          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
+          NamedValueSecret value1 = new NamedValueSecret(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
+          NamedValueSecret value2 = new NamedValueSecret(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L).when(secretDataService).delete(secretName);
 
@@ -170,9 +170,9 @@ public class SecretsControllerDeleteTest {
 
       describe("name can come as a request parameter", () -> {
         beforeEach(() -> {
-          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
+          NamedValueSecret value1 = new NamedValueSecret(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
+          NamedValueSecret value2 = new NamedValueSecret(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L).when(secretDataService).delete(secretName.toUpperCase());
         });
@@ -197,9 +197,9 @@ public class SecretsControllerDeleteTest {
 
       describe("when name has a leading slash", () -> {
         it("should strip the leading slash and delete credential(s)", () -> {
-          NamedValueSecretData value1 = new NamedValueSecretData(secretName);
+          NamedValueSecret value1 = new NamedValueSecret(secretName);
           value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecretData value2 = new NamedValueSecretData(secretName);
+          NamedValueSecret value2 = new NamedValueSecret(secretName);
           value2.setEncryptedValue("value2".getBytes());
           doReturn(2L)
               .when(secretDataService).delete(secretName.toUpperCase());

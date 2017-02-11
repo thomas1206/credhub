@@ -3,9 +3,9 @@ package io.pivotal.security.controller.v1.secret;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedPasswordSecretData;
-import io.pivotal.security.entity.NamedSecretData;
-import io.pivotal.security.entity.NamedValueSecretData;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedSecret;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -24,6 +24,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.time.Instant;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -49,11 +54,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.Instant;
-import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
@@ -85,7 +85,7 @@ public class SecretsControllerSetTest {
   private UUID uuid;
 
   final String secretValue = "secret-value";
-  private NamedValueSecretData valueSecret;
+  private NamedValueSecret valueSecret;
   private ResultActions[] responses;
 
   {
@@ -158,12 +158,12 @@ public class SecretsControllerSetTest {
     describe("setting a secret", () -> {
       beforeEach(() -> {
         uuid = UUID.randomUUID();
-        valueSecret = new NamedValueSecretData(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
+        valueSecret = new NamedValueSecret(secretName).setUuid(uuid).setVersionCreatedAt(frozenTime);
         valueSecret.setValue(secretValue);
 
         doReturn(
             valueSecret
-        ).when(secretDataService).save(any(NamedValueSecretData.class));
+        ).when(secretDataService).save(any(NamedValueSecret.class));
       });
 
       describe("via parameter in request body", () -> {
@@ -261,7 +261,7 @@ public class SecretsControllerSetTest {
         });
 
         it("should return the updated value", () -> {
-          ArgumentCaptor<NamedSecretData> argumentCaptor = ArgumentCaptor.forClass(NamedSecretData.class);
+          ArgumentCaptor<NamedSecret> argumentCaptor = ArgumentCaptor.forClass(NamedSecret.class);
 
           verify(secretDataService, times(1)).save(argumentCaptor.capture());
 
@@ -323,7 +323,7 @@ public class SecretsControllerSetTest {
       });
 
       it("does not copy values from existing secret to new secret", () -> {
-        doReturn(new NamedPasswordSecretData("foo").setEncryptedGenerationParameters(new byte[1])).when(secretDataService).findMostRecent("foo");
+        doReturn(new NamedPasswordSecret("foo").setEncryptedGenerationParameters(new byte[1])).when(secretDataService).findMostRecent("foo");
         mockMvc.perform(put("/api/v1/data")
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
@@ -334,7 +334,7 @@ public class SecretsControllerSetTest {
                 "  \"overwrite\":true" +
                 "}"))
             .andExpect(status().isOk());
-        ArgumentCaptor<NamedPasswordSecretData> captor = ArgumentCaptor.forClass(NamedPasswordSecretData.class);
+        ArgumentCaptor<NamedPasswordSecret> captor = ArgumentCaptor.forClass(NamedPasswordSecret.class);
         verify(secretDataService).save(captor.capture());
         assertThat(captor.getValue().getEncryptedGenerationParameters(), nullValue());
       });
@@ -353,11 +353,11 @@ public class SecretsControllerSetTest {
     });
 
     it("asks the data service to persist the secret", () -> {
-      ArgumentCaptor<NamedValueSecretData> argumentCaptor = ArgumentCaptor.forClass(NamedValueSecretData.class);
+      ArgumentCaptor<NamedValueSecret> argumentCaptor = ArgumentCaptor.forClass(NamedValueSecret.class);
 
       verify(secretDataService, times(1)).save(argumentCaptor.capture());
 
-      NamedValueSecretData namedValueSecret = argumentCaptor.getValue();
+      NamedValueSecret namedValueSecret = argumentCaptor.getValue();
       assertThat(namedValueSecret.getValue(), equalTo(secretValue));
     });
 
@@ -370,7 +370,7 @@ public class SecretsControllerSetTest {
 
     describe("error handling", () -> {
       it("returns 400 when the handler raises an exception", () -> {
-        NamedValueSecretData namedValueSecret = new NamedValueSecretData(secretName);
+        NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
         namedValueSecret.setValue(secretValue);
         doReturn(
             namedValueSecret
@@ -469,11 +469,11 @@ public class SecretsControllerSetTest {
 
   private void putSecretInDatabase(String name, String value) throws Exception {
     uuid = UUID.randomUUID();
-    NamedValueSecretData valueSecret = new NamedValueSecretData(name).setUuid(uuid).setVersionCreatedAt(frozenTime);
+    NamedValueSecret valueSecret = new NamedValueSecret(name).setUuid(uuid).setVersionCreatedAt(frozenTime);
     valueSecret.setValue(value);
     doReturn(
         valueSecret
-    ).when(secretDataService).save(any(NamedValueSecretData.class));
+    ).when(secretDataService).save(any(NamedValueSecret.class));
 
     final MockHttpServletRequestBuilder put = put("/api/v1/data")
         .accept(APPLICATION_JSON)

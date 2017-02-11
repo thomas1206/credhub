@@ -1,10 +1,10 @@
 package io.pivotal.security.view;
 
-import io.pivotal.security.entity.NamedSshSecretData;
+import io.pivotal.security.domain.NamedSshSecret;
 import io.pivotal.security.secret.SshKey;
 
 class SshView extends SecretView {
-  SshView(NamedSshSecretData namedSshSecret) {
+  SshView(NamedSshSecret namedSshSecret) {
     super(
         namedSshSecret.getVersionCreatedAt(),
         namedSshSecret.getUuid(),

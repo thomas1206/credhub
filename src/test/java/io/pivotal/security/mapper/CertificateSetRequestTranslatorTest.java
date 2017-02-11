@@ -4,7 +4,7 @@ import com.greghaskins.spectrum.Spectrum;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.domain.NamedCertificateSecret;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ public class CertificateSetRequestTranslatorTest {
 
   private CertificateSetRequestTranslator subject;
 
-  private NamedCertificateSecretData entity;
+  private NamedCertificateSecret entity;
 
   {
     wireAndUnwire(this, false);
@@ -39,7 +39,7 @@ public class CertificateSetRequestTranslatorTest {
 
       beforeEach(() -> {
         subject = new CertificateSetRequestTranslator();
-        entity = new NamedCertificateSecretData("Foo");
+        entity = new NamedCertificateSecret("Foo");
       });
 
       it("creates an entity when all fields are present", () -> {

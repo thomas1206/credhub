@@ -6,10 +6,10 @@ import com.jayway.jsonpath.ParseContext;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.controller.v1.RsaSecretParameters;
 import io.pivotal.security.controller.v1.RsaSecretParametersFactory;
+import io.pivotal.security.domain.NamedRsaSecret;
 import io.pivotal.security.entity.SecretName;
-import io.pivotal.security.secret.RsaKey;
-import io.pivotal.security.entity.NamedRsaSecretData;
 import io.pivotal.security.generator.RsaGenerator;
+import io.pivotal.security.secret.RsaKey;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.junit.runner.RunWith;
@@ -94,7 +94,7 @@ public class RsaGeneratorRequestTranslatorTest {
         String json = "{\"type\":\"rsa\"}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
+        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(secretGenerator).generateSecret(mockParams);
@@ -107,7 +107,7 @@ public class RsaGeneratorRequestTranslatorTest {
         String json = "{\"type\":\"rsa\"}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
+        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(mockParams, times(1)).validate();
@@ -122,7 +122,7 @@ public class RsaGeneratorRequestTranslatorTest {
           "}";
         DocumentContext parsed = jsonPath.parse(json);
 
-        NamedRsaSecretData namedRsaSecret = new NamedRsaSecretData();
+        NamedRsaSecret namedRsaSecret = new NamedRsaSecret();
         subject.populateEntityFromJson(namedRsaSecret, parsed);
 
         verify(mockParams).setKeyLength(3072);
@@ -131,7 +131,7 @@ public class RsaGeneratorRequestTranslatorTest {
       });
 
       it("can regenerate using the existing entity and JSON", () -> {
-        NamedRsaSecretData secret = spy(NamedRsaSecretData.class);
+        NamedRsaSecret secret = spy(NamedRsaSecret.class);
         SecretName secretName = new SecretName("test");
         secret.setSecretName(secretName);
         when(secret.getKeyLength()).thenReturn(3072);

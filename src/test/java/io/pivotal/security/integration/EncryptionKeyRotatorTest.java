@@ -4,9 +4,9 @@ import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.EncryptionKeyCanaryDataService;
 import io.pivotal.security.data.SecretDataService;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.entity.EncryptionKeyCanary;
-import io.pivotal.security.entity.NamedCertificateSecretData;
-import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.entity.SecretEncryptionHelper;
 import io.pivotal.security.service.Encryption;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
@@ -45,9 +45,9 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = CredentialManagerApp.class)
 @RunWith(Spectrum.class)
 public class EncryptionKeyRotatorTest {
-  private NamedSecretData secretWithCurrentKey;
-  private NamedSecretData secretWithOldKey;
-  private NamedSecretData secretWithUnknownKey;
+  private NamedSecret secretWithCurrentKey;
+  private NamedSecret secretWithOldKey;
+  private NamedSecret secretWithUnknownKey;
 
   @SpyBean
   SecretDataService secretDataService;
@@ -74,7 +74,7 @@ public class EncryptionKeyRotatorTest {
 
     describe("when data exists that is encrypted with an unknown key", () -> {
       beforeEach(() -> {
-        secretWithCurrentKey = new NamedCertificateSecretData("cert");
+        secretWithCurrentKey = new NamedCertificateSecret("cert");
         encryptionHelper.refreshEncryptedValue(secretWithCurrentKey, "cert-private-key");
         secretDataService.save(secretWithCurrentKey);
 
@@ -87,7 +87,7 @@ public class EncryptionKeyRotatorTest {
         when(encryptionKeyCanaryMapper.getKeyForUuid(oldCanary.getUuid())).thenReturn(oldKey);
         when(encryptionKeyCanaryMapper.getCanaryUuidsWithKnownAndInactiveKeys()).thenReturn(singletonList(oldCanary.getUuid()));
 
-        secretWithOldKey = new NamedCertificateSecretData("cert");
+        secretWithOldKey = new NamedCertificateSecret("cert");
         final Encryption encryption = encryptionService.encrypt(oldKey, "old-certificate-private-key");
         secretWithOldKey.setEncryptedValue(encryption.encryptedValue);
         secretWithOldKey.setNonce(encryption.nonce);
@@ -99,7 +99,7 @@ public class EncryptionKeyRotatorTest {
         unknownCanary.setNonce("bad-nonce".getBytes());
         unknownCanary = encryptionKeyCanaryDataService.save(unknownCanary);
 
-        secretWithUnknownKey = new NamedCertificateSecretData("cert");
+        secretWithUnknownKey = new NamedCertificateSecret("cert");
         encryptionHelper.refreshEncryptedValue(secretWithUnknownKey, "cert-private-key");
         secretWithUnknownKey.setEncryptionKeyUuid(unknownCanary.getUuid());
         secretDataService.save(secretWithUnknownKey);
@@ -114,9 +114,9 @@ public class EncryptionKeyRotatorTest {
       it("should rotate data that it can decrypt (and it shouldn't loop forever!)", () -> {
         encryptionKeyRotator.rotate();
 
-        ArgumentCaptor<NamedSecretData> argumentCaptor = ArgumentCaptor.forClass(NamedSecretData.class);
+        ArgumentCaptor<NamedSecret> argumentCaptor = ArgumentCaptor.forClass(NamedSecret.class);
         verify(encryptionHelper).rotate(argumentCaptor.capture());
-        List<NamedSecretData> namedSecrets = argumentCaptor.getAllValues();
+        List<NamedSecret> namedSecrets = argumentCaptor.getAllValues();
         List<UUID> uuids = namedSecrets.stream().map(secret -> secret.getUuid()).collect(Collectors.toList());
 
         // Get's updated to use current key:

@@ -2,7 +2,11 @@ package io.pivotal.security.service;
 
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.*;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedSecret;
+import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.entity.SecretEncryptionHelper;
 import org.junit.runner.RunWith;
 import org.springframework.data.domain.SliceImpl;
 
@@ -11,25 +15,27 @@ import java.util.ArrayList;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static java.util.Arrays.asList;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(Spectrum.class)
 public class EncryptionKeyRotatorTest {
   private SecretEncryptionHelper secretEncryptionHelper;
   private SecretDataService secretDataService;
 
-  private NamedSecretData certificateSecret;
-  private NamedSecretData passwordSecret;
-  private NamedSshSecretData sshSecret;
+  private NamedSecret certificateSecret;
+  private NamedSecret passwordSecret;
+  private NamedSshSecret sshSecret;
 
   {
     beforeEach(() -> {
       secretEncryptionHelper = mock(SecretEncryptionHelper.class);
       secretDataService = mock(SecretDataService.class);
 
-      certificateSecret = new NamedCertificateSecretData();
-      passwordSecret = new NamedPasswordSecretData();
-      sshSecret = new NamedSshSecretData();
+      certificateSecret = new NamedCertificateSecret();
+      passwordSecret = new NamedPasswordSecret();
+      sshSecret = new NamedSshSecret();
 
       when(secretDataService.findEncryptedWithAvailableInactiveKey())
           .thenReturn(new SliceImpl<>(asList(certificateSecret, passwordSecret)))

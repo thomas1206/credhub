@@ -15,6 +15,10 @@ public class NamedValueSecret extends NamedStringSecret<NamedValueSecret> {
     this(new NamedValueSecretData(name));
   }
 
+  public NamedValueSecret() {
+    this(new NamedValueSecretData());
+  }
+
   @Override
   public String getSecretType() {
     return delegate.getSecretType();

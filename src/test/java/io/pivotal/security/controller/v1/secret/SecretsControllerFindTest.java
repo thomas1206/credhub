@@ -3,8 +3,8 @@ package io.pivotal.security.controller.v1.secret;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.entity.NamedPasswordSecretData;
-import io.pivotal.security.entity.NamedValueSecretData;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedValueSecret;
 import io.pivotal.security.fake.FakeAuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -91,7 +91,7 @@ public class SecretsControllerFindTest {
         describe("when search term does not include a leading slash", () -> {
           beforeEach(() -> {
             String substring = secretName.substring(4).toUpperCase();
-            NamedValueSecretData namedValueSecret = new NamedValueSecretData(secretName);
+            NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
             namedValueSecret.setEncryptedValue("some value".getBytes());
             namedValueSecret.setVersionCreatedAt(frozenTime);
             doReturn(
@@ -122,7 +122,7 @@ public class SecretsControllerFindTest {
       describe("when path has a leading slash", () -> {
         it("strips the leading slash and returns the list of credentials", () -> {
           String path = secretName.substring(0, secretName.lastIndexOf("/"));
-          NamedPasswordSecretData namedPasswordSecret = new NamedPasswordSecretData(secretName);
+          NamedPasswordSecret namedPasswordSecret = new NamedPasswordSecret(secretName);
           namedPasswordSecret.setEncryptedValue("some value".getBytes());
           namedPasswordSecret.setVersionCreatedAt(frozenTime);
           doReturn(
@@ -143,7 +143,7 @@ public class SecretsControllerFindTest {
       describe("finding credentials by path", () -> {
         beforeEach(() -> {
           String substring = secretName.substring(0, secretName.lastIndexOf("/"));
-          NamedValueSecretData namedValueSecret = new NamedValueSecretData(secretName);
+          NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
           namedValueSecret.setEncryptedValue("some value".getBytes());
           namedValueSecret.setVersionCreatedAt(frozenTime);
           doReturn(
@@ -179,7 +179,7 @@ public class SecretsControllerFindTest {
 
         it("should return all children which are prefixed with the path case-independently", () -> {
           final String path = "my-namespace";
-          NamedValueSecretData namedValueSecret = new NamedValueSecretData(secretName);
+          NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
           namedValueSecret.setEncryptedValue("some value".getBytes());
           namedValueSecret.setVersionCreatedAt(frozenTime);
           doReturn(

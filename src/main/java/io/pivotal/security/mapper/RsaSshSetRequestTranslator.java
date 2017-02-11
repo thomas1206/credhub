@@ -1,20 +1,20 @@
 package io.pivotal.security.mapper;
 
 import com.jayway.jsonpath.DocumentContext;
-import io.pivotal.security.entity.NamedRsaSshSecretData;
+import io.pivotal.security.domain.NamedRsaSshSecret;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSortedSet.of;
 import static io.pivotal.security.util.StringUtil.emptyToNull;
 
-import java.util.Set;
-
 @Component
-public class RsaSshSetRequestTranslator implements RequestTranslator<NamedRsaSshSecretData> {
+public class RsaSshSetRequestTranslator implements RequestTranslator<NamedRsaSshSecret> {
 
   @Override
-  public void populateEntityFromJson(NamedRsaSshSecretData namedRsaSshSecret, DocumentContext documentContext) {
+  public void populateEntityFromJson(NamedRsaSshSecret namedRsaSshSecret, DocumentContext documentContext) {
     String publicKey = emptyToNull(documentContext.read("$.value.public_key"));
     String privateKey = emptyToNull(documentContext.read("$.value.private_key"));
 

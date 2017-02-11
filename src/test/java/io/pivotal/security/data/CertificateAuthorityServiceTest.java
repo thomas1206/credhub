@@ -1,12 +1,14 @@
 package io.pivotal.security.data;
 
 import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.domain.NamedCertificateSecret;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.view.ParameterizedValidationException;
 import org.junit.runner.RunWith;
 
-import static com.greghaskins.spectrum.Spectrum.*;
+import static com.greghaskins.spectrum.Spectrum.beforeEach;
+import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.helper.SpectrumHelper.itThrowsWithMessage;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.Assert.assertThat;
@@ -19,12 +21,12 @@ public class CertificateAuthorityServiceTest {
   CertificateAuthorityService certificateAuthorityService;
   SecretDataService secretDataService;
   Certificate certificate;
-  NamedCertificateSecretData namedCertificateSecret;
+  NamedCertificateSecret namedCertificateSecret;
 
   {
     beforeEach(() -> {
       certificate = new Certificate(null, "my-cert", "my-key");
-      namedCertificateSecret = mock(NamedCertificateSecretData.class);
+      namedCertificateSecret = mock(NamedCertificateSecret.class);
 
       secretDataService = mock(SecretDataService.class);
       certificateAuthorityService = new CertificateAuthorityService(secretDataService);
