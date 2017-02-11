@@ -71,14 +71,14 @@ public class NamedPasswordSecretTest {
       });
 
       it("sets the parametersNonce and the encryptedGenerationParameters", () -> {
-        subject.setGenerationParameters(generationParameters);
+        subject.setPasswordAndGenerationParameters(secret.getPassword(), generationParameters);
         assertThat(subject.getEncryptedGenerationParameters(), notNullValue());
         assertThat(subject.getParametersNonce(), notNullValue());
       });
 
       it("can decrypt values", () -> {
         subject.setValue("length10pw");
-        subject.setGenerationParameters(generationParameters);
+        subject.setPasswordAndGenerationParameters(secret.getPassword(), generationParameters);
         assertThat(subject.getGenerationParameters().getLength(), equalTo(10));
         assertThat(subject.getGenerationParameters().isExcludeLower(), equalTo(true));
         assertThat(subject.getGenerationParameters().isExcludeUpper(), equalTo(false));

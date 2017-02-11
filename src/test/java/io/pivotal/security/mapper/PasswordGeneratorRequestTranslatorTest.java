@@ -130,7 +130,7 @@ public class PasswordGeneratorRequestTranslatorTest {
       NamedPasswordSecret secret = new NamedPasswordSecret("test");
       secret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
       secret.setValue("old-password");
-      secret.setGenerationParameters(generationParameters);
+      secret.setPasswordAndGenerationParameters(secret.getPassword(), generationParameters);
 
       subject.populateEntityFromJson(secret, jsonPath.parse("{\"regenerate\":true}"));
 

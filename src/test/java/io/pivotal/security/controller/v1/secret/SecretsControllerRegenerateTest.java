@@ -109,7 +109,7 @@ public class SecretsControllerRegenerateTest {
         PasswordGenerationParameters generationParameters = new PasswordGenerationParameters();
 
         generationParameters.setExcludeNumber(true);
-        originalSecret.setGenerationParameters(generationParameters);
+        originalSecret.setPasswordAndGenerationParameters(secret.getPassword(), generationParameters);
 
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 
