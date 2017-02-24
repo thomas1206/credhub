@@ -11,6 +11,7 @@ import io.pivotal.security.data.OperationAuditRecordDataService;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.domain.Encryptor;
 import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.domain.NamedValueSecret;
 import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
 import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_DELETE;
@@ -134,7 +135,7 @@ public class SecretsControllerAuditLogTest {
 
     describe("when a request to set credential is served", () -> {
       beforeEach(() -> {
-        when(secretDataService.save(any())).thenAnswer(invocation -> {
+        when(secretDataService.save(any(NamedSecret.class))).thenAnswer(invocation -> {
           NamedValueSecret namedValueSecret = invocation.getArgumentAt(0, NamedValueSecret.class);
           namedValueSecret.setEncryptor(encryptor);
           namedValueSecret.setUuid(UUID.randomUUID());
@@ -173,7 +174,7 @@ public class SecretsControllerAuditLogTest {
 
     describe("when a request to generate a credential is served", () -> {
       beforeEach(() -> {
-        when(secretDataService.save(any())).thenAnswer(invocation -> {
+        when(secretDataService.save(any(NamedSecret.class))).thenAnswer(invocation -> {
           NamedPasswordSecret namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
           namedPasswordSecret.setUuid(UUID.randomUUID());
           return namedPasswordSecret;
@@ -260,7 +261,7 @@ public class SecretsControllerAuditLogTest {
 
     describe("when a request has multiple X-Forwarded-For headers set", () -> {
       beforeEach(() -> {
-        when(secretDataService.save(any())).thenAnswer(invocation -> {
+        when(secretDataService.save(any(NamedSecret.class))).thenAnswer(invocation -> {
           NamedValueSecret namedValueSecret = invocation.getArgumentAt(0, NamedValueSecret.class);
           namedValueSecret.setUuid(UUID.randomUUID());
           return namedValueSecret;

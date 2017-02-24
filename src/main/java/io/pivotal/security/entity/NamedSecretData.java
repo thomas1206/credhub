@@ -104,10 +104,6 @@ abstract public class NamedSecretData<Z extends NamedSecretData> implements Encr
     this.secretName = secretName;
   }
 
-  public String getName() {
-    return secretName.getName();
-  }
-
   public byte[] getEncryptedValue() {
     return encryptedValue;
   }

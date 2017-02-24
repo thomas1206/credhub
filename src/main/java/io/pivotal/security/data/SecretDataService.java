@@ -71,6 +71,10 @@ public class SecretDataService {
   }
 
   public <Z extends NamedSecret> Z save(Z namedSecret) {
+    return (Z) namedSecret.save(this);
+  }
+
+  public NamedSecret save(NamedSecretData namedSecret) {
     if (namedSecret.getEncryptionKeyUuid() == null) {
       namedSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
     }
@@ -81,11 +85,11 @@ public class SecretDataService {
       namedSecret.setSecretName(secretNameRepository.saveAndFlush(secretName));
     }
 
-    return (Z) wrap(secretRepository.saveAndFlush(namedSecret.toDataEntity()));
+    return wrap(secretRepository.saveAndFlush(namedSecret));
   }
 
   public List<String> findAllPaths() {
-    return secretRepository.findAllPaths(true);
+    return findAllPaths(true);
   }
 
   public NamedSecret findMostRecent(String name) {
@@ -153,6 +157,19 @@ public class SecretDataService {
         new PageRequest(0, BATCH_SIZE)
     );
     return new SliceImpl(wrap(namedSecretDataSlice.getContent()));
+  }
+
+  private List<String> findAllPaths(Boolean findPaths) {
+    if (!findPaths) {
+      return newArrayList();
+    }
+
+    return secretRepository.findAll().stream()
+            .map(namedSecretData -> namedSecretData.getSecretName().getName())
+            .flatMap(NamedSecretData::fullHierarchyForPath)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
   }
 
   private List<SecretView> findMatchingName(String nameLike) {
