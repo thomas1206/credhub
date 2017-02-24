@@ -77,6 +77,7 @@ dependencies {
     compile("net.java.dev.jna:jna:4.2.2")
     compile("org.mariadb.jdbc:mariadb-java-client:1.5.8")
     testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile("org.springframework.security:spring-security-test")
     testCompile("org.skyscreamer:jsonassert")
     testCompile("com.jayway.jsonpath:json-path-assert:2.2.0")
     testCompile("com.greghaskins:spectrum:1.0.0")
