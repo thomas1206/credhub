@@ -116,6 +116,29 @@ public class SecurityConfigurationTest {
       });
     });
 
+    describe("with a token without sufficient scopes", () -> {
+      it("disallows access", () -> {
+        final MockHttpServletRequestBuilder post = post(urlPath)
+            .header("Authorization", "Bearer " + NoExpirationSymmetricKeySecurityConfiguration.INVALID_SCOPE_SYMMETRIC_KEY_JWT)
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
+
+        mockMvc.perform(post).andExpect(status().isForbidden());
+      });
+    });
+
+    describe("without a token", () -> {
+      it("disallows access", () -> {
+        final MockHttpServletRequestBuilder post = post(urlPath)
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
+
+        mockMvc.perform(post).andExpect(status().isUnauthorized());
+      });
+    });
+
     describe("with mutual tls", () -> {
       it("allows all client certificates if provided", () -> {
         final MockHttpServletRequestBuilder post = post(urlPath)
