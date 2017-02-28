@@ -51,6 +51,7 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
     resources.resourceId(resourceServerProperties.getResourceId());
     resources.authenticationEntryPoint(auditOAuth2AuthenticationExceptionHandler);
     resources.accessDeniedHandler(auditOAuth2AccessDeniedHandler);
+    resources.stateless(false);
   }
 
   @Override
