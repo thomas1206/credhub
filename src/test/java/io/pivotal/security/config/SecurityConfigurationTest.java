@@ -21,6 +21,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.Filter;
+import java.io.ByteArrayInputStream;
+import java.security.NoSuchProviderException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -28,9 +33,9 @@ import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
+import static io.pivotal.security.util.CertificateStringConstants.SIMPLE_SELF_SIGNED_TEST_CERT;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.x509;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -74,6 +79,13 @@ public class SecurityConfigurationTest {
           .webAppContextSetup(applicationContext)
           .addFilter(springSecurityFilterChain)
           .build();
+
+      when(secretDataService.save(any(NamedSecret.class))).thenAnswer(invocation -> {
+        NamedPasswordSecret namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
+        namedPasswordSecret.setUuid(UUID.randomUUID());
+        namedPasswordSecret.setVersionCreatedAt(Instant.now());
+        return namedPasswordSecret;
+      });
     });
 
     it("/info can be accessed without authentication", withoutAuthCheck("/info", "$.auth-server.url"));
@@ -90,13 +102,6 @@ public class SecurityConfigurationTest {
 
     describe("with a token accepted by our security config", () -> {
       it("allows access", () -> {
-        when(secretDataService.save(any(NamedSecret.class))).thenAnswer(invocation -> {
-          NamedPasswordSecret namedPasswordSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
-          namedPasswordSecret.setUuid(UUID.randomUUID());
-          namedPasswordSecret.setVersionCreatedAt(Instant.now());
-          return namedPasswordSecret;
-        });
-
         final MockHttpServletRequestBuilder post = post(urlPath)
             .header("Authorization", "Bearer " + NoExpirationSymmetricKeySecurityConfiguration.VALID_SYMMETRIC_KEY_JWT)
             .accept(MediaType.APPLICATION_JSON)
@@ -113,7 +118,8 @@ public class SecurityConfigurationTest {
 
     describe("with mutual tls", () -> {
       it("allows all client certificates if provided", () -> {
-        final MockHttpServletRequestBuilder post = post(urlPath).with(x509("foo-bar-baz.cer")).with(csrf())
+        final MockHttpServletRequestBuilder post = post(urlPath)
+            .with(x509(cert(SIMPLE_SELF_SIGNED_TEST_CERT)))
             .accept(MediaType.APPLICATION_JSON)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
@@ -125,6 +131,11 @@ public class SecurityConfigurationTest {
             .andExpect(jsonPath("$.value").exists());
       });
     });
+  }
+
+  private X509Certificate cert(String string) throws CertificateException, NoSuchProviderException {
+    return (X509Certificate) CertificateFactory.getInstance("X.509", "BC")
+      .generateCertificate(new ByteArrayInputStream(string.getBytes()));
   }
 
   private Spectrum.Block withoutAuthCheck(String path, String expectedJsonSpec) {

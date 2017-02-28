@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -32,7 +33,7 @@ public class AuditRecordBuilder {
   private AuditingOperationCode operationCode;
   private int requestStatus;
   private OAuth2AccessToken accessToken;
-  private OAuth2Authentication authentication;
+  private Authentication authentication;
   private boolean isSuccess;
 
   public AuditRecordBuilder(String credentialName,
@@ -65,7 +66,7 @@ public class AuditRecordBuilder {
     this.queryParameters = queryParameters;
     this.requesterIp = requesterIp;
     this.xForwardedFor = xForwardedFor;
-    this.authentication = (OAuth2Authentication) authentication;
+    this.authentication = authentication;
     this.operationCode = computeOperationCode();
   }
 
@@ -154,22 +155,23 @@ public class AuditRecordBuilder {
   }
 
   public OperationAuditRecord build(Instant now) {
-    OAuth2Request oAuth2Request = authentication.getOAuth2Request();
+    if (authentication instanceof OAuth2Authentication) {
+      OAuth2Request oAuth2Request = ((OAuth2Authentication) authentication).getOAuth2Request();
 
-    String path = getPath();
-    String method = getMethod();
+      String path = getPath();
+      String method = getMethod();
 
-    Set<String> scopes = accessToken.getScope();
-    String scope = scopes == null ? null : String.join(",", scopes);
+      Set<String> scopes = accessToken.getScope();
+      String scope = scopes == null ? null : String.join(",", scopes);
 
-    return new OperationAuditRecord(
+      return new OperationAuditRecord(
         now,
         getCredentialName(),
         getOperationCode().toString(),
         (String) accessToken.getAdditionalInformation().get("user_id"),
         (String) accessToken.getAdditionalInformation().get("user_name"),
         (String) accessToken.getAdditionalInformation().get("iss"),
-        claimValueAsLong(accessToken.getAdditionalInformation(),"iat"),
+        claimValueAsLong(accessToken.getAdditionalInformation(), "iat"),
         accessToken.getExpiration().toInstant().getEpochSecond(), // accessToken.getExpiration().getTime() / 1000,?
         getHostName(),
         method,
@@ -182,7 +184,32 @@ public class AuditRecordBuilder {
         scope,
         oAuth2Request.getGrantType(),
         isSuccess
-    );
+      );
+    } else if (authentication instanceof PreAuthenticatedAuthenticationToken) { // Wippy McWipperson
+      return new OperationAuditRecord(
+        now,
+        getCredentialName(),
+        getOperationCode().toString(),
+        "MTLS",
+        "MTLS",
+        "MTLS",
+        0,
+        0,
+        getHostName(),
+        method,
+        path,
+        getQueryParameters(),
+        requestStatus,
+        getRequesterIp(),
+        getXForwardedFor(),
+        "MTLS",
+        "MTLS",
+        "MTLS",
+        isSuccess
+      );
+    } else {
+      throw new RuntimeException("Unknown authentication " + authentication.getClass().getName());
+    }
   }
 
   /*

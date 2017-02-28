@@ -69,9 +69,11 @@ public class AuthConfiguration extends WebSecurityConfigurerAdapter {
         .authorizeRequests()
         .antMatchers("/info").hasRole("USER")
         .antMatchers("/health").permitAll()
-        .antMatchers("/api/v1/**").access("#oauth2.hasScope('credhub.read') and #oauth2.hasScope('credhub.write')")
-        .and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)").userDetailsService(userDetailsService())
-        .and().httpBasic().disable();
+        .antMatchers("/api/v1/**").hasRole("USER") //.access("#oauth2.hasScope('credhub.read') and #oauth2.hasScope('credhub.write')")
+        .and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)").userDetailsService(userDetailsService());
+
+    http.httpBasic().disable();
+    http.csrf().disable();
   }
 
   public UserDetailsService userDetailsService() {

@@ -50,6 +50,7 @@ repositories {
 
 dependencies {
     listOf(
+            "org.springframework.security:spring-security-test",
             "org.springframework.boot:spring-boot-starter-web",
             "org.springframework.boot:spring-boot-starter-security",
             "org.springframework.boot:spring-boot-starter-data-jpa",
@@ -75,6 +76,7 @@ dependencies {
     compile("org.mariadb.jdbc:mariadb-java-client:1.5.8")
     compile("org.flywaydb:flyway-core:4.0.3")
     compile("net.java.dev.jna:jna:4.2.2")
+
     testCompile("org.springframework.boot:spring-boot-starter-test")
     testCompile("org.skyscreamer:jsonassert")
     testCompile("com.jayway.jsonpath:json-path-assert:2.2.0")
