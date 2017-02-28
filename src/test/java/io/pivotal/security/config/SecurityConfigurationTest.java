@@ -30,6 +30,8 @@ import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.x509;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -82,8 +84,8 @@ public class SecurityConfigurationTest {
       mockMvc.perform(post(urlPath)
           .accept(MediaType.APPLICATION_JSON)
           .contentType(MediaType.APPLICATION_JSON)
-          .content("{\"type\":\"password\",\"name\":\""+ secretName + "\"}")
-          ).andExpect(status().isUnauthorized());
+          .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}")
+      ).andExpect(status().isUnauthorized());
     });
 
     describe("with a token accepted by our security config", () -> {
@@ -99,7 +101,22 @@ public class SecurityConfigurationTest {
             .header("Authorization", "Bearer " + NoExpirationSymmetricKeySecurityConfiguration.VALID_SYMMETRIC_KEY_JWT)
             .accept(MediaType.APPLICATION_JSON)
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"type\":\"password\",\"name\":\""+ secretName + "\"}");
+            .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
+
+        mockMvc.perform(post)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.type").value("password"))
+            .andExpect(jsonPath("$.version_created_at").exists())
+            .andExpect(jsonPath("$.value").exists());
+      });
+    });
+
+    describe("with mutual tls", () -> {
+      it("allows all client certificates if provided", () -> {
+        final MockHttpServletRequestBuilder post = post(urlPath).with(x509("foo-bar-baz.cer")).with(csrf())
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
 
         mockMvc.perform(post)
             .andExpect(status().isOk())
