@@ -4,6 +4,7 @@ public class EncryptionKeyMetadata {
   private String devKey;
   private String encryptionKeyName;
   private boolean active;
+  private String encryptionPassword;
 
   public EncryptionKeyMetadata(String devKey, String encryptionKeyName, boolean active) {
     this.devKey = devKey;
@@ -39,5 +40,14 @@ public class EncryptionKeyMetadata {
   @SuppressWarnings("unused")
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  public String getEncryptionPassword() {
+    return encryptionPassword;
+  }
+
+  @SuppressWarnings("unused")
+  public void setEncryptionPassword(String encryptionPassword) {
+    this.encryptionPassword = encryptionPassword;
   }
 }

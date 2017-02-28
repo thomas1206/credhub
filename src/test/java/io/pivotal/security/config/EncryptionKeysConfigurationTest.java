@@ -27,16 +27,23 @@ public class EncryptionKeysConfigurationTest {
 
     it("fills in list of keys from application-unit-test.yml", () -> {
       List<EncryptionKeyMetadata> keys = subject.getKeys();
-      assertThat(keys.size(), equalTo(2));
+      assertThat(keys.size(), equalTo(3));
 
       EncryptionKeyMetadata firstKey = keys.get(0);
       EncryptionKeyMetadata secondKey = keys.get(1);
+      EncryptionKeyMetadata thirdKey = keys.get(2);
 
       assertThat(firstKey.getDevKey(), equalTo("D673ACD01DA091B08144FBC8C0B5F524"));
+      assertThat(firstKey.getEncryptionPassword(), equalTo(null));
       assertThat(firstKey.isActive(), equalTo(true));
 
       assertThat(secondKey.getDevKey(), equalTo("A673ACF01DB091B08133FBC8C0B5F555"));
+      assertThat(secondKey.getEncryptionPassword(), equalTo(null));
       assertThat(secondKey.isActive(), equalTo(false));
+
+      assertThat(thirdKey.getEncryptionPassword(), equalTo("some_passphrase"));
+      assertThat(thirdKey.getDevKey(), equalTo(null));
+      assertThat(thirdKey.isActive(), equalTo(false));
     });
   }
 }
