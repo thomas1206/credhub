@@ -35,3 +35,31 @@ the following VM Options:
 - `-ea -Dspring.profiles.active=unit-test-mysql` for testing with MySQL
 - `-ea -Dspring.profiles.active=unit-test-postgres` for testing with Postgres
 
+
+
+# To SSL and x509 client certificates locally, do the following:
+
+# * Run 'make' in src/test/resources/tools/ssl_gen
+
+# * Run 'make' in src/test/resources/tools/ca_gen
+
+# * Uncomment the following block:
+
+#server:
+#  ssl:
+#    enabled: true
+#    key-store: src/test/resources/tools/ssl_gen/keystore.jks
+#    key-password: changeit
+#    key-alias: cert
+#    ciphers: ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-RSA-AES128-GCM-SHA256,ECDHE-RSA-AES256-GCM-SHA384
+#    client-auth: want
+#    trust-store: src/test/resources/tools/ca_gen/truststore.jks
+#    trust-store-password: changeit
+#    trust-store-type: JKS
+
+# * Use the client cert:
+#   curl -H "Content-Type: application/json" -X POST -d '{"name":"cred","type":"password"}' https://localhost:9000/api/v1/data -k --cert src/test/resources/tools/ca_gen/tmp/client_cert.p12:changeit
+
+# * Use oauth:
+#   /Users/pivotal/go/src/github.com/pivotal-cf/credhub-cli/build/credhub generate -n foo -t password > /dev/null
+#   curl -H "Authorization: bearer $(cat ~/.credhub/config.json | jq -r '.AccessToken')" -H "Content-Type: application/json" -X POST -d '{"name":"cred","type":"password"}' https://localhost:9000/api/v1/data -k

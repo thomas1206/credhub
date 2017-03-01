@@ -222,8 +222,10 @@ public class AuditRecordBuilder {
   }
 
   public AuditRecordBuilder computeAccessToken(ResourceServerTokenServices tokenServices) {
-    OAuth2AuthenticationDetails authenticationDetails = (OAuth2AuthenticationDetails) authentication.getDetails();
-    setAccessToken(tokenServices.readAccessToken(authenticationDetails.getTokenValue()));
+    if (authentication instanceof OAuth2Authentication) {
+      OAuth2AuthenticationDetails authenticationDetails = (OAuth2AuthenticationDetails) authentication.getDetails();
+      setAccessToken(tokenServices.readAccessToken(authenticationDetails.getTokenValue()));
+    }
 
     return this;
   }

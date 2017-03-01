@@ -39,12 +39,12 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
   @Autowired
   AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler;
 
-  @PostConstruct
-  public void init() {
-    Assert.notNull(resourceServerProperties.getJwt().getKeyValue(), "Configuration property security.oauth2.resource.jwt.key-value must be set.");
-    securityProperties.getUser().setName(RandomStringUtils.random(12));
-    securityProperties.getUser().setRole(new ArrayList<>());
-  }
+//  @PostConstruct
+//  public void init() {
+//    Assert.notNull(resourceServerProperties.getJwt().getKeyValue(), "Configuration property security.oauth2.resource.jwt.key-value must be set.");
+//    securityProperties.getUser().setName(RandomStringUtils.random(12));
+//    securityProperties.getUser().setRole(new ArrayList<>());
+//  }
 
   @Override
   public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
