@@ -9,11 +9,14 @@ import io.pivotal.security.repository.SecretNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessEntryRequest;
 import io.pivotal.security.util.DatabaseProfileResolver;
-import io.pivotal.security.view.AccessEntryResponse;
+import io.pivotal.security.view.AccessControlListResponse;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
+import java.util.List;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -26,9 +29,6 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.hamcrest.core.IsEqual.equalTo;
-
-import java.util.Collections;
-import java.util.List;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
@@ -64,7 +64,7 @@ public class AccessControlServiceTest {
         });
 
         it("returns the acl for the given resource", () -> {
-          AccessEntryResponse response = subject.setAccessControlEntry(request);
+          AccessControlListResponse response = subject.setAccessControlEntry(request);
 
           assertThat(response.getCredentialName(), equalTo("/lightsaber"));
 
@@ -89,7 +89,7 @@ public class AccessControlServiceTest {
         });
 
         it("returns the acl for the given resource", () -> {
-          AccessEntryResponse response = subject.setAccessControlEntry(request);
+          AccessControlListResponse response = subject.setAccessControlEntry(request);
 
           assertThat(response.getCredentialName(), equalTo("/lightsaber2"));
           assertThat(response.getAccessControlList().size(), equalTo(1));
@@ -112,7 +112,7 @@ public class AccessControlServiceTest {
 
       describe("when given an existing credential name", () -> {
         it("returns the access control list", () -> {
-          AccessEntryResponse response = subject.getAccessControlEntries("/lightsaber");
+          AccessControlListResponse response = subject.getAccessControlEntries("/lightsaber");
 
           assertThat(response.getCredentialName(), equalTo("/lightsaber"));
 

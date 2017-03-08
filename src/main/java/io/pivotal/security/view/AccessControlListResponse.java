@@ -6,15 +6,16 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 import java.util.List;
 
 @JsonAutoDetect
-public class AccessEntryResponse {
+public class AccessControlListResponse {
 
     private String credentialName;
     private List<AccessControlEntry> accessControlList;
 
-    public AccessEntryResponse() {
+    @SuppressWarnings("unused")
+    public AccessControlListResponse() {
     }
 
-    public AccessEntryResponse(String credentialName, List<AccessControlEntry> accessControlList) {
+    public AccessControlListResponse(String credentialName, List<AccessControlEntry> accessControlList) {
         this.credentialName = credentialName;
         this.accessControlList = accessControlList;
     }
@@ -23,6 +24,7 @@ public class AccessEntryResponse {
         return credentialName;
     }
 
+    @SuppressWarnings("unused")
     public void setCredentialName(String credentialName) {
         this.credentialName = credentialName;
     }
@@ -31,6 +33,7 @@ public class AccessEntryResponse {
         return accessControlList;
     }
 
+    @SuppressWarnings("unused")
     public void setAccessControlList(List<AccessControlEntry> accessControlList) {
         this.accessControlList = accessControlList;
     }
