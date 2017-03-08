@@ -3,19 +3,19 @@ package io.pivotal.security.request;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import cz.jirutka.validator.collection.constraints.EachPattern;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @JsonAutoDetect
 @Validated
 public class AccessControlEntry {
 
-  @NotNull
+  @NotEmpty(message = "error.acl.missing_actor")
   private String actor;
 
-  @NotNull
+  @NotEmpty(message = "error.acl.missing_operations")
   @EachPattern(regexp = "(read|write)", message = "error.acl.invalid_operation")
   private List<String> operations;
 
