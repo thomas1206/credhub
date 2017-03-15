@@ -5,6 +5,7 @@ import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+
 import org.junit.runner.RunWith;
 
 @RunWith(Spectrum.class)

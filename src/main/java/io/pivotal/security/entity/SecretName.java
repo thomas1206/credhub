@@ -1,15 +1,21 @@
 package io.pivotal.security.entity;
 
-import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.GenericGenerator;
 
+import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.UUID;
 
 @Entity
 @Table(name = "SecretName")
@@ -22,6 +28,9 @@ public class SecretName {
 
   @Column(unique = true, nullable = false)
   private String name;
+
+  @OneToMany(mappedBy = "credentialName", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  private List<AccessEntryData> accessControlList;
 
   // Needed for hibernate
   @SuppressWarnings("unused")
@@ -47,5 +56,13 @@ public class SecretName {
 
   public void setName(String name) {
     this.name = StringUtils.prependIfMissing(name, "/");
+  }
+
+  public List<AccessEntryData> getAccessControlList() {
+    return accessControlList;
+  }
+
+  public void setAccessControlList(List<AccessEntryData> accessControlList) {
+    this.accessControlList = accessControlList;
   }
 }

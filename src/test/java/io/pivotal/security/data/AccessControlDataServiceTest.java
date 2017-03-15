@@ -16,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.fit;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.helper.SpectrumHelper.itThrows;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
@@ -125,7 +126,7 @@ public class AccessControlDataServiceTest {
       beforeEach(this::seedDatabase);
 
       describe("when given a credential and actor that exists in the ACL", () -> {
-        it("removes the ACE from the ACL", () -> {
+        fit("removes the ACE from the ACL", () -> {
           assertThat(subject.getAccessControlList("/lightsaber").getAccessControlList(), containsInAnyOrder(
               allOf(hasProperty("actor", equalTo("Luke")),
                   hasProperty("allowedOperations", hasItems(AccessControlOperation.WRITE))),
