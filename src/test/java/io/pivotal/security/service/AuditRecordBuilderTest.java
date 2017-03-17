@@ -34,6 +34,7 @@ public class AuditRecordBuilderTest {
         assertThat(builtRecord.getRequesterIp(), equalTo("10.0.0.1"));
         assertThat(builtRecord.getXForwardedFor(), equalTo("my-header,my-header2"));
         assertThat(builtRecord.getQueryParameters(), equalTo("name=foo&first=first_value&second=second_value"));
+        assertThat(builtRecord.getAuthMethod(), equalTo("uaa"));
       });
 
       it("sets operation code to be credential_access for a get request", () -> {
@@ -67,7 +68,6 @@ public class AuditRecordBuilderTest {
         assertThat(builtRecord.getUserId(), equalTo("TEST_USER_ID"));
         assertThat(builtRecord.getUserName(), equalTo("TEST_USER_NAME"));
         assertThat(builtRecord.getUaaUrl(), equalTo("TEST_UAA_URL"));
-        assertThat(builtRecord.getAuthValidFrom(), equalTo(123L));
         assertThat(builtRecord.getScope(), equalTo("scope1,scope2"));
       });
 
@@ -75,6 +75,12 @@ public class AuditRecordBuilderTest {
         OperationAuditRecord builtRecord = buildFromOAuth2("GET", "/api/v1/data");
 
         assertThat(builtRecord.getGrantType(), equalTo("TEST_GRANT_TYPE"));
+      });
+
+      it("records auth_valid_from and auth_valid_to", () -> {
+        OperationAuditRecord builtRecord = buildFromOAuth2("GET", "/api/v1/data");
+        assertThat(builtRecord.getAuthValidFrom(), equalTo(1413495264L));
+        assertThat(builtRecord.getAuthValidUntil(), equalTo(1413538464L));
       });
     });
 
@@ -87,6 +93,7 @@ public class AuditRecordBuilderTest {
         assertThat(builtRecord.getRequesterIp(), equalTo("10.0.0.1"));
         assertThat(builtRecord.getXForwardedFor(), equalTo("my-header,my-header2"));
         assertThat(builtRecord.getQueryParameters(), equalTo("name=foo&first=first_value&second=second_value"));
+        assertThat(builtRecord.getAuthMethod(), equalTo("mutual_tls"));
       });
 
       it("sets operation code to be credential_access for a get request", () -> {
@@ -117,13 +124,27 @@ public class AuditRecordBuilderTest {
       it("specifies that the user was authenticated through MTLS", () -> {
         OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
 
-        assertThat(builtRecord.getUserId(), equalTo("MTLS"));
-        assertThat(builtRecord.getUserName(), equalTo("MTLS"));
-        assertThat(builtRecord.getUaaUrl(), equalTo("MTLS"));
-        assertThat(builtRecord.getScope(), equalTo("MTLS"));
-        assertThat(builtRecord.getGrantType(), equalTo("MTLS"));
-        assertThat(builtRecord.getAuthValidFrom(), equalTo(0L));
+        assertThat(builtRecord.getUserId(), equalTo(null));
+        assertThat(builtRecord.getUserName(), equalTo(null));
+        assertThat(builtRecord.getUaaUrl(), equalTo(null));
+        assertThat(builtRecord.getScope(), equalTo(null));
+        assertThat(builtRecord.getGrantType(), equalTo(null));
       });
+
+      // make a real cert with expiration, issued at, client_id, etc.
+
+      it("records auth_valid_from and auth_valid_to", () -> {
+        // client cert not valid before / after
+        OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
+        assertThat(builtRecord.getAuthValidFrom(), equalTo(0L));
+        assertThat(builtRecord.getAuthValidUntil(), equalTo(0L));
+      });
+
+//      it("records client_id", () -> {
+//        // cert common name
+//        OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
+//        assertThat(builtRecord.getClientId(), equalTo("some name"));
+//      });
     });
   }
 
@@ -140,7 +161,7 @@ public class AuditRecordBuilderTest {
     additionalInformation.put("user_id", "TEST_USER_ID");
     additionalInformation.put("user_name", "TEST_USER_NAME");
     additionalInformation.put("iss", "TEST_UAA_URL");
-    additionalInformation.put("iat", 123);
+    additionalInformation.put("iat", 1413495264);
 
     Set<String> scopes = new HashSet<>();
     scopes.add("scope1");
@@ -150,7 +171,7 @@ public class AuditRecordBuilderTest {
 
     when(authentication.getOAuth2Request()).thenReturn(oAuth2Request);
     when(token.getAdditionalInformation()).thenReturn(additionalInformation);
-    when(token.getExpiration()).thenReturn(Date.from(Instant.ofEpochMilli(123L)));
+    when(token.getExpiration()).thenReturn(Date.from(Instant.ofEpochSecond(1413538464)));
     when(token.getScope()).thenReturn(scopes);
 
     return build(method, url, authentication, token);

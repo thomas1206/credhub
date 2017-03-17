@@ -137,6 +137,7 @@ public class AuditRecordBuilder {
       String scope = scopes == null ? null : String.join(",", scopes);
 
       return new OperationAuditRecord(
+        "uaa",
         now,
         getCredentialName(),
         getOperationCode().toString(),
@@ -144,7 +145,7 @@ public class AuditRecordBuilder {
         (String) accessToken.getAdditionalInformation().get("user_name"),
         (String) accessToken.getAdditionalInformation().get("iss"),
         claimValueAsLong(accessToken.getAdditionalInformation(), "iat"),
-        accessToken.getExpiration().toInstant().getEpochSecond(), // accessToken.getExpiration().getTime() / 1000,?
+        accessToken.getExpiration().toInstant().getEpochSecond(),
         getHostName(),
         method,
         path,
@@ -159,12 +160,13 @@ public class AuditRecordBuilder {
       );
     } else {
       return new OperationAuditRecord(
+        "mutual_tls",
         now,
         getCredentialName(),
         getOperationCode().toString(),
-        "MTLS",
-        "MTLS",
-        "MTLS",
+        null,
+        null,
+        null,
         0,
         0,
         getHostName(),
@@ -175,8 +177,8 @@ public class AuditRecordBuilder {
         getRequesterIp(),
         getXForwardedFor(),
         "MTLS",
-        "MTLS",
-        "MTLS",
+        null,
+        null,
         isSuccess
       );
     }
