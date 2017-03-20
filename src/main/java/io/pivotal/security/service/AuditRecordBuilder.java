@@ -8,8 +8,10 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
 import javax.servlet.http.HttpServletRequest;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -159,6 +161,9 @@ public class AuditRecordBuilder {
         isSuccess
       );
     } else {
+      PreAuthenticatedAuthenticationToken token = (PreAuthenticatedAuthenticationToken) authentication;
+      X509Certificate certificate = (X509Certificate) token.getCredentials();
+
       return new OperationAuditRecord(
         "mutual_tls",
         now,
@@ -167,8 +172,8 @@ public class AuditRecordBuilder {
         null,
         null,
         null,
-        0,
-        0,
+        certificate.getNotBefore().toInstant().getEpochSecond(),
+        certificate.getNotAfter().toInstant().getEpochSecond(),
         getHostName(),
         method,
         path,
@@ -176,7 +181,7 @@ public class AuditRecordBuilder {
         requestStatus,
         getRequesterIp(),
         getXForwardedFor(),
-        "MTLS",
+        certificate.getSubjectDN().getName(),
         null,
         null,
         isSuccess

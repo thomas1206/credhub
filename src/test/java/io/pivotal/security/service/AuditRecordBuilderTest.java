@@ -10,12 +10,15 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
+import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.*;
 
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.entity.AuditingOperationCode.*;
+import static java.time.LocalDate.now;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -136,20 +139,31 @@ public class AuditRecordBuilderTest {
       it("records auth_valid_from and auth_valid_to", () -> {
         // client cert not valid before / after
         OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
-        assertThat(builtRecord.getAuthValidFrom(), equalTo(0L));
-        assertThat(builtRecord.getAuthValidUntil(), equalTo(0L));
+        assertThat(builtRecord.getAuthValidFrom(), equalTo(1413495264L));
+        assertThat(builtRecord.getAuthValidUntil(), equalTo(1413538464L));
       });
 
-//      it("records client_id", () -> {
-//        // cert common name
-//        OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
-//        assertThat(builtRecord.getClientId(), equalTo("some name"));
-//      });
+      it("records client_id", () -> {
+        // cert common name
+        OperationAuditRecord builtRecord = buildFromMTLS("GET", "/api/v1/data");
+        assertThat(builtRecord.getClientId(), equalTo("some name"));
+      });
     });
   }
 
   private OperationAuditRecord buildFromMTLS(String method, String url) {
-    return build(method, url, mock(PreAuthenticatedAuthenticationToken.class), null);
+    X509Certificate certificate = mock(X509Certificate.class);
+    Principal principal = mock(Principal.class);
+    PreAuthenticatedAuthenticationToken token = mock(PreAuthenticatedAuthenticationToken.class);
+
+    when(certificate.getSubjectDN()).thenReturn(principal);
+    when(principal.getName()).thenReturn("some name");
+
+    when(certificate.getNotAfter()).thenReturn(Date.from(Instant.ofEpochSecond(1413538464L)));
+    when(certificate.getNotBefore()).thenReturn(Date.from(Instant.ofEpochSecond(1413495264L)));
+    when(token.getCredentials()).thenReturn(certificate);
+
+    return build(method, url, token , null);
   }
 
   private OperationAuditRecord buildFromOAuth2(String method, String url) {
