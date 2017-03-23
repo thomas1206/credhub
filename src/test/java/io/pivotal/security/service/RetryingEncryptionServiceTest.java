@@ -1,6 +1,7 @@
 package io.pivotal.security.service;
 
 import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.exceptions.IncorrectKeyException;
 import io.pivotal.security.exceptions.KeyNotFoundException;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -217,81 +218,121 @@ public class RetryingEncryptionServiceTest {
       });
 
       describe("when decrypt throws errors", () -> {
-        beforeEach(() -> {
-          when(encryptionService.decrypt(any(Key.class), any(byte[].class), any(byte[].class)))
-              .thenThrow(new ProviderException("function 'C_GenerateRandom' returns 0x30"));
-        });
+        describe("and the error is a ProviderException", () -> {
+          beforeEach(() -> {
+            when(encryptionService.decrypt(any(Key.class), any(byte[].class), any(byte[].class)))
+                .thenThrow(new ProviderException("function 'C_GenerateRandom' returns 0x30"));
+          });
 
-        it("retries decryption failures", () -> {
-          try {
-            subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
-            fail("Expected exception");
-          } catch (ProviderException e) {
-            // expected
-          }
+          it("retries decryption failures", () -> {
+            try {
+              subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
+              fail("Expected exception");
+            } catch (ProviderException e) {
+              // expected
+            }
 
-          final InOrder inOrder = inOrder(encryptionService, remoteEncryptionConnectable);
-          inOrder.verify(encryptionService).decrypt(eq(firstKey), any(byte[].class), any(byte[].class));
-          inOrder.verify(remoteEncryptionConnectable).reconnect(any(ProviderException.class));
-          inOrder.verify(encryptionService).decrypt(eq(secondKey), any(byte[].class), any(byte[].class));
-        });
+            final InOrder inOrder = inOrder(encryptionService, remoteEncryptionConnectable);
+            inOrder.verify(encryptionService).decrypt(eq(firstKey), any(byte[].class), any(byte[].class));
+            inOrder.verify(remoteEncryptionConnectable).reconnect(any(ProviderException.class));
+            inOrder.verify(encryptionService).decrypt(eq(secondKey), any(byte[].class), any(byte[].class));
+          });
 
-        it("unlocks after exception and locks again before encrypting", () -> {
-          reset(writeLock);
+          it("unlocks after exception and locks again before encrypting", () -> {
+            reset(writeLock);
 
-          try {
-            subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
-          } catch (ProviderException e) {
-            // expected
-          }
+            try {
+              subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
+            } catch (ProviderException e) {
+              // expected
+            }
 
-          verify(readLock, times(2)).lock();
-          verify(readLock, times(2)).unlock();
+            verify(readLock, times(2)).lock();
+            verify(readLock, times(2)).unlock();
 
-          verify(writeLock, times(1)).lock();
-          verify(writeLock, times(1)).unlock();
-        });
+            verify(writeLock, times(1)).lock();
+            verify(writeLock, times(1)).unlock();
+          });
 
-        // no need to test this for encryption because the behavior is the same
-        it("locks and unlocks the reconnect lock when login errors", () -> {
-          reset(writeLock);
-          doThrow(new RuntimeException()).when(remoteEncryptionConnectable).reconnect(any(Exception.class));
+          // no need to test this for encryption because the behavior is the same
+          it("locks and unlocks the reconnect lock when login errors", () -> {
+            reset(writeLock);
+            doThrow(new RuntimeException()).when(remoteEncryptionConnectable).reconnect(any(Exception.class));
 
-          try {
-            subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
-          } catch (IllegalBlockSizeException | RuntimeException e) {
-            // expected
-          }
+            try {
+              subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
+            } catch (IllegalBlockSizeException | RuntimeException e) {
+              // expected
+            }
 
-          verify(readLock, times(2)).lock();
-          verify(readLock, times(2)).unlock();
+            verify(readLock, times(2)).lock();
+            verify(readLock, times(2)).unlock();
 
-          verify(writeLock, times(1)).lock();
-          verify(writeLock, times(1)).unlock();
-        });
+            verify(writeLock, times(1)).lock();
+            verify(writeLock, times(1)).unlock();
+          });
 
-        describe("when the operation succeeds only after reconnection", () -> {
-          it("should return the decrypted string", () -> {
-            reset(encryptionService);
+          describe("when the operation succeeds only after reconnection", () -> {
+            it("should return the decrypted string", () -> {
+              reset(encryptionService);
 
-            when(encryptionService.decrypt(firstKey, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()))
-                .thenThrow(new IllegalBlockSizeException("test exception"));
-            when(encryptionService.decrypt(secondKey, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()))
-                .thenReturn("fake-plaintext");
+              when(encryptionService.decrypt(firstKey, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()))
+                  .thenThrow(new IllegalBlockSizeException("test exception"));
+              when(encryptionService.decrypt(secondKey, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()))
+                  .thenReturn("fake-plaintext");
 
-            assertThat(subject.decrypt(keyUuid, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()), equalTo("fake-plaintext"));
+              assertThat(subject.decrypt(keyUuid, "fake-encrypted-value".getBytes(), "fake-nonce".getBytes()), equalTo("fake-plaintext"));
 
-            verify(remoteEncryptionConnectable, times(1)).reconnect(any(IllegalBlockSizeException.class));
-            verify(keyMapper, times(1)).mapUuidsToKeys();
+              verify(remoteEncryptionConnectable, times(1)).reconnect(any(IllegalBlockSizeException.class));
+              verify(keyMapper, times(1)).mapUuidsToKeys();
+            });
+          });
+
+          describe("when the encryption key for the credential cannot be found", () -> {
+            itThrows("should throw an appropriate exception", KeyNotFoundException.class, () -> {
+              UUID fakeUUID = UUID.randomUUID();
+              reset(encryptionService);
+              when(keyMapper.getKeyForUuid(fakeUUID)).thenReturn(null);
+              subject.decrypt(fakeUUID, "something we cant read".getBytes(), "nonce".getBytes());
+            });
           });
         });
 
-        describe("when the encryption key for the credential cannot be found", () -> {
-          itThrows("should throw an appropriate exception", KeyNotFoundException.class, () -> {
-            UUID fakeUUID = UUID.randomUUID();
-            reset(encryptionService);
-            when(keyMapper.getKeyForUuid(fakeUUID)).thenReturn(null);
-            subject.decrypt(fakeUUID, "something we cant read".getBytes(), "nonce".getBytes());
+        describe("and the error is an IllegalBlockSizeException", () -> {
+          it("handles the exception", () -> {
+            when(encryptionService.decrypt(any(Key.class), any(byte[].class), any(byte[].class)))
+                .thenThrow(new IllegalBlockSizeException());
+
+            try {
+              subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
+              fail("Expected exception");
+            } catch (IllegalBlockSizeException e) {
+              // expected
+            }
+
+            final InOrder inOrder = inOrder(encryptionService, remoteEncryptionConnectable);
+            inOrder.verify(encryptionService).decrypt(eq(firstKey), any(byte[].class), any(byte[].class));
+            inOrder.verify(remoteEncryptionConnectable).reconnect(any(ProviderException.class));
+            inOrder.verify(encryptionService).decrypt(eq(secondKey), any(byte[].class), any(byte[].class));
+          });
+        });
+
+        describe("and the error is an IncorrectKeyException", () -> {
+          it("handles the exception", () -> {
+            when(encryptionService.decrypt(any(Key.class), any(byte[].class), any(byte[].class)))
+                .thenThrow(new IncorrectKeyException(new Exception()));
+
+            try {
+              subject.decrypt(keyUuid, "an encrypted value".getBytes(), "a nonce".getBytes());
+              fail("Expected exception");
+            } catch (IncorrectKeyException e) {
+              // expected
+            }
+
+            final InOrder inOrder = inOrder(encryptionService, remoteEncryptionConnectable);
+            inOrder.verify(encryptionService).decrypt(eq(firstKey), any(byte[].class), any(byte[].class));
+            inOrder.verify(remoteEncryptionConnectable).reconnect(any(ProviderException.class));
+            inOrder.verify(encryptionService).decrypt(eq(secondKey), any(byte[].class), any(byte[].class));
           });
         });
       });

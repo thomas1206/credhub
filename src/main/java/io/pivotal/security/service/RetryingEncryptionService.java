@@ -1,5 +1,6 @@
 package io.pivotal.security.service;
 
+import io.pivotal.security.exceptions.IncorrectKeyException;
 import io.pivotal.security.exceptions.KeyNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,7 +53,7 @@ public class RetryingEncryptionService {
           throw new KeyNotFoundException();
         }
         return operation.apply(keyForUuid);
-      } catch (IllegalBlockSizeException | ProviderException e) {
+      } catch (IllegalBlockSizeException | ProviderException | IncorrectKeyException e) {
         logger.info("Operation failed: " + e.getMessage());
 
         setNeedsReconnectFlag();
