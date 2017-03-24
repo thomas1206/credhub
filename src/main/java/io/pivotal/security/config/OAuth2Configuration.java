@@ -1,10 +1,12 @@
 package io.pivotal.security.config;
 
+import io.pivotal.security.aspects.TLSLogger;
 import io.pivotal.security.auth.AuditOAuth2AccessDeniedHandler;
 import io.pivotal.security.auth.X509AuthenticationProvider;
 import io.pivotal.security.data.OperationAuditRecordDataService;
 import io.pivotal.security.service.SecurityEventsLogService;
 import io.pivotal.security.util.CurrentTimeProvider;
+import org.aspectj.lang.Aspects;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -86,6 +88,13 @@ public class OAuth2Configuration {
         new AuthenticationManagerBuilder(objectPostProcessor);
     authenticationManagerBuilder.parentAuthenticationManager(authenticationManager());
     return authenticationManagerBuilder;
+  }
+
+  @Bean
+  public TLSLogger tlsLogging(SecurityEventsLogService securityEventsLogService) {
+    TLSLogger tlsLogger = Aspects.aspectOf(TLSLogger.class);
+    tlsLogger.setSecurityEventsLogService(securityEventsLogService);
+    return tlsLogger;
   }
 
   @Bean
