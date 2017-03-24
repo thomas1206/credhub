@@ -27,18 +27,13 @@ import io.pivotal.security.request.BaseSecretGenerateRequest;
 import io.pivotal.security.request.BaseSecretSetRequest;
 import io.pivotal.security.request.DefaultSecretGenerateRequest;
 import io.pivotal.security.request.SecretRegenerateRequest;
+import io.pivotal.security.request.*;
 import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.service.GenerateService;
 import io.pivotal.security.service.SetService;
 import io.pivotal.security.util.CheckedFunction;
-import io.pivotal.security.view.DataResponse;
-import io.pivotal.security.view.FindCredentialResults;
-import io.pivotal.security.view.FindPathResults;
-import io.pivotal.security.view.ResponseError;
-import io.pivotal.security.view.SecretKind;
-import io.pivotal.security.view.SecretKindFromString;
-import io.pivotal.security.view.SecretView;
+import io.pivotal.security.view.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,14 +60,20 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static io.pivotal.security.entity.AuditingOperationCode.*;
 
 @RestController
 @RequestMapping(
