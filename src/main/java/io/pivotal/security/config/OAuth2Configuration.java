@@ -1,6 +1,6 @@
 package io.pivotal.security.config;
 
-import io.pivotal.security.aspects.TLSLogger;
+import io.pivotal.security.aspects.AclLogging;
 import io.pivotal.security.auth.AuditOAuth2AccessDeniedHandler;
 import io.pivotal.security.auth.X509AuthenticationProvider;
 import io.pivotal.security.data.OperationAuditRecordDataService;
@@ -91,10 +91,10 @@ public class OAuth2Configuration {
   }
 
   @Bean
-  public TLSLogger tlsLogging(SecurityEventsLogService securityEventsLogService) {
-    TLSLogger tlsLogger = Aspects.aspectOf(TLSLogger.class);
-    tlsLogger.setSecurityEventsLogService(securityEventsLogService);
-    return tlsLogger;
+  public AclLogging tlsLogging(SecurityEventsLogService securityEventsLogService) {
+    AclLogging aclLogging = Aspects.aspectOf(AclLogging.class);
+    aclLogging.setSecurityEventsLogService(securityEventsLogService);
+    return aclLogging;
   }
 
   @Bean
