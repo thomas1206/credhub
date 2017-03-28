@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.EnableLoadTimeWeaving;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
@@ -21,6 +22,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 @EnableConfigurationProperties({AuthServerProperties.class})
 @EnableJpaAuditing(dateTimeProviderRef = "currentTimeProvider")
 @EnableAspectJAutoProxy
+@EnableLoadTimeWeaving
 public class CredentialManagerApp {
 
   public static void main(String[] args) {
