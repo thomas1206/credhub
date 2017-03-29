@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.context.ApplicationContext;
 
 public class ValueSetRequest extends BaseSecretSetRequest {
+
   @NotEmpty(message = "error.missing_value")
   private String value;
 
@@ -19,7 +20,10 @@ public class ValueSetRequest extends BaseSecretSetRequest {
   }
 
   @Override
-  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor, ApplicationContext applicationContext) {
-    return NamedValueSecret.createNewVersion((NamedValueSecret) existing, getName(), this.getValue(), encryptor, this.getAccessControlEntries());
+  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor,
+      ApplicationContext applicationContext) {
+    return NamedValueSecret
+        .createNewVersion((NamedValueSecret) existing, getName(), this.getValue(), encryptor,
+            this.getAccessControlEntries());
   }
 }

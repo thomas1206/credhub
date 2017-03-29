@@ -1,7 +1,22 @@
 package io.pivotal.security.auth;
 
+import static io.pivotal.security.config.NoExpirationSymmetricKeySecurityConfiguration.INVALID_SCOPE_SYMMETRIC_KEY_JWT;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.StringContains.containsString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.util.DatabaseProfileResolver;
+import java.security.Principal;
+import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -16,24 +31,9 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.security.Principal;
-import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static io.pivotal.security.config.NoExpirationSymmetricKeySecurityConfiguration.INVALID_SCOPE_SYMMETRIC_KEY_JWT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.StringContains.containsString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @RunWith(SpringRunner.class)
-@ActiveProfiles(value = {"unit-test", "NoExpirationSymmetricKeySecurityConfiguration"}, resolver = DatabaseProfileResolver.class)
+@ActiveProfiles(value = {"unit-test",
+    "NoExpirationSymmetricKeySecurityConfiguration"}, resolver = DatabaseProfileResolver.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
 public class UserContextTest {
 
@@ -46,7 +46,8 @@ public class UserContextTest {
   @Test
   public void fromAuthenication_readsFromOAuthDetails() throws Exception {
     OAuth2Authentication oAuth2Authentication = setupOAuthMock();
-    UserContext context = UserContext.fromAuthentication(oAuth2Authentication, null, tokenServicesMock);
+    UserContext context = UserContext
+        .fromAuthentication(oAuth2Authentication, null, tokenServicesMock);
 
     assertThat(context.getUserId(), equalTo("TEST_USER_ID"));
     assertThat(context.getUserName(), equalTo("TEST_USER_NAME"));
@@ -63,7 +64,9 @@ public class UserContextTest {
   public void fromAuthentication_handlesAccessDeniedToken() throws Exception {
 
     OAuth2Authentication oAuth2Authentication = setupOAuthMock();
-    UserContext context = UserContext.fromAuthentication(oAuth2Authentication, INVALID_SCOPE_SYMMETRIC_KEY_JWT, realTokenServices);
+    UserContext context = UserContext
+        .fromAuthentication(oAuth2Authentication, INVALID_SCOPE_SYMMETRIC_KEY_JWT,
+            realTokenServices);
 
     assertThat(context.getUserName(), equalTo("credhub_cli"));
     assertThat(context.getIssuer(), containsString("/oauth/token"));
@@ -119,7 +122,7 @@ public class UserContextTest {
     return authentication;
   }
 
-  private PreAuthenticatedAuthenticationToken setupMtlsMock(){
+  private PreAuthenticatedAuthenticationToken setupMtlsMock() {
     X509Certificate certificate = mock(X509Certificate.class);
     Principal principal = mock(Principal.class);
     PreAuthenticatedAuthenticationToken token = mock(PreAuthenticatedAuthenticationToken.class);

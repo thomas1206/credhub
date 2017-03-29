@@ -9,6 +9,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.context.ApplicationContext;
 
 public class PasswordSetRequest extends BaseSecretSetRequest {
+
   @NotEmpty(message = "error.missing_value")
   @JsonProperty("value")
   private String password;
@@ -23,7 +24,10 @@ public class PasswordSetRequest extends BaseSecretSetRequest {
 
   @Override
   @JsonIgnore
-  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor, ApplicationContext applicationContext) {
-    return NamedPasswordSecret.createNewVersion((NamedPasswordSecret) existing, getName(), this.getPassword(), null, encryptor, this.getAccessControlEntries());
+  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor,
+      ApplicationContext applicationContext) {
+    return NamedPasswordSecret
+        .createNewVersion((NamedPasswordSecret) existing, getName(), this.getPassword(), null,
+            encryptor, this.getAccessControlEntries());
   }
 }

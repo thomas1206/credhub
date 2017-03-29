@@ -159,7 +159,7 @@ During development, it is helpful to set up different IntelliJ testing profiles 
 After having pulled the [credhub-cli](https://github.com/cloudfoundry-incubator/credhub-cli) repo, run `make`, and then run the following command to target your locally running CredHub instance:
 
 ```shell
-build/credhub login -s https://localhost:9000 -u credhub -p password --skip-tls-validation
+build/credhub login -s https://localhost:9000 -u credhub -pp password --skip-tls-validation
 ```
 
 #### Running the Acceptance Tests

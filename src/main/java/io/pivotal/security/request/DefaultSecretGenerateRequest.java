@@ -6,6 +6,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.springframework.context.ApplicationContext;
 
 public class DefaultSecretGenerateRequest extends BaseSecretGenerateRequest {
+
   private Object parameters;
 
   public Object getParameters() {
@@ -17,7 +18,8 @@ public class DefaultSecretGenerateRequest extends BaseSecretGenerateRequest {
   }
 
   @Override
-  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor, ApplicationContext applicationContext) {
+  public NamedSecret createNewVersion(NamedSecret existing, Encryptor encryptor,
+      ApplicationContext applicationContext) {
     throw new NotImplementedException();
   }
 }

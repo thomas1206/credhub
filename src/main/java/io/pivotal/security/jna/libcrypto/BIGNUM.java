@@ -2,28 +2,29 @@ package io.pivotal.security.jna.libcrypto;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
-
 import java.util.Arrays;
 import java.util.List;
 
-public class BIGNUM extends Structure {
-  public static class ByReference extends BIGNUM implements Structure.ByReference {
-    public ByReference(Pointer p) {
-      super(p);
-    }
-  }
+public class Bignum extends Structure {
 
-  public BIGNUM(Pointer p) {
-    super(p);
-  }
-
-  public Pointer d;
+  public Pointer dp;
   public int top;
   public int dmax;
   public int neg;
 
+  public Bignum(Pointer p) {
+    super(p);
+  }
+
   @Override
   protected List getFieldOrder() {
-    return Arrays.asList("d", "top", "dmax", "neg");
+    return Arrays.asList("dp", "top", "dmax", "neg");
+  }
+
+  public static class ByReference extends Bignum implements Structure.ByReference {
+
+    public ByReference(Pointer p) {
+      super(p);
+    }
   }
 }

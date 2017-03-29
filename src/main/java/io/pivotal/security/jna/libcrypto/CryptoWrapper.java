@@ -30,7 +30,8 @@ public class CryptoWrapper {
     keyFactory = KeyFactory.getInstance(ALGORITHM, bouncyCastleProvider);
   }
 
-  public synchronized <E extends Throwable> void generateKeyPair(int keyLength, CheckedConsumer<Pointer, E> consumer) throws E {
+  public synchronized <E extends Throwable> void
+      generateKeyPair(int keyLength, CheckedConsumer<Pointer, E> consumer) throws E {
     Pointer bne = Crypto.BN_new();
     try {
       Crypto.BN_set_word(bne, Crypto.RSA_F4);
@@ -50,7 +51,7 @@ public class CryptoWrapper {
   }
 
   public synchronized KeyPair toKeyPair(Pointer rsa) throws InvalidKeySpecException {
-    RSA.ByReference rsaStructure = new RSA.ByReference(rsa);
+    Rsa.ByReference rsaStructure = new Rsa.ByReference(rsa);
     rsaStructure.read();
 
     RSAPublicKeySpec publicKeySpec = getRsaPublicKeySpec(rsaStructure);
@@ -64,11 +65,11 @@ public class CryptoWrapper {
     Assert.notNull(bn, "bn cannot be null");
     Assert.notNull(Pointer.nativeValue(bn), "bn cannot be wrapping null");
 
-    BIGNUM.ByReference bignum = new BIGNUM.ByReference(bn);
+    Bignum.ByReference bignum = new Bignum.ByReference(bn);
     bignum.read();
 
     int ratio = 8;
-    long[] longs = bignum.d.getLongArray(0, bignum.top);
+    long[] longs = bignum.dp.getLongArray(0, bignum.top);
     byte[] bytes = new byte[longs.length * ratio];
     for (int i = 0; i < longs.length; i++) {
       for (int j = 0; j < ratio; j++) {
@@ -86,20 +87,20 @@ public class CryptoWrapper {
     return Native.toString(buffer);
   }
 
-  private RSAPrivateCrtKeySpec getRsaPrivateCrtKeySpec(RSA.ByReference rsa) {
+  private RSAPrivateCrtKeySpec getRsaPrivateCrtKeySpec(Rsa.ByReference rsa) {
     return new RSAPrivateCrtKeySpec(
-        convert(rsa.n),
-        convert(rsa.e),
-        convert(rsa.d),
-        convert(rsa.p),
-        convert(rsa.q),
+        convert(rsa.np),
+        convert(rsa.ep),
+        convert(rsa.dp),
+        convert(rsa.pp),
+        convert(rsa.qp),
         convert(rsa.dmp1),
         convert(rsa.dmq1),
         convert(rsa.iqmp)
     );
   }
 
-  private RSAPublicKeySpec getRsaPublicKeySpec(RSA.ByReference rsa) {
-    return new RSAPublicKeySpec(convert(rsa.n), convert(rsa.e));
+  private RSAPublicKeySpec getRsaPublicKeySpec(Rsa.ByReference rsa) {
+    return new RSAPublicKeySpec(convert(rsa.np), convert(rsa.ep));
   }
 }

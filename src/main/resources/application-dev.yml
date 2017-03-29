@@ -35,7 +35,7 @@ server:
     key-store: src/test/resources/key_store.jks
     key-password: changeit
     key-alias: cert
-    ciphers: ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-RSA-AES128-GCM-SHA256,ECDHE-RSA-AES256-GCM-SHA384
+    ciphers: ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-Rsa-AES128-GCM-SHA256,ECDHE-Rsa-AES256-GCM-SHA384
     client-auth: want
     trust-store: src/test/resources/trust_store.jks
     trust-store-password: changeit

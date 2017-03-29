@@ -438,7 +438,7 @@ Status: 200
     "type": "ssh",
     "value":
       {
-        "public_key": "ssh-rsa AAAAB3NzaC...p+p3QPLx comment",
+        "public_key": "ssh-rsa AAAAB3NzaC...pp+p3QPLx comment",
         "private_key": "-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
       },
     "version_created_at": "2016-01-01T12:00:00Z"
@@ -459,7 +459,7 @@ Request -
   "type": "ssh",
   "value":
     {
-      "public_key": "ssh-rsa AAAAB3NzaC...p+p3QPLx comment",
+      "public_key": "ssh-rsa AAAAB3NzaC...pp+p3QPLx comment",
       "private_key": "-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
     }
 }
@@ -474,7 +474,7 @@ Status: 200
   "type": "ssh",
   "value":
     {
-      "public_key": "ssh-rsa AAAAB3NzaC...p+p3QPLx comment",
+      "public_key": "ssh-rsa AAAAB3NzaC...pp+p3QPLx comment",
       "private_key": "-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
     },
   "version_created_at": "2016-01-01T12:00:00Z"
@@ -511,7 +511,7 @@ Status: 200
   "type": "ssh",
   "value":
     {
-      "public_key": "ssh-rsa AAAAB3NzaC...p+p3QPLx user@location",
+      "public_key": "ssh-rsa AAAAB3NzaC...pp+p3QPLx user@location",
       "private_key": "-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
     },
   "version_created_at": "2016-01-01T12:00:00Z"

@@ -124,9 +124,9 @@ properties:
 
 **Job Template ERB:**
   ```erb
-api-ca=<%= p("demo.tls.ca") %>
-api-certificate=<%= p("demo.tls.certificate") %>
-api-private-key=<%= p("demo.tls.private_key") %>
+api-ca=<%= pp("demo.tls.ca") %>
+api-certificate=<%= pp("demo.tls.certificate") %>
+api-private-key=<%= pp("demo.tls.private_key") %>
   ```
 
 **Deployment manifest:**

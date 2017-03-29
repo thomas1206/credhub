@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SecurityEventsLogService {
+
   private final Logger securityEventsLogger;
   private final VersionProvider versionProvider;
 
@@ -20,7 +21,9 @@ public class SecurityEventsLogService {
 
   public void log(OperationAuditRecord operationAuditRecord) {
     String signature = operationAuditRecord.getMethod() + " " + operationAuditRecord.getPath();
-    String header = String.join("|", "CEF:0|cloud_foundry|credhub", versionProvider.getVersion(), signature, signature, "0");
+    String header = String
+        .join("|", "CEF:0|cloud_foundry|credhub", versionProvider.getVersion(), signature,
+            signature, "0");
     String message = String.join(
         " ",
         "rt=" + String.valueOf(operationAuditRecord.getNow().toEpochMilli()),

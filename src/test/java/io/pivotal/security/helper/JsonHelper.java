@@ -1,30 +1,31 @@
 package io.pivotal.security.helper;
 
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE;
+import static io.pivotal.security.util.TimeModuleFactory.createTimeModule;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import java.io.IOException;
-import java.util.Set;
-
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE;
-import static io.pivotal.security.util.TimeModuleFactory.createTimeModule;
-
 public class JsonHelper {
+
   private static final ObjectMapper objectMapper = createObjectMapper();
 
-  private static final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+  private static final Validator validator = Validation.buildDefaultValidatorFactory()
+      .getValidator();
 
   public static ObjectMapper createObjectMapper() {
     return new ObjectMapper()
-      .registerModule(createTimeModule())
-      .setPropertyNamingStrategy(SNAKE_CASE);
+        .registerModule(createTimeModule())
+        .setPropertyNamingStrategy(SNAKE_CASE);
   }
 
   public static byte[] serialize(Object object) {
@@ -67,7 +68,8 @@ public class JsonHelper {
     return validator.validate(original);
   }
 
-  public static <T> Set<ConstraintViolation<T>> deserializeAndValidate(String json, Class<T> klass) {
+  public static <T> Set<ConstraintViolation<T>> deserializeAndValidate(String json,
+      Class<T> klass) {
     try {
       T object = objectMapper.readValue(json, klass);
       return validator.validate(object);
@@ -76,7 +78,8 @@ public class JsonHelper {
     }
   }
 
-  public static <T> Set<ConstraintViolation<T>> deserializeAndValidate(byte[] json, Class<T> klass) {
+  public static <T> Set<ConstraintViolation<T>> deserializeAndValidate(byte[] json,
+      Class<T> klass) {
     try {
       T object = objectMapper.readValue(json, klass);
       return validator.validate(object);
