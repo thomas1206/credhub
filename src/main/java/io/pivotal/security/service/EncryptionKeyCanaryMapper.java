@@ -1,13 +1,13 @@
 package io.pivotal.security.service;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
-
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import io.pivotal.security.config.EncryptionKeysConfiguration;
 import io.pivotal.security.data.EncryptionKeyCanaryDataService;
 import io.pivotal.security.entity.EncryptionKeyCanary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.nio.charset.Charset;
 import java.security.Key;
 import java.util.ArrayList;
@@ -16,8 +16,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
 
 @Component
 public class EncryptionKeyCanaryMapper {
@@ -141,12 +142,17 @@ public class EncryptionKeyCanaryMapper {
     EncryptionKeyCanary canary = new EncryptionKeyCanary();
 
     try {
+      final UUID throwawayUUIDThatWillBeReplaced = UUID.randomUUID();
+
       Encryption encryptionData = encryptionService
-          .encrypt(null, encryptionKey.getKey(), CANARY_VALUE);
+          .encrypt(throwawayUUIDThatWillBeReplaced, encryptionKey.getKey(), CANARY_VALUE);
+
       canary.setEncryptedValue(encryptionData.encryptedValue);
       canary.setNonce(encryptionData.nonce);
+
       final List<Byte> salt = encryptionKey.getSalt();
       final Byte[] saltArray = new Byte[salt.size()];
+
       canary.setSalt(toPrimitive(salt.toArray(saltArray)));
 
     } catch (Exception e) {

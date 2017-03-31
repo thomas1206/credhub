@@ -4,9 +4,12 @@ import io.pivotal.security.exceptions.KeyNotFoundException;
 import io.pivotal.security.service.Encryption;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.service.RetryingEncryptionService;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.security.InvalidKeyException;
+import java.util.Objects;
+import java.util.UUID;
 
 @Component
 public class Encryptor {
@@ -25,7 +28,7 @@ public class Encryptor {
     try {
       final UUID activeUuid = encryptionKeyCanaryMapper.getActiveUuid();
       return clearTextValue == null
-          ? new Encryption(activeUuid, null, null) :
+          ? new Encryption(activeUuid, new byte[]{}, new byte[]{}) :
           encryptionService.encrypt(activeUuid, clearTextValue);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -33,13 +36,16 @@ public class Encryptor {
   }
 
   public String decrypt(UUID keyUuid, byte[] encryptedValue, byte[] nonce) {
-    if (keyUuid == null || encryptedValue == null || nonce == null) {
-      return null;
-    }
+    Objects.requireNonNull(keyUuid);
+    Objects.requireNonNull(encryptedValue);
+    Objects.requireNonNull(nonce);
+
     try {
       return encryptionService.decrypt(keyUuid, encryptedValue, nonce);
     } catch (KeyNotFoundException e) {
       throw e;
+    } catch (InvalidKeyException ke) {
+      throw new RuntimeException(ke);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

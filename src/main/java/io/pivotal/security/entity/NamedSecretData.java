@@ -1,16 +1,13 @@
 package io.pivotal.security.entity;
 
-import static io.pivotal.security.constants.EncryptionConstants.ENCRYPTED_BYTES;
-import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
-import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
-
+import io.pivotal.security.util.DefensiveCopier;
 import io.pivotal.security.util.InstantMillisecondsConverter;
 import io.pivotal.security.view.SecretKind;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
+import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.DiscriminatorColumn;
@@ -24,10 +21,16 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import javax.persistence.Transient;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static io.pivotal.security.constants.EncryptionConstants.ENCRYPTED_BYTES;
+import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
+import static io.pivotal.security.constants.UuidConstants.UUID_BYTES;
 
 @Entity
 @Table(name = "NamedSecret")
@@ -48,10 +51,10 @@ public abstract class NamedSecretData<Z extends NamedSecretData> implements
   private UUID uuid;
 
   @Column(length = ENCRYPTED_BYTES + NONCE_SIZE, name = "encrypted_value")
-  private byte[] encryptedValue;
+  private byte[] encryptedValue = {};
 
   @Column(length = NONCE_SIZE)
-  private byte[] nonce;
+  private byte[] nonce = {};
 
   @Convert(converter = InstantMillisecondsConverter.class)
   @Column(nullable = false, columnDefinition = "BIGINT NOT NULL")
@@ -71,6 +74,9 @@ public abstract class NamedSecretData<Z extends NamedSecretData> implements
   @ManyToOne
   @JoinColumn(name = "secret_name_uuid", nullable = false)
   private SecretName secretName;
+
+  @Transient
+  protected final static DefensiveCopier DEFENSIVE_COPIER = new DefensiveCopier();
 
   public NamedSecretData(SecretName name) {
     if (this.secretName != null) {
@@ -122,19 +128,19 @@ public abstract class NamedSecretData<Z extends NamedSecretData> implements
   }
 
   public byte[] getEncryptedValue() {
-    return encryptedValue;
+    return DEFENSIVE_COPIER.copyByteArray(encryptedValue);
   }
 
   public void setEncryptedValue(byte[] encryptedValue) {
-    this.encryptedValue = encryptedValue;
+    this.encryptedValue = DEFENSIVE_COPIER.copyByteArray(encryptedValue);
   }
 
   public byte[] getNonce() {
-    return nonce;
+    return DEFENSIVE_COPIER.copyByteArray(nonce);
   }
 
   public void setNonce(byte[] nonce) {
-    this.nonce = nonce;
+    this.nonce = DEFENSIVE_COPIER.copyByteArray(nonce);
   }
 
   public abstract SecretKind getKind();

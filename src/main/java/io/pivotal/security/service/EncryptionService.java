@@ -1,20 +1,22 @@
 package io.pivotal.security.service;
 
-import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
-import static io.pivotal.security.service.EncryptionKeyCanaryMapper.CHARSET;
-
 import io.pivotal.security.config.EncryptionKeyMetadata;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.UUID;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Objects;
+import java.util.UUID;
+
+import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
+import static io.pivotal.security.service.EncryptionKeyCanaryMapper.CHARSET;
 
 // This class is tested in BCEncryptionServiceTest.
 
@@ -41,6 +43,10 @@ public abstract class EncryptionService {
   }
 
   public String decrypt(Key key, byte[] encryptedValue, byte[] nonce) throws Exception {
+    Objects.requireNonNull(key);
+    Objects.requireNonNull(encryptedValue);
+    Objects.requireNonNull(nonce);
+
     CipherWrapper decryptionCipher = getCipher();
     IvParameterSpec ccmParameterSpec = generateParameterSpec(nonce);
     decryptionCipher.init(Cipher.DECRYPT_MODE, key, ccmParameterSpec);
