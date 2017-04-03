@@ -17,6 +17,7 @@ import static com.google.common.collect.Lists.newArrayList;
 )
 @JsonSubTypes({
     @JsonSubTypes.Type(name = "password", value = PasswordGenerateRequest.class)
+    @JsonSubTypes.Type(name = "ssh", value = SshGenerateRequest.class)
 })
 public abstract class BaseSecretGenerateRequest extends BaseSecretRequest {
 

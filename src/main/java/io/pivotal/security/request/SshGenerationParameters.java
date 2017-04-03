@@ -1,9 +1,9 @@
-package io.pivotal.security.controller.v1;
+package io.pivotal.security.request;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class SshSecretParameters extends RsaSshSecretParameters {
+public class SshGenerationParameters extends RsaSshGenerationParameters {
 
   private String sshComment = "";
 
