@@ -1,5 +1,10 @@
 package io.pivotal.security.controller.v1.secret;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
+
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -10,6 +15,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.config.JsonContextFactory;
 import io.pivotal.security.controller.v1.SecretKindMappingFactory;
 import io.pivotal.security.data.SecretDataService;
@@ -17,6 +23,8 @@ import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.entity.AuditingOperationCode;
 import io.pivotal.security.exceptions.KeyNotFoundException;
 import io.pivotal.security.exceptions.ParameterizedValidationException;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.request.AccessControlOperation;
 import io.pivotal.security.request.BaseSecretGenerateRequest;
 import io.pivotal.security.request.BaseSecretSetRequest;
 import io.pivotal.security.request.DefaultSecretGenerateRequest;
@@ -31,6 +39,17 @@ import io.pivotal.security.view.ResponseError;
 import io.pivotal.security.view.SecretKind;
 import io.pivotal.security.view.SecretKindFromString;
 import io.pivotal.security.view.SecretView;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -46,6 +65,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,21 +76,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
 
 @RestController
 @RequestMapping(
@@ -88,28 +93,31 @@ public class SecretsController {
   private final MessageSourceAccessor messageSourceAccessor;
   private final ObjectMapper objectMapper;
   private final SecretRequestService secretRequestService;
+  private final ResourceServerTokenServices tokenServices;
 
   @Autowired
   public SecretsController(SecretDataService secretDataService,
-                           NamedSecretGenerateHandler namedSecretGenerateHandler,
-                           JsonContextFactory jsonContextFactory,
-                           MessageSource messageSource,
-                           AuditLogService auditLogService,
-                           ObjectMapper objectMapper,
-                           SecretRequestService secretRequestService) {
+      NamedSecretGenerateHandler namedSecretGenerateHandler,
+      JsonContextFactory jsonContextFactory,
+      MessageSource messageSource,
+      AuditLogService auditLogService,
+      ResourceServerTokenServices tokenServices,
+      ObjectMapper objectMapper,
+      SecretRequestService secretRequestService) {
     this.secretDataService = secretDataService;
     this.namedSecretGenerateHandler = namedSecretGenerateHandler;
     this.jsonContextFactory = jsonContextFactory;
     this.auditLogService = auditLogService;
     this.messageSourceAccessor = new MessageSourceAccessor(messageSource);
+    this.tokenServices = tokenServices;
     this.objectMapper = objectMapper;
     this.secretRequestService = secretRequestService;
   }
 
   @RequestMapping(path = "", method = RequestMethod.POST)
   public ResponseEntity generate(InputStream inputStream,
-                                 HttpServletRequest request,
-                                 Authentication authentication) throws Exception {
+      HttpServletRequest request,
+      Authentication authentication) throws Exception {
     InputStream requestInputStream = new ByteArrayInputStream(ByteStreams.toByteArray(inputStream));
     try {
       return auditedHandlePostRequest(requestInputStream, request, authentication);
@@ -190,9 +198,21 @@ public class SecretsController {
 
   @RequestMapping(path = "", method = RequestMethod.PUT)
   public ResponseEntity set(@RequestBody BaseSecretSetRequest requestBody,
-                            HttpServletRequest request,
-                            Authentication authentication) throws Exception {
+      HttpServletRequest request,
+      Authentication authentication) throws Exception {
     requestBody.validate();
+
+    final AccessControlEntry accessControlEntry = new AccessControlEntry(
+        UserContext.fromAuthentication(authentication, null, tokenServices).getUserId(),
+        Arrays.asList(AccessControlOperation.READ, AccessControlOperation.WRITE));
+
+    requestBody.setAccessControlEntries(requestBody.getAccessControlEntries()
+        .stream()
+        .filter(ace -> !(ace.getActor().equals(
+            UserContext.fromAuthentication(authentication, null, tokenServices).getUserId())))
+        .collect(Collectors.toList()));
+
+    requestBody.getAccessControlEntries().add(accessControlEntry);
 
     try {
       return auditedHandlePutRequest(requestBody, request, authentication);
@@ -229,8 +249,8 @@ public class SecretsController {
 
   @RequestMapping(path = "", method = RequestMethod.DELETE)
   public ResponseEntity delete(@RequestParam(value = "name", required = false) String secretName,
-                               HttpServletRequest request,
-                               Authentication authentication) throws Exception {
+      HttpServletRequest request,
+      Authentication authentication) throws Exception {
     return auditLogService.performWithAuditing(auditRecorder -> {
       auditRecorder.setCredentialName(secretName);
       auditRecorder.populateFromRequest(request);
@@ -297,10 +317,10 @@ public class SecretsController {
   }
 
   private ResponseEntity retrieveSecretWithAuditing(String identifier,
-                                                    Function<String, List<NamedSecret>> finder,
-                                                    HttpServletRequest request,
-                                                    Authentication authentication,
-                                                    boolean returnFirstEntry) throws Exception {
+      Function<String, List<NamedSecret>> finder,
+      HttpServletRequest request,
+      Authentication authentication,
+      boolean returnFirstEntry) throws Exception {
     return auditLogService.performWithAuditing(auditRecordBuilder -> {
       auditRecordBuilder.populateFromRequest(request);
       auditRecordBuilder.setAuthentication(authentication);
@@ -423,9 +443,9 @@ public class SecretsController {
   }
 
   private ResponseEntity findWithAuditing(String nameSubstring,
-                                          Function<String, List<SecretView>> finder,
-                                          HttpServletRequest request,
-                                          Authentication authentication) throws Exception {
+      Function<String, List<SecretView>> finder,
+      HttpServletRequest request,
+      Authentication authentication) throws Exception {
     return auditLogService.performWithAuditing(auditParams -> {
       auditParams.populateFromRequest(request);
       auditParams.setAuthentication(authentication);
@@ -529,7 +549,7 @@ public class SecretsController {
   }
 
   private ResponseEntity findStartingWithAuditing(String path, HttpServletRequest request,
-                                                  Authentication authentication) throws Exception {
+      Authentication authentication) throws Exception {
     return findWithAuditing(path, secretDataService::findStartingWithPath, request, authentication);
   }
 }

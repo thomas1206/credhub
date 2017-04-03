@@ -41,6 +41,14 @@ public class UserContext {
     }
   }
 
+  /**
+   *
+   * @param authentication
+   * @param token Normally null, but in an auth failure the OAuth2Authentication doesn't have the a
+   *              tokenValue associated with it.
+   * @param tokenServices
+   * @return
+   */
   private static UserContext fromOauth(OAuth2Authentication authentication, String token,
       ResourceServerTokenServices tokenServices) {
     UserContext user = new UserContext();

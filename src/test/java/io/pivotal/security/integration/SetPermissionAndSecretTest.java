@@ -54,7 +54,69 @@ public class SetPermissionAndSecretTest {
     });
 
     describe("#put", () -> {
-      describe("with a new secret", () -> {
+      describe("with a secret and no ace", () -> {
+        describe("and UAA authentication", () -> {
+          describe("and a password grant", () -> {
+            it("should set the secret giving current user read and write permission", () -> {
+              String requestBody = "{\n"
+                  + "  \"type\":\"password\",\n"
+                  + "  \"name\":\"/test-password\",\n"
+                  + "  \"value\":\"ORIGINAL-VALUE\""
+                  + "}";
+
+              mockMvc.perform(put("/api/v1/data")
+                  .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+                  .accept(APPLICATION_JSON)
+                  .contentType(APPLICATION_JSON)
+                  .content(requestBody))
+
+                  .andExpect(status().isOk())
+                  .andExpect(jsonPath("$.type", equalTo("password")));
+
+              mockMvc.perform(get("/api/v1/acls?credential_name=" + "/test-password")
+                  .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN))
+                  .andDo(print())
+                  .andExpect(status().isOk())
+                  .andExpect(jsonPath("$.credential_name").value("/test-password"))
+                  .andExpect(jsonPath("$.access_control_list[0].actor")
+                      .value("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"))
+                  .andExpect(jsonPath("$.access_control_list[0].operations[0]").value("read"))
+                  .andExpect(jsonPath("$.access_control_list[0].operations[1]").value("write"));
+            });
+          });
+          describe("and a client credential", () -> {
+            it("should set the secret giving current user read and write permission", () -> {
+              String requestBody = "{\n"
+                  + "  \"type\":\"password\",\n"
+                  + "  \"name\":\"/test-password\",\n"
+                  + "  \"value\":\"ORIGINAL-VALUE\""
+                  + "}";
+
+              mockMvc.perform(put("/api/v1/data")
+                  .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+                  .accept(APPLICATION_JSON)
+                  .contentType(APPLICATION_JSON)
+                  .content(requestBody))
+
+                  .andExpect(status().isOk())
+                  .andExpect(jsonPath("$.type", equalTo("password")));
+
+              mockMvc.perform(get("/api/v1/acls?credential_name=" + "/test-password")
+                  .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN))
+                  .andDo(print())
+                  .andExpect(status().isOk())
+                  .andExpect(jsonPath("$.credential_name").value("/test-password"))
+                  .andExpect(jsonPath("$.access_control_list[0].actor")
+                      .value("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"))
+                  .andExpect(jsonPath("$.access_control_list[0].operations[0]").value("read"))
+                  .andExpect(jsonPath("$.access_control_list[0].operations[1]").value("write"));
+            });
+          });
+
+        });
+      });
+
+      describe("with a new secret and an ace", () -> {
         it("should allow the secret and ACEs to be created", () -> {
           // language=JSON
           String requestBody = "{\n"
@@ -64,8 +126,9 @@ public class SetPermissionAndSecretTest {
               + "  \"overwrite\":true, \n"
               + "  \"access_control_entries\": [{\n"
               + "    \"actor\": \"app1-guid\",\n"
-              + "    \"operations\": [\"read\"]\n"
-              + "  }]\n"
+              + "    \"operations\": [\"read\"]}, {\n"
+              + "    \"actor\": \"df0c1a26-2875-4bf5-baf9-716c6bb5ea6d\",\n"
+              + "    \"operations\": [\"read\"]}]\n"
               + "}";
 
           mockMvc.perform(put("/api/v1/data")
@@ -83,11 +146,15 @@ public class SetPermissionAndSecretTest {
               .andExpect(status().isOk())
               .andExpect(jsonPath("$.credential_name").value("/test-password"))
               .andExpect(jsonPath("$.access_control_list[0].actor").value("app1-guid"))
-              .andExpect(jsonPath("$.access_control_list[0].operations[0]").value("read"));
+              .andExpect(jsonPath("$.access_control_list[0].operations").value(contains("read")))
+              .andExpect(jsonPath("$.access_control_list[1].actor")
+                  .value("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"))
+              .andExpect(
+                  jsonPath("$.access_control_list[1].operations").value(contains("read", "write")));
         });
       });
 
-      describe("with an existing secret", () -> {
+      describe("with an existing secret and an ace", () -> {
         beforeEach(() -> {
           // language=JSON
           String requestBody = "{\n"
@@ -145,7 +212,10 @@ public class SetPermissionAndSecretTest {
                   jsonPath("$.access_control_list[0].operations").value(contains("read", "write")))
               .andExpect(jsonPath("$.access_control_list[1].actor").exists())
               .andExpect(
-                  jsonPath("$.access_control_list[1].operations").value(contains("read", "write")));
+                  jsonPath("$.access_control_list[1].operations").value(contains("read", "write")))
+              .andExpect(jsonPath("$.access_control_list[2].actor").exists())
+              .andExpect(
+                  jsonPath("$.access_control_list[2].operations").value(contains("read", "write")));
         });
 
         describe("When posting access control entry for user and credential with invalid operation",

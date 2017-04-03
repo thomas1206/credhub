@@ -87,9 +87,12 @@ public class AccessControlEndpointTest {
           this.mockMvc.perform(post).andExpect(status().isOk())
               .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
               .andExpect(jsonPath("$.credential_name", equalTo("/cred1")))
-              .andExpect(jsonPath("$.access_control_list", hasSize(1)))
-              .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("dan")))
-              .andExpect(jsonPath("$.access_control_list[0].operations[0]", equalTo("read")));
+              .andExpect(jsonPath("$.access_control_list", hasSize(2)))
+              .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")))
+              .andExpect(jsonPath("$.access_control_list[0].operations[0]", equalTo("read")))
+              .andExpect(jsonPath("$.access_control_list[0].operations[1]", equalTo("write")))
+              .andExpect(jsonPath("$.access_control_list[1].actor", equalTo("dan")))
+              .andExpect(jsonPath("$.access_control_list[1].operations[0]", equalTo("read")));
 
           this.mockMvc.perform(get)
               .andExpect(status().isOk());
@@ -134,10 +137,12 @@ public class AccessControlEndpointTest {
           this.mockMvc.perform(updatePost).andExpect(status().isOk())
               .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
               .andExpect(jsonPath("$.credential_name", equalTo("/cred1")))
-              .andExpect(jsonPath("$.access_control_list", hasSize(1)))
-              .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("dan")))
+              .andExpect(jsonPath("$.access_control_list", hasSize(2)))
+              .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")))
+              .andExpect(jsonPath("$.access_control_list[0].operations", contains("read", "write")))
+              .andExpect(jsonPath("$.access_control_list[1].actor", equalTo("dan")))
               .andExpect(
-                  jsonPath("$.access_control_list[0].operations", contains("read", "write")));
+                  jsonPath("$.access_control_list[1].operations", contains("read", "write")));
 
           this.mockMvc.perform(get)
               .andExpect(status().isOk());
@@ -182,9 +187,11 @@ public class AccessControlEndpointTest {
             this.mockMvc.perform(post).andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
                 .andExpect(jsonPath("$.credential_name", equalTo("/cred2")))
-                .andExpect(jsonPath("$.access_control_list", hasSize(1)))
-                .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("dan")))
-                .andExpect(jsonPath("$.access_control_list[0].operations[0]", equalTo("read")));
+                .andExpect(jsonPath("$.access_control_list", hasSize(2)))
+                .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")))
+                .andExpect(jsonPath("$.access_control_list[0].operations", contains("read", "write")))
+                .andExpect(jsonPath("$.access_control_list[1].actor", equalTo("dan")))
+                .andExpect(jsonPath("$.access_control_list[1].operations[0]", equalTo("read")));
 
             this.mockMvc.perform(get)
                 .andExpect(status().isOk());
@@ -310,9 +317,11 @@ public class AccessControlEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
                 .andExpect(jsonPath("$.credential_name", equalTo("/cred1")))
-                .andExpect(jsonPath("$.access_control_list", hasSize(1)))
-                .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("dan")))
-                .andExpect(jsonPath("$.access_control_list[0].operations[0]", equalTo("read")));
+                .andExpect(jsonPath("$.access_control_list", hasSize(2)))
+                .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")))
+                .andExpect(jsonPath("$.access_control_list[0].operations", contains("read", "write")))
+                .andExpect(jsonPath("$.access_control_list[1].actor", equalTo("dan")))
+                .andExpect(jsonPath("$.access_control_list[1].operations[0]", equalTo("read")));
           });
 
           it("returns the full list of access control entries for the credential"
@@ -325,9 +334,11 @@ public class AccessControlEndpointTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
                     .andExpect(jsonPath("$.credential_name", equalTo("/cred1")))
-                    .andExpect(jsonPath("$.access_control_list", hasSize(1)))
-                    .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("dan")))
-                    .andExpect(jsonPath("$.access_control_list[0].operations[0]", equalTo("read")));
+                    .andExpect(jsonPath("$.access_control_list", hasSize(2)))
+                    .andExpect(jsonPath("$.access_control_list[0].actor", equalTo("df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")))
+                    .andExpect(jsonPath("$.access_control_list[0].operations", contains("read", "write")))
+                    .andExpect(jsonPath("$.access_control_list[1].actor", equalTo("dan")))
+                    .andExpect(jsonPath("$.access_control_list[1].operations[0]", equalTo("read")));
               });
         });
 
@@ -386,7 +397,7 @@ public class AccessControlEndpointTest {
                     .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
             )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_control_list").isEmpty());
+                .andExpect(jsonPath("$.access_control_list", hasSize(1)));
           });
         });
 
