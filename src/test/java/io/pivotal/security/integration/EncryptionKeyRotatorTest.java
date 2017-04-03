@@ -7,7 +7,7 @@ import static io.pivotal.security.helper.JsonHelper.parse;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static io.pivotal.security.service.EncryptionKeyCanaryMapper.CANARY_VALUE;
 import static io.pivotal.security.service.PasswordBasedKeyProxy.generateSalt;
-import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_TOKEN;
+import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -214,7 +214,7 @@ public class EncryptionKeyRotatorTest {
 
       it("can rotate password secrets", () -> {
         MockHttpServletRequestBuilder post = post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
             .content("{"
@@ -242,14 +242,14 @@ public class EncryptionKeyRotatorTest {
             not(equalTo(secondEncryption.getEncryptedGenerationParameters())));
 
         final MockHttpServletRequestBuilder get = get("/api/v1/data?name=cred1")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN);
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN);
         this.mockMvc.perform(get).andExpect(status().isOk())
             .andExpect(jsonPath(".data[0].value").value(originalPassword));
       });
 
       it("can rotate certificate secrets", () -> {
         MockHttpServletRequestBuilder post = post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
             .content("{"
@@ -278,7 +278,7 @@ public class EncryptionKeyRotatorTest {
             not(equalTo(secondEncryption.getEncryptedValue())));
 
         final MockHttpServletRequestBuilder get = get("/api/v1/data?name=cred1")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN);
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN);
         this.mockMvc.perform(get).andExpect(status().isOk())
             .andExpect(jsonPath("$.data[0].value.private_key").value(originalCert));
       });

@@ -7,7 +7,7 @@ import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE
 import static io.pivotal.security.helper.SpectrumHelper.mockOutCurrentTimeProvider;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static io.pivotal.security.util.AuditLogTestHelper.resetAuditLogMock;
-import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_TOKEN;
+import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -135,7 +135,7 @@ public class SecretsControllerRegenerateTest {
         fakeTimeSetter.accept(frozenTime.plusSeconds(10).toEpochMilli());
 
         response = mockMvc.perform(post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
             .content("{\"regenerate\":true,\"name\":\"my-password\"}"));
@@ -168,7 +168,7 @@ public class SecretsControllerRegenerateTest {
         doReturn(null).when(secretDataService).findMostRecent("my-password");
 
         response = mockMvc.perform(post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
             .content("{\"regenerate\":true,\"name\":\"my-password\"}"));
@@ -197,7 +197,7 @@ public class SecretsControllerRegenerateTest {
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 
         response = mockMvc.perform(post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
             .accept(APPLICATION_JSON)
             .contentType(APPLICATION_JSON)
             .content("{\"regenerate\":true,\"name\":\"my-password\"}"));
@@ -228,7 +228,7 @@ public class SecretsControllerRegenerateTest {
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 
         response = mockMvc.perform(post("/api/v1/data")
-                .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+                .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
                 .accept(APPLICATION_JSON)
                 .contentType(APPLICATION_JSON)
                 .content("{\"regenerate\":true,\"name\":\"my-password\"}"));

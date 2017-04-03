@@ -2,10 +2,11 @@ package io.pivotal.security.config;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.fit;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static io.pivotal.security.util.AuthConstants.INVALID_SCOPE_KEY_JWT;
-import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_TOKEN;
+import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
 import static io.pivotal.security.util.CertificateStringConstants.SIMPLE_SELF_SIGNED_TEST_CERT;
 import static io.pivotal.security.util.CertificateStringConstants.TEST_CERT_WITHOUT_ORGANIZATION_UNIT;
 import static io.pivotal.security.util.CertificateStringConstants.TEST_CERT_WITH_INVALID_ORGANIZATION_UNIT_PREFIX;
@@ -122,7 +123,7 @@ public class AuthConfigurationTest {
       describe("with a token accepted by our security config", () -> {
         it("allows access", () -> {
           final MockHttpServletRequestBuilder post = post(dataApiPath)
-              .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+              .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
               .accept(MediaType.APPLICATION_JSON)
               .contentType(MediaType.APPLICATION_JSON)
               .content("{\"type\":\"password\",\"name\":\"" + secretName + "\"}");
@@ -255,7 +256,7 @@ public class AuthConfigurationTest {
       describe("with a token accepted by our security config", () -> {
         it("allows access", () -> {
           final MockHttpServletRequestBuilder post = post("/api/v1/vcap")
-              .header("Authorization", "Bearer " + UAA_OAUTH2_TOKEN)
+              .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
               .accept(MediaType.APPLICATION_JSON)
               .contentType(MediaType.APPLICATION_JSON)
               .content("{}");
