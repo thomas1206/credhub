@@ -1,25 +1,30 @@
 package io.pivotal.security.generator;
 
 import io.pivotal.security.controller.v1.CertificateSecretParameters;
+import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509ExtensionUtils;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.auditing.DateTimeProvider;
+import org.springframework.stereotype.Component;
+
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.auditing.DateTimeProvider;
-import org.springframework.stereotype.Component;
 
 @Component
 public class SignedCertificateGenerator {
@@ -27,16 +32,18 @@ public class SignedCertificateGenerator {
   private final DateTimeProvider timeProvider;
   private final RandomSerialNumberGenerator serialNumberGenerator;
   private final BouncyCastleProvider provider;
+  private final X509ExtensionUtils x509ExtensionUtils;
 
   @Autowired
   SignedCertificateGenerator(
       DateTimeProvider timeProvider,
       RandomSerialNumberGenerator serialNumberGenerator,
       BouncyCastleProvider provider
-  ) {
+  ) throws Exception {
     this.timeProvider = timeProvider;
     this.serialNumberGenerator = serialNumberGenerator;
     this.provider = provider;
+    this.x509ExtensionUtils = new X509ExtensionUtils(new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1)));
   }
 
   X509Certificate getSelfSigned(KeyPair keyPair, CertificateSecretParameters params)
@@ -62,6 +69,7 @@ public class SignedCertificateGenerator {
         publicKeyInfo
     );
 
+    certificateBuilder.addExtension(Extension.subjectKeyIdentifier, false, x509ExtensionUtils.createSubjectKeyIdentifier(publicKeyInfo));
     if (params.getAlternativeNames() != null) {
       certificateBuilder
           .addExtension(Extension.subjectAlternativeName, false, params.getAlternativeNames());

@@ -1,5 +1,20 @@
 package io.pivotal.security.generator;
 
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.controller.v1.CertificateSecretParameters;
+import io.pivotal.security.exceptions.ParameterizedValidationException;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.springframework.data.auditing.DateTimeProvider;
+
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
@@ -17,9 +32,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.controller.v1.CertificateSecretParameters;
-import io.pivotal.security.exceptions.ParameterizedValidationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -39,17 +51,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.springframework.data.auditing.DateTimeProvider;
 
 @RunWith(Spectrum.class)
 public class SignedCertificateGeneratorTest {
@@ -120,6 +121,10 @@ public class SignedCertificateGeneratorTest {
 
         it("contains the public key", () -> {
           assertThat(generatedCert.getPublicKey(), equalTo(certKeyPair.getPublic()));
+        });
+
+        it("contains the subject key identifier", () -> {
+
         });
 
         it("has no alterative names", () -> {
