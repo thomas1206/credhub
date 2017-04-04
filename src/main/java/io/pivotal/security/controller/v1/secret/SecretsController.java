@@ -1,10 +1,5 @@
 package io.pivotal.security.controller.v1.secret;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
-
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -27,22 +22,18 @@ import io.pivotal.security.request.BaseSecretGenerateRequest;
 import io.pivotal.security.request.BaseSecretSetRequest;
 import io.pivotal.security.request.DefaultSecretGenerateRequest;
 import io.pivotal.security.request.SecretRegenerateRequest;
-import io.pivotal.security.request.*;
 import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
 import io.pivotal.security.service.GenerateService;
 import io.pivotal.security.service.SetService;
 import io.pivotal.security.util.CheckedFunction;
-import io.pivotal.security.view.*;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import javax.servlet.http.HttpServletRequest;
+import io.pivotal.security.view.DataResponse;
+import io.pivotal.security.view.FindCredentialResults;
+import io.pivotal.security.view.FindPathResults;
+import io.pivotal.security.view.ResponseError;
+import io.pivotal.security.view.SecretKind;
+import io.pivotal.security.view.SecretKindFromString;
+import io.pivotal.security.view.SecretView;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +51,14 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
@@ -73,7 +71,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static io.pivotal.security.entity.AuditingOperationCode.*;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
 
 @RestController
 @RequestMapping(
@@ -119,7 +119,7 @@ public class SecretsController {
   @RequestMapping(path = "", method = RequestMethod.POST)
   public ResponseEntity generate(InputStream inputStream,
       HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
     InputStream requestInputStream = new ByteArrayInputStream(ByteStreams.toByteArray(inputStream));
     try {
       return auditedHandlePostRequest(requestInputStream, request, authentication);
@@ -136,7 +136,7 @@ public class SecretsController {
       InputStream inputStream,
       HttpServletRequest request,
       Authentication authentication
-  ) throws Exception {
+  ) throws Throwable {
     return auditLogService.performWithAuditing((auditRecordBuilder -> {
       return deserializeAndHandlePostRequest(
           inputStream,
@@ -211,7 +211,7 @@ public class SecretsController {
   public ResponseEntity set(@RequestBody BaseSecretSetRequest requestBody,
       HttpServletRequest request,
       Authentication authentication,
-      AccessControlEntry currentUserAccessControlEntry) throws Exception {
+      AccessControlEntry currentUserAccessControlEntry) throws Throwable {
     requestBody.validate();
 
     requestBody.addCurrentUser(currentUserAccessControlEntry);
@@ -229,7 +229,7 @@ public class SecretsController {
       @RequestBody BaseSecretSetRequest requestBody,
       HttpServletRequest request,
       Authentication authentication
-  ) throws Exception {
+  ) throws Throwable {
     return auditLogService.performWithAuditing(auditRecordBuilder -> {
       return handlePutRequest(requestBody, request, authentication, auditRecordBuilder);
     });
@@ -251,7 +251,7 @@ public class SecretsController {
   @RequestMapping(path = "", method = RequestMethod.DELETE)
   public ResponseEntity delete(@RequestParam(value = "name", required = false) String secretName,
       HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
     return auditLogService.performWithAuditing(auditRecorder -> {
       auditRecorder.setCredentialName(secretName);
       auditRecorder.populateFromRequest(request);
@@ -275,7 +275,7 @@ public class SecretsController {
   public ResponseEntity getSecretById(
       @PathVariable String id,
       HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
 
     return retrieveSecretWithAuditing(
         id,
@@ -291,7 +291,7 @@ public class SecretsController {
       @RequestParam(value = "name", required = false) String secretName,
       @RequestParam(value = "current", required = false, defaultValue = "false") boolean current,
       HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
 
     return retrieveSecretWithAuditing(
         secretName,
@@ -321,7 +321,7 @@ public class SecretsController {
       Function<String, List<NamedSecret>> finder,
       HttpServletRequest request,
       Authentication authentication,
-      boolean returnFirstEntry) throws Exception {
+      boolean returnFirstEntry) throws Throwable {
     return auditLogService.performWithAuditing(auditRecordBuilder -> {
       auditRecordBuilder.populateFromRequest(request);
       auditRecordBuilder.setAuthentication(authentication);
@@ -360,13 +360,13 @@ public class SecretsController {
       @RequestParam Map<String, String> params,
       HttpServletRequest request,
       Authentication authentication
-  ) throws Exception {
+  ) throws Throwable {
     return findStartingWithAuditing(params.get("path"), request, authentication);
   }
 
   @RequestMapping(path = "", params = "paths=true", method = RequestMethod.GET)
   public ResponseEntity findPaths(HttpServletRequest request, Authentication authentication)
-      throws Exception {
+      throws Throwable {
     return findPathsWithAuditing(request, authentication);
   }
 
@@ -375,7 +375,7 @@ public class SecretsController {
       @RequestParam Map<String, String> params,
       HttpServletRequest request,
       Authentication authentication
-  ) throws Exception {
+  ) throws Throwable {
     return findWithAuditing(params.get("name-like"), secretDataService::findContainingName, request,
         authentication);
   }
@@ -446,7 +446,7 @@ public class SecretsController {
   private ResponseEntity findWithAuditing(String nameSubstring,
       Function<String, List<SecretView>> finder,
       HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
     return auditLogService.performWithAuditing(auditParams -> {
       auditParams.populateFromRequest(request);
       auditParams.setAuthentication(authentication);
@@ -459,7 +459,7 @@ public class SecretsController {
   private ResponseEntity findPathsWithAuditing(
       HttpServletRequest request,
       Authentication authentication
-  ) throws Exception {
+  ) throws Throwable {
     return auditLogService.performWithAuditing(auditParams -> {
       auditParams.populateFromRequest(request);
       auditParams.setAuthentication(authentication);
@@ -550,7 +550,7 @@ public class SecretsController {
   }
 
   private ResponseEntity findStartingWithAuditing(String path, HttpServletRequest request,
-      Authentication authentication) throws Exception {
+      Authentication authentication) throws Throwable {
     return findWithAuditing(path, secretDataService::findStartingWithPath, request, authentication);
   }
 }

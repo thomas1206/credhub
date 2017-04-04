@@ -53,8 +53,8 @@ public class AuditLogService {
 
   @SuppressWarnings("ReturnInsideFinallyBlock")
   public ResponseEntity<?> performWithAuditing(
-      ExceptionThrowingFunction<AuditRecordBuilder, ResponseEntity<?>, Exception> respondToRequestFunction
-  ) throws Exception {
+      ExceptionThrowingFunction<AuditRecordBuilder, ResponseEntity<?>, Throwable> respondToRequestFunction
+  ) throws Throwable {
     AuditRecordBuilder auditRecordBuilder = new AuditRecordBuilder();
 
     ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

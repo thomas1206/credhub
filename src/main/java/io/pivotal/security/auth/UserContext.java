@@ -1,10 +1,5 @@
 package io.pivotal.security.auth;
 
-import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -16,6 +11,12 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+
+import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class UserContext {
 
@@ -33,10 +34,10 @@ public class UserContext {
   private String issuer = VALUE_MISSING_OR_IRRELEVANT_TO_AUTH_TYPE;
   private long validFrom = Instant.EPOCH.getEpochSecond();
   private long validUntil = Instant.EPOCH.getEpochSecond();
-  private String clientId;
+  private String clientId = VALUE_MISSING_OR_IRRELEVANT_TO_AUTH_TYPE;
   private String scope = VALUE_MISSING_OR_IRRELEVANT_TO_AUTH_TYPE;
   private String grantType = VALUE_MISSING_OR_IRRELEVANT_TO_AUTH_TYPE;
-  private String authMethod;
+  private String authMethod = VALUE_MISSING_OR_IRRELEVANT_TO_AUTH_TYPE;
   private Collection<? extends GrantedAuthority> authorities;
 
 
@@ -44,8 +45,10 @@ public class UserContext {
       ResourceServerTokenServices tokenServices) {
     if (authentication instanceof OAuth2Authentication) {
       return fromOauth((OAuth2Authentication) authentication, token, tokenServices);
-    } else {
+    } else if (authentication instanceof PreAuthenticatedAuthenticationToken) {
       return fromMtls((PreAuthenticatedAuthenticationToken) authentication);
+    } else {
+      return new UserContext();
     }
   }
 

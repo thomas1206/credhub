@@ -2,12 +2,13 @@ package io.pivotal.security.config;
 
 import io.pivotal.security.aspects.AclLogging;
 import io.pivotal.security.auth.AuditOAuth2AccessDeniedHandler;
-import io.pivotal.security.auth.X509AuthenticationProvider;
 import io.pivotal.security.data.OperationAuditRecordDataService;
+import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.SecurityEventsLogService;
 import io.pivotal.security.util.CurrentTimeProvider;
 import org.aspectj.lang.Aspects;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.provider.token.ResourceServerTokenSer
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 public class OAuth2Configuration {
@@ -91,9 +93,21 @@ public class OAuth2Configuration {
   }
 
   @Bean
-  public AclLogging tlsLogging(SecurityEventsLogService securityEventsLogService) {
+  public AclLogging aclLogging(SecurityEventsLogService securityEventsLogService,
+                               PlatformTransactionManager transactionManager,
+                               CurrentTimeProvider currentTimeProvider,
+                               ResourceServerTokenServices tokenServices,
+                               OperationAuditRecordDataService operationAuditRecordDataService,
+                               MessageSource messageSource,
+                               AuditLogService auditLogService) {
     AclLogging aclLogging = Aspects.aspectOf(AclLogging.class);
-    aclLogging.setSecurityEventsLogService(securityEventsLogService);
+    aclLogging.setAclLogging(securityEventsLogService,
+      transactionManager,
+      currentTimeProvider,
+      tokenServices,
+      operationAuditRecordDataService,
+      messageSource,
+      auditLogService);
     return aclLogging;
   }
 

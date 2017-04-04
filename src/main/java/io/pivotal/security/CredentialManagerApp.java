@@ -1,7 +1,5 @@
 package io.pivotal.security;
 
-import static io.pivotal.security.util.TimeModuleFactory.createTimeModule;
-
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import io.pivotal.security.config.AuthServerProperties;
@@ -19,15 +17,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.EnableLoadTimeWeaving;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import java.security.Security;
+
+import static io.pivotal.security.util.TimeModuleFactory.createTimeModule;
 
 @SpringBootApplication
 @EnableConfigurationProperties({AuthServerProperties.class})
 @EnableJpaAuditing(dateTimeProviderRef = "currentTimeProvider")
 @EnableAspectJAutoProxy
-@EnableLoadTimeWeaving
 public class CredentialManagerApp {
 
   public static void main(String[] args) {

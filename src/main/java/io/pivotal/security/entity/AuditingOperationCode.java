@@ -1,6 +1,7 @@
 package io.pivotal.security.entity;
 
 public enum AuditingOperationCode {
+  ACL_ACCESS("acl_access"),
   CREDENTIAL_ACCESS("credential_access"),
   CREDENTIAL_FIND("credential_find"),
   CREDENTIAL_DELETE("credential_delete"),

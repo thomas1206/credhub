@@ -1,5 +1,23 @@
 package io.pivotal.security.integration;
 
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.helper.JsonHelper;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.service.SecurityEventsLogService;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import io.pivotal.security.view.AccessControlListResponse;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
@@ -13,6 +31,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -24,22 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.helper.JsonHelper;
-import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import io.pivotal.security.view.AccessControlListResponse;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
 @RunWith(Spectrum.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
@@ -49,6 +54,9 @@ public class AccessControlEndpointTest {
   private WebApplicationContext webApplicationContext;
 
   private MockMvc mockMvc;
+
+  @MockBean
+  private SecurityEventsLogService securityEventsLogService;
 
   {
     wireAndUnwire(this);
@@ -452,6 +460,19 @@ public class AccessControlEndpointTest {
                     "The request could not be fulfilled because the resource could not be found."));
 
           });
+        });
+      });
+    });
+
+    describe("Logging", () -> {
+      describe("When calling get", () -> {
+        it("logs acl_access", () -> {
+          mockMvc.perform(
+            get("/api/v1/acls?credential_name=/cred1")
+              .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+          );
+
+          verify(securityEventsLogService, times(2)).log(any());
         });
       });
     });
