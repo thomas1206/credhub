@@ -52,6 +52,10 @@ public class AccessControlDataService {
     accessEntryRepository.deleteByCredentialNameUuidAndActor(secretName.getUuid(), actor);
   }
 
+  public boolean hasAclReadPermission(String actor, String credentialName) {
+    return false;
+  }
+
   private void upsertAccessEntryOperations(SecretName secretName,
       List<AccessEntryData> accessEntries, String actor, List<AccessControlOperation> operations) {
     AccessEntryData entry = findAccessEntryForActor(accessEntries, actor);

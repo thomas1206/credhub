@@ -15,10 +15,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
 import io.pivotal.security.request.AccessEntriesRequest;
+import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,22 +29,30 @@ import org.junit.runner.RunWith;
 @RunWith(Spectrum.class)
 public class AccessControlHandlerTest {
   private AccessControlHandler subject;
+
+  private PermissionService permissionService;
   private AccessControlDataService accessControlDataService;
+
+  private final UserContext userContext = mock(UserContext.class);
 
   {
     beforeEach(() -> {
+      permissionService = mock(PermissionService.class);
       accessControlDataService = mock(AccessControlDataService.class);
-      subject = new AccessControlHandler(accessControlDataService);
+      subject = new AccessControlHandler(permissionService, accessControlDataService);
     });
 
     describe("#getAccessControlListResponse", () -> {
       describe("when the requested credential name does not start with a slash", () -> {
-        it("should ensure the response contains the corrected name", () -> {
+        beforeEach(() -> {
           List<AccessControlEntry> accessControlList = newArrayList();
           when(accessControlDataService.getAccessControlList(any(String.class)))
               .thenReturn(accessControlList);
+        });
 
-          AccessControlListResponse response = subject.getAccessControlListResponse("test-credential");
+        it("should ensure the response contains the corrected name", () -> {
+          AccessControlListResponse response = subject.getAccessControlListResponse(null,
+              "test-credential");
           assertThat(response.getCredentialName(), equalTo("/test-credential"));
         });
       });
@@ -60,8 +70,18 @@ public class AccessControlHandlerTest {
              .thenReturn(accessControlList);
         });
 
+        it("verifies that the user has permission to read the credential's ACL", () -> {
+          subject.getAccessControlListResponse(userContext, "/test-credential");
+
+          verify(permissionService, times(1))
+              .verifyAclReadPermission(userContext, "/test-credential");
+        });
+
         it("should return the ACL response", () -> {
-          AccessControlListResponse response = subject.getAccessControlListResponse("/test-credential");
+          AccessControlListResponse response = subject.getAccessControlListResponse(
+              userContext,
+              "/test-credential"
+          );
           List<AccessControlEntry> accessControlEntries = response.getAccessControlList();
 
           assertThat(response.getCredentialName(), equalTo("/test-credential"));
