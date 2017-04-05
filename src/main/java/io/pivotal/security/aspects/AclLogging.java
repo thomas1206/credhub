@@ -1,12 +1,9 @@
 package io.pivotal.security.aspects;
 
 import io.pivotal.security.data.OperationAuditRecordDataService;
-import io.pivotal.security.entity.AuditingOperationCode;
 import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.SecurityEventsLogService;
 import io.pivotal.security.util.CurrentTimeProvider;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,9 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import static io.pivotal.security.aspects.AspectHelper.setResponse;
+
 @Aspect
 public class AclLogging {
-  private final Logger logger = LogManager.getLogger();
   private SecurityEventsLogService securityEventsLogService;
   private PlatformTransactionManager transactionManager;
   private CurrentTimeProvider currentTimeProvider;
@@ -44,11 +42,8 @@ public class AclLogging {
   }
 
   @Around("execution(public * io.pivotal.security.controller.v1.permissions.AccessControlListController.getAccessControlList(..)) && args(credentialName)")
-  public void logBefore(ProceedingJoinPoint joinPoint, String credentialName) throws Throwable {
-    auditLogService.performWithAuditing(auditRecordBuilder -> {
-      auditRecordBuilder.setOperationCode(AuditingOperationCode.ACL_ACCESS);
-      return (ResponseEntity) joinPoint.proceed();
-    });
+  public ResponseEntity logBefore(ProceedingJoinPoint joinPoint, String credentialName) throws Throwable {
+    return auditLogService.performWithAuditing(setResponse(joinPoint));
   }
 }
 

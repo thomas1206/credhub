@@ -11,6 +11,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,9 +36,9 @@ public class AccessControlListController {
   }
 
   @GetMapping
-  public AccessControlListResponse getAccessControlList(
+  public ResponseEntity<AccessControlListResponse> getAccessControlList(
       @RequestParam("credential_name") String credentialName) {
-    return accessControlViewService.getAccessControlListResponse(credentialName);
+    return new ResponseEntity<>(accessControlViewService.getAccessControlListResponse(credentialName), HttpStatus.OK);
   }
 
   @ExceptionHandler(MissingServletRequestParameterException.class)
