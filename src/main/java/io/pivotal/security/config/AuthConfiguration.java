@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -31,18 +33,21 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
   private final AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler;
   private final AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler;
   private final PreAuthenticationFailureFilter preAuthenticationFailureFilter;
+  private final AuthenticationManager authenticationManager;
+
 
   @Autowired
   AuthConfiguration(
-      ResourceServerProperties resourceServerProperties,
-      AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler,
-      AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler,
-      PreAuthenticationFailureFilter preAuthenticationFailureFilter
-  ) {
+    ResourceServerProperties resourceServerProperties,
+    AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler,
+    AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler,
+    PreAuthenticationFailureFilter preAuthenticationFailureFilter,
+    AuthenticationManager authenticationManager) {
     this.resourceServerProperties = resourceServerProperties;
     this.auditOAuth2AuthenticationExceptionHandler = auditOAuth2AuthenticationExceptionHandler;
     this.auditOAuth2AccessDeniedHandler = auditOAuth2AccessDeniedHandler;
     this.preAuthenticationFailureFilter = preAuthenticationFailureFilter;
+    this.authenticationManager = authenticationManager;
   }
 
   @Override
@@ -66,7 +71,15 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
 
     http.x509()
         .subjectPrincipalRegex(VALID_MTLS_ID)
-        .userDetailsService(mtlsSUserDetailsService());
+        .userDetailsService(mtlsSUserDetailsService())
+        .withObjectPostProcessor(new ObjectPostProcessor<X509AuthenticationFilter>() {
+          @Override
+          public <O extends X509AuthenticationFilter> O postProcess(O filter) {
+            filter.setContinueFilterChainOnUnsuccessfulAuthentication(false);
+            return filter;
+          }
+        });
+
 
     http.addFilterBefore(preAuthenticationFailureFilter, X509AuthenticationFilter.class)
         .authenticationProvider(getPreAuthenticatedAuthenticationProvider());
@@ -90,6 +103,13 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
   @Bean
   public PreAuthenticatedAuthenticationProvider getPreAuthenticatedAuthenticationProvider() {
     return new X509AuthenticationProvider();
+  }
+
+  private X509AuthenticationFilter getX509AuthenticationFilter() {
+    X509AuthenticationFilter x509AuthenticationFilter = new X509AuthenticationFilter();
+    x509AuthenticationFilter.setAuthenticationManager(authenticationManager);
+    x509AuthenticationFilter.setContinueFilterChainOnUnsuccessfulAuthentication(false);
+    return x509AuthenticationFilter;
   }
 
 }
