@@ -27,6 +27,6 @@ public class SshSecret implements Regeneratable {
     generationParameters.setSshComment(sshSecret.getComment());
     generateRequest.setGenerationParameters(generationParameters);
 
-    return generateService.performGenerate(auditRecordBuilder, generateRequest);
+    return generateService.performGenerate(auditRecordBuilder, generateRequest, null);
   }
 }

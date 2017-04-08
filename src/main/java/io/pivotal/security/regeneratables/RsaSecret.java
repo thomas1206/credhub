@@ -21,6 +21,6 @@ public class RsaSecret implements Regeneratable {
     generateRequest.setName(rsaSecret.getName());
     generateRequest.setType(rsaSecret.getSecretType());
 
-    return generateService.performGenerate(auditRecordBuilder, generateRequest);
+    return generateService.performGenerate(auditRecordBuilder, generateRequest, null);
   }
 }

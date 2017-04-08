@@ -33,6 +33,6 @@ public class PasswordSecret implements Regeneratable {
     }
     generateRequest.setGenerationParameters(generationParameters);
 
-    return generateService.performGenerate(auditRecordBuilder, generateRequest);
+    return generateService.performGenerate(auditRecordBuilder, generateRequest, null);
   }
 }

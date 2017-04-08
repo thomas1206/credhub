@@ -1,5 +1,10 @@
 package io.pivotal.security.controller.v1.secret;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
+import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import com.jayway.jsonpath.DocumentContext;
@@ -28,6 +33,15 @@ import io.pivotal.security.view.FindPathResults;
 import io.pivotal.security.view.SecretKind;
 import io.pivotal.security.view.SecretKindFromString;
 import io.pivotal.security.view.SecretView;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -47,21 +61,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_ACCESS;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_FIND;
-import static io.pivotal.security.entity.AuditingOperationCode.CREDENTIAL_UPDATE;
 
 @RestController
 @RequestMapping(
@@ -125,14 +124,13 @@ public class SecretsController {
       AccessControlEntry currentUserAccessControlEntry) throws Exception {
     requestBody.validate();
 
-    requestBody.addCurrentUser(currentUserAccessControlEntry);
     try {
-      return auditedHandlePutRequest(requestBody, request, authentication);
+      return auditedHandlePutRequest(requestBody, request, authentication, currentUserAccessControlEntry);
     } catch (JpaSystemException | DataIntegrityViolationException e) {
       LOGGER.error(
           "Exception \"" + e.getMessage() + "\" with class \"" + e.getClass().getCanonicalName()
               + "\" while storing secret, possibly caused by race condition, retrying...");
-      return auditedHandlePutRequest(requestBody, request, authentication);
+      return auditedHandlePutRequest(requestBody, request, authentication, currentUserAccessControlEntry);
     }
   }
 
@@ -263,7 +261,6 @@ public class SecretsController {
   ) throws IOException {
     BaseSecretGenerateRequest requestBody = objectMapper.readValue(requestString, BaseSecretGenerateRequest.class);
     requestBody.validate();
-    requestBody.addCurrentUser(currentUserAccessControlEntry);
 
     auditRecordBuilder.setCredentialName(requestBody.getName());
     final boolean isCurrentlyTrappedInTheMonad = requestBody instanceof DefaultSecretGenerateRequest;
@@ -272,7 +269,7 @@ public class SecretsController {
       DocumentContext parsedRequestBody = jsonContextFactory.getParseContext().parse(requestInputStream);
       return storeSecret(auditRecordBuilder, namedSecretGenerateHandler, parsedRequestBody);
     } else {
-      return generateService.performGenerate(auditRecordBuilder, requestBody);
+      return generateService.performGenerate(auditRecordBuilder, requestBody, currentUserAccessControlEntry);
     }
   }
 
@@ -298,10 +295,11 @@ public class SecretsController {
   private ResponseEntity auditedHandlePutRequest(
       @RequestBody BaseSecretSetRequest requestBody,
       HttpServletRequest request,
-      Authentication authentication
+      Authentication authentication,
+      AccessControlEntry currentUserAccessControlEntry
   ) throws Exception {
     return auditLogService.performWithAuditing(auditRecordBuilder -> {
-      return handlePutRequest(requestBody, request, authentication, auditRecordBuilder);
+      return handlePutRequest(requestBody, request, authentication, auditRecordBuilder, currentUserAccessControlEntry);
     });
   }
 
@@ -309,13 +307,14 @@ public class SecretsController {
       @RequestBody BaseSecretSetRequest requestBody,
       HttpServletRequest request,
       Authentication authentication,
-      AuditRecordBuilder auditRecordBuilder
+      AuditRecordBuilder auditRecordBuilder,
+      AccessControlEntry currentUserAccessControlEntry
   ) throws Exception {
     auditRecordBuilder.setCredentialName(requestBody.getName());
     auditRecordBuilder.populateFromRequest(request);
     auditRecordBuilder.setAuthentication(authentication);
 
-    return setService.performSet(auditRecordBuilder, requestBody);
+    return setService.performSet(auditRecordBuilder, requestBody, currentUserAccessControlEntry);
   }
 
   private Function<String, List<NamedSecret>> selectLookupFunction(boolean current) {

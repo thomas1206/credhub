@@ -1,26 +1,5 @@
 package io.pivotal.security.controller.v1.secret;
 
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.domain.NamedCertificateSecret;
-import io.pivotal.security.domain.NamedPasswordSecret;
-import io.pivotal.security.domain.NamedRsaSecret;
-import io.pivotal.security.domain.NamedSshSecret;
-import io.pivotal.security.exceptions.ParameterizedValidationException;
-import io.pivotal.security.request.BaseSecretGenerateRequest;
-import io.pivotal.security.request.PasswordGenerateRequest;
-import io.pivotal.security.request.PasswordGenerationParameters;
-import io.pivotal.security.request.RsaGenerateRequest;
-import io.pivotal.security.request.SecretRegenerateRequest;
-import io.pivotal.security.request.SshGenerateRequest;
-import io.pivotal.security.service.AuditRecordBuilder;
-import io.pivotal.security.service.GenerateService;
-import io.pivotal.security.view.ResponseError;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
@@ -35,6 +14,28 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.data.SecretDataService;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedRsaSecret;
+import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.exceptions.ParameterizedValidationException;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.request.BaseSecretGenerateRequest;
+import io.pivotal.security.request.PasswordGenerateRequest;
+import io.pivotal.security.request.PasswordGenerationParameters;
+import io.pivotal.security.request.RsaGenerateRequest;
+import io.pivotal.security.request.SecretRegenerateRequest;
+import io.pivotal.security.request.SshGenerateRequest;
+import io.pivotal.security.service.AuditRecordBuilder;
+import io.pivotal.security.service.GenerateService;
+import io.pivotal.security.view.ResponseError;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @RunWith(Spectrum.class)
 public class RegenerateServiceTest {
@@ -63,7 +64,10 @@ public class RegenerateServiceTest {
       when(secretDataService.findMostRecent(eq("unsupported")))
           .thenReturn(secretOfUnsupportedType);
       when(generateService
-          .performGenerate(isA(AuditRecordBuilder.class), isA(BaseSecretGenerateRequest.class)))
+          .performGenerate(
+              isA(AuditRecordBuilder.class),
+              isA(BaseSecretGenerateRequest.class),
+              isA(AccessControlEntry.class)))
           .thenReturn(new ResponseEntity(HttpStatus.OK));
       secretOfUnsupportedType = new NamedCertificateSecret();
       subject = new RegenerateService(secretDataService, generateService);
@@ -100,7 +104,10 @@ public class RegenerateServiceTest {
                 ArgumentCaptor.forClass(BaseSecretGenerateRequest.class);
 
             verify(generateService)
-                .performGenerate(isA(AuditRecordBuilder.class), generateRequestCaptor.capture());
+                .performGenerate(
+                    isA(AuditRecordBuilder.class),
+                    generateRequestCaptor.capture(),
+                    isA(AccessControlEntry.class));
 
             PasswordGenerateRequest generateRequest = (PasswordGenerateRequest) generateRequestCaptor
                 .getValue();
@@ -156,7 +163,10 @@ public class RegenerateServiceTest {
                 ArgumentCaptor.forClass(BaseSecretGenerateRequest.class);
 
             verify(generateService)
-                .performGenerate(isA(AuditRecordBuilder.class), generateRequestCaptor.capture());
+                .performGenerate(
+                    isA(AuditRecordBuilder.class),
+                    generateRequestCaptor.capture(),
+                    isA(AccessControlEntry.class));
 
             SshGenerateRequest generateRequest = (SshGenerateRequest) generateRequestCaptor
                 .getValue();
@@ -188,7 +198,10 @@ public class RegenerateServiceTest {
                 ArgumentCaptor.forClass(BaseSecretGenerateRequest.class);
 
             verify(generateService)
-                .performGenerate(isA(AuditRecordBuilder.class), generateRequestCaptor.capture());
+                .performGenerate(
+                    isA(AuditRecordBuilder.class),
+                    generateRequestCaptor.capture(),
+                    isA(AccessControlEntry.class));
 
             RsaGenerateRequest generateRequest = (RsaGenerateRequest) generateRequestCaptor
                 .getValue();
