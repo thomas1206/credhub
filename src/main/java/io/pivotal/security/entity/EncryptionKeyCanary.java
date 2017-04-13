@@ -1,5 +1,15 @@
 package io.pivotal.security.entity;
 
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.util.List;
+import java.util.UUID;
+
 import static io.pivotal.security.constants.EncryptionConstants.ENCRYPTED_BYTES;
 import static io.pivotal.security.constants.EncryptionConstants.NONCE_SIZE;
 import static io.pivotal.security.constants.EncryptionConstants.SALT_SIZE;
@@ -8,18 +18,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static org.apache.commons.lang3.ArrayUtils.toObject;
 
-import java.util.List;
-import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import org.hibernate.annotations.GenericGenerator;
-
 @Entity
 @Table(name = "EncryptionKeyCanary")
-public class EncryptionKeyCanary implements EncryptedValueContainer<EncryptionKeyCanary> {
+public class EncryptionKeyCanary {
 
   // Use VARBINARY to make all 3 DB types happy.
   // H2 doesn't distinguish between "binary" and "varbinary" - see
@@ -32,7 +33,7 @@ public class EncryptionKeyCanary implements EncryptedValueContainer<EncryptionKe
   private UUID uuid;
 
   @Column(length = ENCRYPTED_BYTES + NONCE_SIZE, name = "encrypted_value")
-  private byte[] encryptedValue;
+  private byte[] encryptedCanaryValue;
 
   @Column(length = NONCE_SIZE)
   private byte[] nonce;
@@ -48,34 +49,28 @@ public class EncryptionKeyCanary implements EncryptedValueContainer<EncryptionKe
     this.uuid = uuid;
   }
 
-  @Override
-  public byte[] getEncryptedValue() {
-    return encryptedValue;
+  public byte[] getEncryptedCanaryValue() {
+    return encryptedCanaryValue;
   }
 
-  @Override
-  public EncryptionKeyCanary setEncryptedValue(byte[] encryptedValue) {
-    this.encryptedValue = encryptedValue;
+  public EncryptionKeyCanary setEncryptedCanaryValue(byte[] encryptedCanaryValue) {
+    this.encryptedCanaryValue = encryptedCanaryValue;
     return this;
   }
 
-  @Override
   public byte[] getNonce() {
     return nonce;
   }
 
-  @Override
   public EncryptionKeyCanary setNonce(byte[] nonce) {
     this.nonce = nonce;
     return this;
   }
 
-  @Override
   public UUID getEncryptionKeyUuid() {
     return uuid;
   }
 
-  @Override
   public EncryptionKeyCanary setEncryptionKeyUuid(UUID encryptionKeyUuid) {
     setUuid(encryptionKeyUuid);
     return this;

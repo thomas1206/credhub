@@ -1,5 +1,20 @@
 package io.pivotal.security.domain;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.entity.AccessEntryData;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.request.AccessControlOperation;
+import io.pivotal.security.request.PasswordGenerationParameters;
+import io.pivotal.security.service.Encryption;
+import org.junit.runner.RunWith;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
@@ -15,20 +30,9 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.entity.AccessEntryData;
-import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.request.AccessControlOperation;
-import io.pivotal.security.request.PasswordGenerationParameters;
-import io.pivotal.security.service.Encryption;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import org.junit.runner.RunWith;
 
 @RunWith(Spectrum.class)
 public class NamedPasswordSecretTest {
@@ -42,6 +46,7 @@ public class NamedPasswordSecretTest {
   private NamedPasswordSecret subject;
   private PasswordGenerationParameters generationParameters;
   private UUID canaryUuid;
+  private NamedPasswordSecretData namedPasswordSecretData;
 
   {
     beforeEach(() -> {
@@ -81,14 +86,15 @@ public class NamedPasswordSecretTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new NamedPasswordSecret("/foo");
+        namedPasswordSecretData = new NamedPasswordSecretData("/foo");
+        subject = new NamedPasswordSecret(namedPasswordSecretData);
         subject.setEncryptor(encryptor);
       });
 
       it("sets the nonce and the encrypted value", () -> {
         subject.setPasswordAndGenerationParameters("my-value", null);
-        assertThat(subject.getEncryptedValue(), notNullValue());
-        assertThat(subject.getNonce(), notNullValue());
+        assertThat(namedPasswordSecretData.getEncryptedValue(), notNullValue());
+        assertThat(namedPasswordSecretData.getNonce(), notNullValue());
       });
 
       it("can decrypt values", () -> {
@@ -107,8 +113,8 @@ public class NamedPasswordSecretTest {
 
       it("sets the parametersNonce and the encryptedGenerationParameters", () -> {
         subject.setPasswordAndGenerationParameters("my-value", generationParameters);
-        assertThat(subject.getEncryptedGenerationParameters(), notNullValue());
-        assertThat(subject.getParametersNonce(), notNullValue());
+        assertThat(namedPasswordSecretData.getEncryptedGenerationParameters(), notNullValue());
+        assertThat(namedPasswordSecretData.getParametersNonce(), notNullValue());
       });
 
       it("should set encrypted generation parameters and nonce to null if parameters are null",
@@ -116,8 +122,8 @@ public class NamedPasswordSecretTest {
             subject = new NamedPasswordSecret("password-with-null-parameters");
             subject.setEncryptor(encryptor);
             subject.setPasswordAndGenerationParameters("my-value", null);
-            assertThat(subject.getEncryptedGenerationParameters(), nullValue());
-            assertThat(subject.getParametersNonce(), nullValue());
+            assertThat(namedPasswordSecretData.getEncryptedGenerationParameters(), nullValue());
+            assertThat(namedPasswordSecretData.getParametersNonce(), nullValue());
           });
     });
 
@@ -134,35 +140,37 @@ public class NamedPasswordSecretTest {
         String generationParametersJson = new ObjectMapper().writeValueAsString(parameters);
         byte[] encryptedParametersValue = "fake-encrypted-parameters".getBytes();
         byte[] parametersNonce = "fake-parameters-nonce".getBytes();
+        byte[] encryptedPasswordValue = "fake-encrypted-password".getBytes();
+        byte[] passwordNonce = "password-nonce".getBytes();
         when(encryptor.encrypt(generationParametersJson))
             .thenReturn(new Encryption(canaryUuid, encryptedParametersValue, parametersNonce));
         when(encryptor.decrypt(any(UUID.class), eq(encryptedParametersValue), eq(parametersNonce)))
             .thenReturn(generationParametersJson);
+        when(encryptor.encrypt("my-password"))
+            .thenReturn(new Encryption(canaryUuid, encryptedPasswordValue, passwordNonce));
+        when(encryptor.decrypt(any(UUID.class), eq(encryptedPasswordValue), eq(passwordNonce)))
+            .thenReturn("my-password");
 
-        subject = new NamedPasswordSecret("/foo");
+        namedPasswordSecretData = new NamedPasswordSecretData("/foo");
+        subject = new NamedPasswordSecret(namedPasswordSecretData);
         subject.setEncryptor(encryptor);
-        subject.setPasswordAndGenerationParameters("my-value", parameters);
+        subject.setPasswordAndGenerationParameters("my-password", parameters);
         subject.setUuid(uuid);
         subject.setVersionCreatedAt(frozenTime);
-
-        byte[] initialEncryptedValue = subject.getEncryptedValue();
-        byte[] initialNonce = subject.getParametersNonce();
-        UUID encryptionKeuUuid = subject.getEncryptionKeyUuid();
 
         NamedPasswordSecret copy = new NamedPasswordSecret();
         subject.copyInto(copy);
 
         assertThat(copy.getName(), equalTo("/foo"));
-        assertThat(copy.getPassword(), equalTo("my-value"));
-        assertThat(copy.getEncryptedValue(), equalTo(initialEncryptedValue));
-
-        assertThat(subject.getGenerationParameters(),
-            samePropertyValuesAs(copy.getGenerationParameters()));
-        assertThat(copy.getEncryptionKeyUuid(), equalTo(encryptionKeuUuid));
-        assertThat(copy.getParametersNonce(), equalTo(initialNonce));
+        assertThat(copy.getPassword(), equalTo("my-password"));
+        assertThat(copy.getGenerationParameters(),
+            samePropertyValuesAs(subject.getGenerationParameters()));
 
         assertThat(copy.getUuid(), not(equalTo(uuid)));
         assertThat(copy.getVersionCreatedAt(), not(equalTo(frozenTime)));
+
+        verify(encryptor, times(2)).encrypt(any());
+        verify(encryptor, times(5)).decrypt(any(), any(), any());
       });
     });
 
@@ -175,9 +183,10 @@ public class NamedPasswordSecretTest {
         when(encryptor.decrypt(any(UUID.class), eq(encryptedValue), eq(nonce)))
             .thenReturn("new password");
 
-        subject = new NamedPasswordSecret("/existingName");
+        namedPasswordSecretData = new NamedPasswordSecretData("/existingName");
+        namedPasswordSecretData.setEncryptedValue("old encrypted value".getBytes());
+        subject = new NamedPasswordSecret(namedPasswordSecretData);
         subject.setEncryptor(encryptor);
-        subject.setEncryptedValue("old encrypted value".getBytes());
 
         ArrayList<AccessControlOperation> operations = newArrayList(AccessControlOperation.READ,
             AccessControlOperation.WRITE);

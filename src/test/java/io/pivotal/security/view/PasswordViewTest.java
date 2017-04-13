@@ -30,8 +30,6 @@ public class PasswordViewTest {
       entity = new NamedPasswordSecret("/foo")
           .setEncryptor(encryptor)
           .setUuid(uuid);
-      entity.setEncryptedValue("fake-encrypted-value".getBytes());
-      entity.setNonce("fake-nonce".getBytes());
 
       when(encryptor.decrypt(any(UUID.class), any(byte[].class), any(byte[].class)))
           .thenReturn("fake-plaintext-value");

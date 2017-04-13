@@ -1,5 +1,46 @@
 package io.pivotal.security.controller.v1.secret;
 
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.data.SecretDataService;
+import io.pivotal.security.domain.Encryptor;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedRsaSecret;
+import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.entity.NamedSshSecretData;
+import io.pivotal.security.generator.PassayStringSecretGenerator;
+import io.pivotal.security.generator.RsaGenerator;
+import io.pivotal.security.generator.SshGenerator;
+import io.pivotal.security.request.PasswordGenerationParameters;
+import io.pivotal.security.request.RsaGenerationParameters;
+import io.pivotal.security.request.SshGenerationParameters;
+import io.pivotal.security.secret.Password;
+import io.pivotal.security.secret.RsaKey;
+import io.pivotal.security.secret.SshKey;
+import io.pivotal.security.service.AuditLogService;
+import io.pivotal.security.service.AuditRecordBuilder;
+import io.pivotal.security.service.EncryptionKeyCanaryMapper;
+import io.pivotal.security.util.CurrentTimeProvider;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import io.pivotal.security.util.ExceptionThrowingFunction;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.time.Instant;
+import java.util.UUID;
+import java.util.function.Consumer;
+
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
@@ -23,43 +64,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.domain.Encryptor;
-import io.pivotal.security.domain.NamedPasswordSecret;
-import io.pivotal.security.domain.NamedRsaSecret;
-import io.pivotal.security.domain.NamedSshSecret;
-import io.pivotal.security.generator.PassayStringSecretGenerator;
-import io.pivotal.security.generator.RsaGenerator;
-import io.pivotal.security.generator.SshGenerator;
-import io.pivotal.security.request.PasswordGenerationParameters;
-import io.pivotal.security.request.RsaGenerationParameters;
-import io.pivotal.security.request.SshGenerationParameters;
-import io.pivotal.security.secret.Password;
-import io.pivotal.security.secret.RsaKey;
-import io.pivotal.security.secret.SshKey;
-import io.pivotal.security.service.AuditLogService;
-import io.pivotal.security.service.AuditRecordBuilder;
-import io.pivotal.security.service.EncryptionKeyCanaryMapper;
-import io.pivotal.security.util.CurrentTimeProvider;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import io.pivotal.security.util.ExceptionThrowingFunction;
-import java.time.Instant;
-import java.util.UUID;
-import java.util.function.Consumer;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
@@ -122,9 +126,12 @@ public class SecretsControllerRegenerateTest {
       beforeEach(() -> {
         when(passwordGenerator.generateSecret(any(PasswordGenerationParameters.class)))
             .thenReturn(new Password("generated-secret"));
-        NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
+
+        NamedPasswordSecretData namedPasswordSecretData =
+            new NamedPasswordSecretData("my-password");
+        namedPasswordSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+        NamedPasswordSecret originalSecret = new NamedPasswordSecret(namedPasswordSecretData);
         originalSecret.setEncryptor(encryptor);
-        originalSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
         PasswordGenerationParameters generationParameters = new PasswordGenerationParameters();
         generationParameters.setExcludeNumber(true);
         originalSecret
@@ -181,9 +188,10 @@ public class SecretsControllerRegenerateTest {
       beforeEach(() -> {
         when(rsaGenerator.generateSecret(any(RsaGenerationParameters.class)))
             .thenReturn(new RsaKey("public_key", "private_key"));
-        NamedRsaSecret originalSecret = new NamedRsaSecret("my-rsa");
+        NamedRsaSecretData namedRsaSecretData = new NamedRsaSecretData("my-rsa");
+        namedRsaSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+        NamedRsaSecret originalSecret = new NamedRsaSecret(namedRsaSecretData);
         originalSecret.setEncryptor(encryptor);
-        originalSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
         originalSecret.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-rsa");
@@ -236,9 +244,10 @@ public class SecretsControllerRegenerateTest {
       beforeEach(() -> {
         when(sshGenerator.generateSecret(any(SshGenerationParameters.class)))
             .thenReturn(new SshKey("public_key", "private_key", null));
-        NamedSshSecret originalSecret = new NamedSshSecret("my-ssh");
+        NamedSshSecretData namedSshSecretData = new NamedSshSecretData("my-ssh");
+        namedSshSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+        NamedSshSecret originalSecret = new NamedSshSecret(namedSshSecretData);
         originalSecret.setEncryptor(encryptor);
-        originalSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
         originalSecret.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-ssh");
@@ -347,12 +356,14 @@ public class SecretsControllerRegenerateTest {
     describe("when attempting to regenerate a password with parameters that can't be decrypted",
         () -> {
           beforeEach(() -> {
-            NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
+            NamedPasswordSecretData namedPasswordSecretData = new NamedPasswordSecretData(
+                "my-password");
+            NamedPasswordSecret originalSecret = new NamedPasswordSecret(namedPasswordSecretData);
             originalSecret.setEncryptor(encryptor);
             originalSecret
                 .setPasswordAndGenerationParameters("abcde", new PasswordGenerationParameters());
-            originalSecret.setEncryptionKeyUuid(UUID.randomUUID());
 
+            namedPasswordSecretData.setEncryptionKeyUuid(UUID.randomUUID());
             doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
 
             response = mockMvc.perform(post("/api/v1/data")
@@ -364,15 +375,14 @@ public class SecretsControllerRegenerateTest {
 
           it("returns an error", () -> {
             // language=JSON
-            String cannotRegenerateJson = "{\n" +
-                "  \"error\": \"The credential could not be accessed with the provided encryption "
-                +
+            String cannotRegenerate = "{\n" +
+                "  \"error\": \"The credential could not be accessed with the provided encryption " +
                 "keys. You must update your deployment configuration to continue.\"\n" +
                 "}";
 
             response
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().json(cannotRegenerateJson));
+                .andExpect(content().json(cannotRegenerate));
           });
         });
   }

@@ -43,7 +43,7 @@ class DefaultKeyProxy implements KeyProxy {
     String plaintext;
 
     try {
-      plaintext = encryptionService.decrypt(key, canary.getEncryptedValue(), canary.getNonce());
+      plaintext = encryptionService.decrypt(key, canary.getEncryptedCanaryValue(), canary.getNonce());
       return Arrays.equals(CANARY_VALUE.getBytes(), plaintext.getBytes())
           || Arrays.equals(DEPRECATED_CANARY_VALUE.getBytes(), plaintext.getBytes());
     } catch (AEADBadTagException e) {

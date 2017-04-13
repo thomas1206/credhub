@@ -79,7 +79,7 @@ public class PasswordBasedKeyProxyTest {
           final Encryption encryptedCanary = encryptionService
               .encrypt(null, derivedKey, CANARY_VALUE);
           canary = new EncryptionKeyCanary();
-          canary.setEncryptedValue(encryptedCanary.encryptedValue);
+          canary.setEncryptedCanaryValue(encryptedCanary.encryptedValue);
           canary.setNonce(encryptedCanary.nonce);
           final Byte[] saltArray = new Byte[salt.size()];
           canary.setSalt(toPrimitive(salt.toArray(saltArray)));
@@ -97,7 +97,7 @@ public class PasswordBasedKeyProxyTest {
           canary = new EncryptionKeyCanary();
           canary.setSalt(new byte[SALT_SIZE]);
           canary.setNonce(new byte[NONCE_SIZE]);
-          canary.setEncryptedValue(new byte[32]);
+          canary.setEncryptedCanaryValue(new byte[32]);
           final boolean match = subject.matchesCanary(canary);
           assertFalse(match);
           assertThat(subject.getKey(), not(equalTo(derivedKey)));

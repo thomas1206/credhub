@@ -1,9 +1,47 @@
 package io.pivotal.security.integration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.config.EncryptionKeyMetadata;
+import io.pivotal.security.config.EncryptionKeysConfiguration;
+import io.pivotal.security.data.EncryptionKeyCanaryDataService;
+import io.pivotal.security.data.SecretDataService;
+import io.pivotal.security.domain.Encryptor;
+import io.pivotal.security.domain.NamedCertificateSecret;
+import io.pivotal.security.domain.NamedPasswordSecret;
+import io.pivotal.security.domain.NamedSecret;
+import io.pivotal.security.entity.EncryptionKeyCanary;
+import io.pivotal.security.entity.NamedCertificateSecretData;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.repository.SecretRepository;
+import io.pivotal.security.request.PasswordGenerationParameters;
+import io.pivotal.security.service.Encryption;
+import io.pivotal.security.service.EncryptionKeyCanaryMapper;
+import io.pivotal.security.service.EncryptionKeyRotator;
+import io.pivotal.security.service.EncryptionService;
+import io.pivotal.security.service.PasswordBasedKeyProxy;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Slice;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.security.Key;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
-import static com.greghaskins.spectrum.Spectrum.xit;
 import static io.pivotal.security.helper.JsonHelper.parse;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static io.pivotal.security.service.EncryptionKeyCanaryMapper.CANARY_VALUE;
@@ -24,46 +62,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.config.EncryptionKeyMetadata;
-import io.pivotal.security.config.EncryptionKeysConfiguration;
-import io.pivotal.security.data.EncryptionKeyCanaryDataService;
-import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.domain.Encryptor;
-import io.pivotal.security.domain.NamedCertificateSecret;
-import io.pivotal.security.domain.NamedPasswordSecret;
-import io.pivotal.security.domain.NamedSecret;
-import io.pivotal.security.entity.EncryptionKeyCanary;
-import io.pivotal.security.request.PasswordGenerationParameters;
-import io.pivotal.security.service.Encryption;
-import io.pivotal.security.service.EncryptionKeyCanaryMapper;
-import io.pivotal.security.service.EncryptionKeyRotator;
-import io.pivotal.security.service.EncryptionService;
-import io.pivotal.security.service.PasswordBasedKeyProxy;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import java.security.Key;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.data.domain.Slice;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
 @RunWith(Spectrum.class)
 public class EncryptionKeyRotatorTest {
 
+  @SpyBean
+  SecretRepository secretRepository;
   @SpyBean
   SecretDataService secretDataService;
   @SpyBean
@@ -108,49 +113,59 @@ public class EncryptionKeyRotatorTest {
         final PasswordBasedKeyProxy keyProxy = new PasswordBasedKeyProxy("old-password",
             encryptionService);
         Key oldKey = keyProxy.deriveKey(generateSalt());
+
         oldCanary = new EncryptionKeyCanary();
         final Encryption canaryEncryption = encryptionService.encrypt(null, oldKey, CANARY_VALUE);
-        oldCanary.setEncryptedValue(canaryEncryption.encryptedValue);
+        oldCanary.setEncryptedCanaryValue(canaryEncryption.encryptedValue);
         oldCanary.setNonce(canaryEncryption.nonce);
         oldCanary = encryptionKeyCanaryDataService.save(oldCanary);
+
         when(encryptionKeyCanaryMapper.getKeyForUuid(oldCanary.getUuid())).thenReturn(oldKey);
         when(encryptionKeyCanaryMapper.getCanaryUuidsWithKnownAndInactiveKeys())
             .thenReturn(singletonList(oldCanary.getUuid()));
 
-        secretWithOldKey = new NamedCertificateSecret("/old-key");
         final Encryption encryption = encryptionService
             .encrypt(oldCanary.getUuid(), oldKey, "old-certificate-private-key");
-        secretWithOldKey.setEncryptedValue(encryption.encryptedValue);
-        secretWithOldKey.setNonce(encryption.nonce);
-        secretWithOldKey.setEncryptionKeyUuid(oldCanary.getUuid());
+        NamedCertificateSecretData namedCertificateSecretData1 =
+            new NamedCertificateSecretData("/old-key");
+        namedCertificateSecretData1.setEncryptedValue(encryption.encryptedValue);
+        namedCertificateSecretData1.setNonce(encryption.nonce);
+        namedCertificateSecretData1.setEncryptionKeyUuid(oldCanary.getUuid());
+        secretWithOldKey = new NamedCertificateSecret(namedCertificateSecretData1);
         secretDataService.save(secretWithOldKey);
 
         unknownCanary = new EncryptionKeyCanary();
-        unknownCanary.setEncryptedValue("bad-encrypted-value".getBytes());
+        unknownCanary.setEncryptedCanaryValue("bad-encrypted-value".getBytes());
         unknownCanary.setNonce("bad-nonce".getBytes());
         unknownCanary = encryptionKeyCanaryDataService.save(unknownCanary);
 
-        secretWithUnknownKey = new NamedCertificateSecret("/unknown-key");
+        NamedCertificateSecretData namedCertificateSecretData2 = new NamedCertificateSecretData(
+            "/unknown-key");
+        namedCertificateSecretData2.setEncryptionKeyUuid(unknownCanary.getUuid());
+        secretWithUnknownKey = new NamedCertificateSecret(namedCertificateSecretData2);
         secretWithUnknownKey
             .setEncryptor(encryptor)
             .setPrivateKey("cert-private-key");
-        secretWithUnknownKey.setEncryptionKeyUuid(unknownCanary.getUuid());
         secretDataService.save(secretWithUnknownKey);
 
         passwordName = "/test-password";
-        password = new NamedPasswordSecret(passwordName);
         final Encryption secretEncryption = encryptionService
             .encrypt(oldCanary.getUuid(), oldKey, "test-password-plaintext");
-        password.setEncryptedValue(secretEncryption.encryptedValue);
-        password.setNonce(secretEncryption.nonce);
+        NamedPasswordSecretData namedPasswordSecretData = new NamedPasswordSecretData(passwordName);
+        namedPasswordSecretData.setEncryptedValue(secretEncryption.encryptedValue);
+        namedPasswordSecretData.setNonce(secretEncryption.nonce);
+        namedPasswordSecretData.setNonce(secretEncryption.nonce);
+
         PasswordGenerationParameters parameters = new PasswordGenerationParameters();
         parameters.setExcludeNumber(true);
         final Encryption parameterEncryption = encryptionService
             .encrypt(oldCanary.getUuid(), oldKey,
                 new ObjectMapper().writeValueAsString(parameters));
-        password.setEncryptedGenerationParameters(parameterEncryption.encryptedValue);
-        password.setParametersNonce(parameterEncryption.nonce);
-        password.setEncryptionKeyUuid(oldCanary.getUuid());
+        namedPasswordSecretData.setEncryptedGenerationParameters(parameterEncryption.encryptedValue);
+        namedPasswordSecretData.setParametersNonce(parameterEncryption.nonce);
+        namedPasswordSecretData.setEncryptionKeyUuid(oldCanary.getUuid());
+
+        password = new NamedPasswordSecret(namedPasswordSecretData);
 
         secretDataService.save(password);
 
@@ -174,24 +189,25 @@ public class EncryptionKeyRotatorTest {
             .collect(Collectors.toList());
 
         // Gets updated to use current key:
-        assertThat(secretDataService.findByUuid(secretWithOldKey.getUuid()).getEncryptionKeyUuid(),
-            equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
+
+        assertThat(secretRepository.findFirstBySecretNameUuidOrderByVersionCreatedAtDesc(secretWithOldKey.getUuid())
+                .getEncryptionKeyUuid(), equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
         assertThat(uuids, hasItem(secretWithOldKey.getUuid()));
 
-        assertThat(secretDataService.findByUuid(password.getUuid()).getEncryptionKeyUuid(),
-            equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
+        assertThat(secretRepository.findFirstBySecretNameUuidOrderByVersionCreatedAtDesc(password.getUuid())
+                .getEncryptionKeyUuid(), equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
         assertThat(uuids, hasItem(password.getUuid()));
 
         // Unchanged because we don't have the key:
         assertThat(
-            secretDataService.findByUuid(secretWithUnknownKey.getUuid()).getEncryptionKeyUuid(),
-            equalTo(unknownCanary.getUuid()));
+            secretRepository.findFirstBySecretNameUuidOrderByVersionCreatedAtDesc(secretWithUnknownKey.getUuid())
+                .getEncryptionKeyUuid(), equalTo(unknownCanary.getUuid()));
         assertThat(uuids, not(hasItem(secretWithUnknownKey.getUuid())));
 
         // Unchanged because it's already up to date:
         assertThat(
-            secretDataService.findByUuid(secretWithCurrentKey.getUuid()).getEncryptionKeyUuid(),
-            equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
+            secretRepository.findFirstBySecretNameUuidOrderByVersionCreatedAtDesc(secretWithCurrentKey.getUuid())
+                .getEncryptionKeyUuid(), equalTo(encryptionKeyCanaryMapper.getActiveUuid()));
         assertThat(uuids, not(hasItem(secretWithCurrentKey.getUuid())));
 
         NamedPasswordSecret rotatedPassword = (NamedPasswordSecret) secretDataService

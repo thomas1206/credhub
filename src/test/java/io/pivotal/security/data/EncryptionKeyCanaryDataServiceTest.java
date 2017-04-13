@@ -3,7 +3,6 @@ package io.pivotal.security.data;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
-import static io.pivotal.security.helper.SpectrumHelper.itThrowsWithMessage;
 import static io.pivotal.security.helper.SpectrumHelper.wireAndUnwire;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -50,7 +49,7 @@ public class EncryptionKeyCanaryDataServiceTest {
       it("should save the encryption key in the database", () -> {
         EncryptionKeyCanary encryptionKeyCanary = new EncryptionKeyCanary();
         encryptionKeyCanary.setNonce("test-nonce".getBytes());
-        encryptionKeyCanary.setEncryptedValue("test-value".getBytes());
+        encryptionKeyCanary.setEncryptedCanaryValue("test-value".getBytes());
         subject.save(encryptionKeyCanary);
 
         List<EncryptionKeyCanary> canaries = jdbcTemplate
@@ -66,7 +65,7 @@ public class EncryptionKeyCanaryDataServiceTest {
               EncryptionKeyCanary key = new EncryptionKeyCanary();
               key.setUuid(uuid);
               key.setNonce(rowSet.getBytes("nonce"));
-              key.setEncryptedValue(rowSet.getBytes("encrypted_value"));
+              key.setEncryptedCanaryValue(rowSet.getBytes("encrypted_value"));
 
               return key;
             });
@@ -78,7 +77,7 @@ public class EncryptionKeyCanaryDataServiceTest {
         assertNotNull(actual.getUuid());
         assertThat(actual.getUuid(), equalTo(encryptionKeyCanary.getUuid()));
         assertThat(actual.getNonce(), equalTo("test-nonce".getBytes()));
-        assertThat(actual.getEncryptedValue(), equalTo("test-value".getBytes()));
+        assertThat(actual.getEncryptedCanaryValue(), equalTo("test-value".getBytes()));
       });
     });
 

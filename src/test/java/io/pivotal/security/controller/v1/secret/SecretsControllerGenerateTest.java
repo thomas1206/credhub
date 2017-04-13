@@ -37,6 +37,7 @@ import io.pivotal.security.domain.NamedPasswordSecret;
 import io.pivotal.security.domain.NamedRsaSecret;
 import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
 import io.pivotal.security.generator.BcCertificateGenerator;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
 import io.pivotal.security.generator.RsaGenerator;
@@ -219,18 +220,19 @@ public class SecretsControllerGenerateTest {
 
       describe("when another thread wins a race to write a new value", () -> {
         beforeEach(() -> {
-          final NamedPasswordSecret expectedSecret = new NamedPasswordSecret(secretName);
+          NamedPasswordSecretData namedPasswordSecretData = new NamedPasswordSecretData(secretName);
+          namedPasswordSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+          final NamedPasswordSecret expectedSecret = new NamedPasswordSecret(namedPasswordSecretData);
           expectedSecret.setEncryptor(encryptor);
-          expectedSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
           expectedSecret.setPasswordAndGenerationParameters(fakePassword, null);
 
           Mockito.reset(secretDataService);
 
           doReturn(null)
-              .doReturn(expectedSecret
-                  .setUuid(uuid)
-                  .setVersionCreatedAt(frozenTime.minusSeconds(1))
-              ).when(secretDataService).findMostRecent(anyString());
+          .doReturn(expectedSecret
+              .setUuid(uuid)
+              .setVersionCreatedAt(frozenTime.minusSeconds(1))
+          ).when(secretDataService).findMostRecent(anyString());
 
           doThrow(new DataIntegrityViolationException("we already have one of those"))
               .when(secretDataService).save(any(NamedSecret.class));
@@ -474,9 +476,10 @@ public class SecretsControllerGenerateTest {
       describe("with an existing secret", () -> {
         beforeEach(() -> {
           uuid = UUID.randomUUID();
-          final NamedPasswordSecret expectedSecret = new NamedPasswordSecret(secretName);
+          NamedPasswordSecretData namedPasswordSecretData = new NamedPasswordSecretData(secretName);
+          namedPasswordSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+          NamedPasswordSecret expectedSecret = new NamedPasswordSecret(namedPasswordSecretData);
           expectedSecret.setEncryptor(encryptor);
-          expectedSecret.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
           expectedSecret.setPasswordAndGenerationParameters(fakePassword, null);
           doReturn(expectedSecret
               .setUuid(uuid)

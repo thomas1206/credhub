@@ -10,6 +10,9 @@ import io.pivotal.security.domain.NamedPasswordSecret;
 import io.pivotal.security.domain.NamedRsaSecret;
 import io.pivotal.security.domain.NamedSecret;
 import io.pivotal.security.domain.NamedSshSecret;
+import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.entity.NamedRsaSecretData;
+import io.pivotal.security.entity.NamedSshSecretData;
 import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.generator.PassayStringSecretGenerator;
 import io.pivotal.security.generator.RsaGenerator;
@@ -171,12 +174,15 @@ public class SecretsControllerTypeSpecificGenerateTest {
           assertThat(passwordSecret.getGenerationParameters().isExcludeNumber(), equalTo(true));
           assertThat(passwordSecret.getPassword(), equalTo(fakePassword));
         },
-        () -> new NamedPasswordSecret(secretName)
+        () -> {
+          NamedPasswordSecretData namedPasswordSecretData = new NamedPasswordSecretData(secretName);
+          namedPasswordSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+          return new NamedPasswordSecret(namedPasswordSecretData)
             .setEncryptor(encryptor)
-            .setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid())
             .setPasswordAndGenerationParameters(fakePassword, new PasswordGenerationParameters().setExcludeNumber(true))
             .setUuid(uuid)
-            .setVersionCreatedAt(frozenTime.minusSeconds(1))
+            .setVersionCreatedAt(frozenTime.minusSeconds(1));
+        }
     ));
 
     describe("ssh", this.<NamedSshSecret>testSecretBehavior(
@@ -190,13 +196,16 @@ public class SecretsControllerTypeSpecificGenerateTest {
           assertThat(sshSecret.getPublicKey(), equalTo(publicKey));
           assertThat(sshSecret.getPrivateKey(), equalTo(privateKey));
         },
-        () -> new NamedSshSecret(secretName)
-            .setEncryptor(encryptor)
-            .setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid())
-            .setPrivateKey(privateKey)
-            .setPublicKey(publicKey)
-            .setUuid(uuid)
-            .setVersionCreatedAt(frozenTime.minusSeconds(1)))
+        () -> {
+          NamedSshSecretData namedSshSecretData = new NamedSshSecretData(secretName);
+          namedSshSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+          return new NamedSshSecret(namedSshSecretData)
+              .setEncryptor(encryptor)
+              .setPrivateKey(privateKey)
+              .setPublicKey(publicKey)
+              .setUuid(uuid)
+              .setVersionCreatedAt(frozenTime.minusSeconds(1));
+        })
     );
 
     describe("rsa", this.<NamedRsaSecret>testSecretBehavior(
@@ -209,13 +218,16 @@ public class SecretsControllerTypeSpecificGenerateTest {
           assertThat(rsaSecret.getPublicKey(), equalTo(publicKey));
           assertThat(rsaSecret.getPrivateKey(), equalTo(privateKey));
         },
-        () -> new NamedRsaSecret(secretName)
-            .setEncryptor(encryptor)
-            .setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid())
-            .setPrivateKey(privateKey)
-            .setPublicKey(publicKey)
-            .setUuid(uuid)
-            .setVersionCreatedAt(frozenTime.minusSeconds(1)))
+        () -> {
+          NamedRsaSecretData namedRsaSecretData = new NamedRsaSecretData(secretName);
+              namedRsaSecretData.setEncryptionKeyUuid(encryptionKeyCanaryMapper.getActiveUuid());
+          return new NamedRsaSecret(secretName)
+              .setEncryptor(encryptor)
+              .setPrivateKey(privateKey)
+              .setPublicKey(publicKey)
+              .setUuid(uuid)
+              .setVersionCreatedAt(frozenTime.minusSeconds(1));
+        })
     );
   }
 

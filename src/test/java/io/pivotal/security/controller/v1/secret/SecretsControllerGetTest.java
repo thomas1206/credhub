@@ -5,6 +5,7 @@ import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.SecretDataService;
 import io.pivotal.security.domain.Encryptor;
 import io.pivotal.security.domain.NamedValueSecret;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.exceptions.KeyNotFoundException;
 import io.pivotal.security.service.AuditLogService;
 import io.pivotal.security.service.AuditRecordBuilder;
@@ -110,18 +111,22 @@ public class SecretsControllerGetTest {
 
       beforeEach(() -> {
         uuid = UUID.randomUUID();
-        NamedValueSecret valueSecret = new NamedValueSecret(secretName)
+        NamedValueSecretData namedValueSecretData1 = new NamedValueSecretData(secretName);
+        namedValueSecretData1.setEncryptedValue("fake-encrypted-value1".getBytes());
+        namedValueSecretData1.setNonce("fake-nonce1".getBytes());
+
+        NamedValueSecretData namedValueSecretData2 = new NamedValueSecretData(secretName);
+        namedValueSecretData2.setEncryptedValue("fake-encrypted-value2".getBytes());
+        namedValueSecretData2.setNonce("fake-nonce2".getBytes());
+
+        NamedValueSecret valueSecret = new NamedValueSecret(namedValueSecretData1)
             .setEncryptor(encryptor)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime);
-        valueSecret.setEncryptedValue("fake-encrypted-value1".getBytes());
-        valueSecret.setEncryptedValue("fake-encrypted-value2".getBytes());
-        NamedValueSecret valueSecret2 = new NamedValueSecret(secretName)
+        NamedValueSecret valueSecret2 = new NamedValueSecret(namedValueSecretData2)
             .setEncryptor(encryptor)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime);
-        valueSecret2.setEncryptedValue("fake-encrypted-value2".getBytes());
-        valueSecret2.setNonce("fake-nonce2".getBytes());
 
         doReturn(secretValue).when(encryptor).decrypt(any(UUID.class), any(byte[].class), any(byte[].class));
 
@@ -237,13 +242,15 @@ public class SecretsControllerGetTest {
     describe("when key not present", () -> {
       beforeEach(() -> {
         uuid = UUID.randomUUID();
+        NamedValueSecretData namedValueSecretData = new NamedValueSecretData(secretName);
+        namedValueSecretData.setEncryptedValue("fake-encrypted-value1".getBytes());
+        namedValueSecretData.setNonce("fake-nonce1".getBytes());
+
         NamedValueSecret valueSecret =
-            new NamedValueSecret(secretName)
+            new NamedValueSecret(namedValueSecretData)
                 .setEncryptor(encryptor)
                 .setUuid(uuid)
                 .setVersionCreatedAt(frozenTime);
-        valueSecret.setEncryptedValue("fake-encrypted-value1".getBytes());
-        valueSecret.setEncryptedValue("fake-encrypted-value2".getBytes());
 
         doThrow(new KeyNotFoundException("error.missing_encryption_key"))
             .when(encryptor).decrypt(any(UUID.class), any(byte[].class), any(byte[].class));

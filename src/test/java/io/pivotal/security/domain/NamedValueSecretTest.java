@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.entity.NamedValueSecretData;
 import io.pivotal.security.service.Encryption;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class NamedValueSecretTest {
   NamedValueSecret subject;
   private Encryptor encryptor;
   private UUID canaryUuid;
+  private NamedValueSecretData namedValueSecretData;
 
   {
     beforeEach(() -> {
@@ -45,13 +47,15 @@ public class NamedValueSecretTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new NamedValueSecret("foo").setEncryptor(encryptor);
+        namedValueSecretData = new NamedValueSecretData("foo");
+        subject = new NamedValueSecret(namedValueSecretData).setEncryptor(encryptor);
       });
 
-      it("sets the nonce and the encrypted value", () -> {
+      it("encrypts the value", () -> {
+
         subject.setValue("my-value");
-        assertThat(subject.getEncryptedValue(), notNullValue());
-        assertThat(subject.getNonce(), notNullValue());
+        assertThat(namedValueSecretData.getEncryptedValue(), notNullValue());
+        assertThat(namedValueSecretData.getNonce(), notNullValue());
       });
 
       it("can decrypt values", () -> {
@@ -75,7 +79,7 @@ public class NamedValueSecretTest {
 
         subject = new NamedValueSecret("/existingName");
         subject.setEncryptor(encryptor);
-        subject.setEncryptedValue("old encrypted value".getBytes());
+        namedValueSecretData.setEncryptedValue("old encrypted value".getBytes());
       });
 
       it("copies values from existing, except value", () -> {

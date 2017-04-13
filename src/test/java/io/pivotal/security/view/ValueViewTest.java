@@ -34,9 +34,6 @@ public class ValueViewTest {
       entity = new NamedValueSecret("/foo")
           .setEncryptor(encryptor)
           .setUuid(uuid);
-      entity.setEncryptedValue("fake-encrypted-value".getBytes());
-      entity.setNonce("fake-nonce".getBytes());
-
     });
 
     it("can create view from entity", () -> {

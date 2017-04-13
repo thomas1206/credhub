@@ -40,13 +40,13 @@ public class DefaultKeyProxyTest {
       encryptionKey = encryptionService.createKeyProxy(keyMetadata).getKey();
       canary = new EncryptionKeyCanary();
       Encryption encryptionData = encryptionService.encrypt(null, encryptionKey, CANARY_VALUE);
-      canary.setEncryptedValue(encryptionData.encryptedValue);
+      canary.setEncryptedCanaryValue(encryptionData.encryptedValue);
       canary.setNonce(encryptionData.nonce);
 
       deprecatedCanary = new EncryptionKeyCanary();
       Encryption deprecatedEncryptionData = encryptionService
           .encrypt(null, encryptionKey, DEPRECATED_CANARY_VALUE);
-      deprecatedCanary.setEncryptedValue(deprecatedEncryptionData.encryptedValue);
+      deprecatedCanary.setEncryptedCanaryValue(deprecatedEncryptionData.encryptedValue);
       deprecatedCanary.setNonce(deprecatedEncryptionData.nonce);
     });
 

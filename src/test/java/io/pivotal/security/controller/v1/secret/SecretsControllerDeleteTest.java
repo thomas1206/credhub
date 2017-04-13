@@ -152,10 +152,6 @@ public class SecretsControllerDeleteTest {
 
       describe("when there are multiple secrets with that name", () -> {
         beforeEach(() -> {
-          NamedValueSecret value1 = new NamedValueSecret(secretName);
-          value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecret value2 = new NamedValueSecret(secretName);
-          value2.setEncryptedValue("value2".getBytes());
           doReturn(true).when(secretDataService).delete(secretName);
           doReturn(new NamedValueSecret()).when(secretDataService).findMostRecent(secretName);
 
@@ -181,10 +177,6 @@ public class SecretsControllerDeleteTest {
 
       describe("name can come as a request parameter", () -> {
         beforeEach(() -> {
-          NamedValueSecret value1 = new NamedValueSecret(secretName);
-          value1.setEncryptedValue("value1".getBytes());
-          NamedValueSecret value2 = new NamedValueSecret(secretName);
-          value2.setEncryptedValue("value2".getBytes());
           doReturn(true).when(secretDataService).delete(secretName.toUpperCase());
           doReturn(new NamedValueSecret())
               .when(secretDataService)

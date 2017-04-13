@@ -1,5 +1,30 @@
 package io.pivotal.security.controller.v1.secret;
 
+import com.greghaskins.spectrum.Spectrum;
+import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.data.SecretDataService;
+import io.pivotal.security.service.AuditLogService;
+import io.pivotal.security.service.AuditRecordBuilder;
+import io.pivotal.security.util.CurrentTimeProvider;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import io.pivotal.security.util.ExceptionThrowingFunction;
+import io.pivotal.security.view.SecretView;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.function.Consumer;
+
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
@@ -21,31 +46,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.greghaskins.spectrum.Spectrum;
-import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.data.SecretDataService;
-import io.pivotal.security.domain.NamedValueSecret;
-import io.pivotal.security.service.AuditLogService;
-import io.pivotal.security.service.AuditRecordBuilder;
-import io.pivotal.security.util.CurrentTimeProvider;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import io.pivotal.security.util.ExceptionThrowingFunction;
-import io.pivotal.security.view.SecretView;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.function.Consumer;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(Spectrum.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
@@ -100,9 +100,6 @@ public class SecretsControllerFindTest {
         describe("when search term does not include a leading slash", () -> {
           beforeEach(() -> {
             String substring = secretName.substring(4).toUpperCase();
-            NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
-            namedValueSecret.setEncryptedValue("some value".getBytes());
-            namedValueSecret.setVersionCreatedAt(frozenTime);
             doReturn(
                 Arrays.asList(new SecretView(frozenTime, secretName))
             ).when(secretDataService).findContainingName(substring);
@@ -130,9 +127,6 @@ public class SecretsControllerFindTest {
       describe("finding credentials by path", () -> {
         beforeEach(() -> {
           String substring = secretName.substring(0, secretName.lastIndexOf("/"));
-          NamedValueSecret namedValueSecret = new NamedValueSecret(secretName);
-          namedValueSecret.setEncryptedValue("some value".getBytes());
-          namedValueSecret.setVersionCreatedAt(frozenTime);
           doReturn(
               Arrays.asList(new SecretView(frozenTime, secretName))
           ).when(secretDataService).findStartingWithPath(substring);
@@ -168,9 +162,6 @@ public class SecretsControllerFindTest {
 
         it("should return all children which are prefixed with the path case-independently", () -> {
           final String path = "/my-namespace";
-          NamedValueSecret namedValueSecret = new NamedValueSecret("my-namespace");
-          namedValueSecret.setEncryptedValue("some value".getBytes());
-          namedValueSecret.setVersionCreatedAt(frozenTime);
           doReturn(
               Arrays.asList(new SecretView(frozenTime, secretName))
           ).when(secretDataService).findStartingWithPath(path.toUpperCase());
