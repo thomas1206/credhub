@@ -1,34 +1,35 @@
 package io.pivotal.security.data;
 
+import static io.pivotal.security.util.StringUtil.addLeadingSlashIfMissing;
+
 import io.pivotal.security.entity.AccessEntryData;
 import io.pivotal.security.entity.SecretName;
 import io.pivotal.security.exceptions.EntryNotFoundException;
 import io.pivotal.security.repository.AccessEntryRepository;
+import io.pivotal.security.repository.SecretNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 @Component
 public class AccessControlDataService {
 
   private AccessEntryRepository accessEntryRepository;
-  private SecretDataService secretDataService;
   private final JdbcTemplate jdbcTemplate;
+  private SecretNameRepository secretNameRepository;
 
   @Autowired
   public AccessControlDataService(
       AccessEntryRepository accessEntryRepository,
-      SecretDataService secretDataService,
-      JdbcTemplate jdbcTemplate
-  ) {
+      SecretNameRepository secretNameRepository,
+      JdbcTemplate jdbcTemplate) {
     this.accessEntryRepository = accessEntryRepository;
-    this.secretDataService = secretDataService;
+    this.secretNameRepository = secretNameRepository;
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -84,7 +85,7 @@ public class AccessControlDataService {
   }
 
   private SecretName findSecretName(String credentialName) {
-    final SecretName secretName = secretDataService.findSecretName(credentialName);
+    final SecretName secretName = secretNameRepository.findOneByNameIgnoreCase(addLeadingSlashIfMissing(credentialName));
 
     if (secretName == null) {
       throw new EntryNotFoundException("error.resource_not_found");

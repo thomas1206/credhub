@@ -2,6 +2,7 @@ package io.pivotal.security.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 public class StringUtil {
 
@@ -15,5 +16,9 @@ public class StringUtil {
       result = matcher.group(1) + INTERNAL_SYMBOL_FOR_ALLOW_ARRAY_MEMBERS + matcher.group(2);
     }
     return result;
+  }
+
+  public static String addLeadingSlashIfMissing(String name) {
+    return StringUtils.prependIfMissing(name, "/");
   }
 }

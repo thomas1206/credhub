@@ -1,5 +1,7 @@
 package io.pivotal.security.handler;
 
+import static io.pivotal.security.util.StringUtil.addLeadingSlashIfMissing;
+
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
 import io.pivotal.security.exceptions.EntryNotFoundException;
@@ -62,9 +64,5 @@ public class AccessControlHandler {
 
   public void deleteAccessControlEntries(String credentialName, String actor) {
     accessControlDataService.deleteAccessControlEntries(credentialName, actor);
-  }
-
-  private static String addLeadingSlashIfMissing(String name) {
-    return StringUtils.prependIfMissing(name, "/");
   }
 }

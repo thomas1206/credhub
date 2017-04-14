@@ -103,6 +103,8 @@ task cleanAndAssemble(dependsOn: ['clean', 'assemble'])
 assemble.mustRunAfter("clean")
 
 test {
+    maxParallelForks = 1
+
     jacoco {
         append = false
         destinationFile = file("${project.buildDir}/jacoco/jacocoTest.exec")
