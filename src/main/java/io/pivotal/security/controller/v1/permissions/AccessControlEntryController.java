@@ -1,5 +1,6 @@
 package io.pivotal.security.controller.v1.permissions;
 
+import io.pivotal.security.audit.EventAuditLogService;
 import io.pivotal.security.handler.AccessControlHandler;
 import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.view.AccessControlListResponse;
@@ -22,7 +23,10 @@ public class AccessControlEntryController {
   private AccessControlHandler accessControlHandler;
 
   @Autowired
-  public AccessControlEntryController(AccessControlHandler accessControlHandler) {
+  public AccessControlEntryController(
+      AccessControlHandler accessControlHandler,
+      EventAuditLogService eventAuditLogService
+  ) {
     this.accessControlHandler = accessControlHandler;
   }
 
