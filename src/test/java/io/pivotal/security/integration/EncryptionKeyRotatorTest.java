@@ -171,11 +171,6 @@ public class EncryptionKeyRotatorTest {
 
         StringGenerationParameters parameters = new StringGenerationParameters();
         parameters.setExcludeNumber(true);
-        final Encryption parameterEncryption = encryptionService
-            .encrypt(oldCanary.getUuid(), oldKey,
-                new ObjectMapper().writeValueAsString(parameters));
-        namedPasswordSecretData.setEncryptedGenerationParameters(parameterEncryption.encryptedValue);
-        namedPasswordSecretData.setParametersNonce(parameterEncryption.nonce);
         namedPasswordSecretData.setEncryptionKeyUuid(oldCanary.getUuid());
 
         password = new NamedPasswordSecret(namedPasswordSecretData);
@@ -233,11 +228,6 @@ public class EncryptionKeyRotatorTest {
         NamedPasswordSecret rotatedPassword = (NamedPasswordSecret) secretDataService
             .findMostRecent(passwordName);
         assertThat(rotatedPassword.getPassword(), equalTo("test-password-plaintext"));
-        assertThat(rotatedPassword.getGenerationParameters(), samePropertyValuesAs(
-            new StringGenerationParameters()
-                .setExcludeNumber(true)
-                .setLength(23))
-        );
       });
     });
 
@@ -277,8 +267,6 @@ public class EncryptionKeyRotatorTest {
             (NamedPasswordSecretData) secretRepository.findAllBySecretNameUuid(secretName.getUuid()).get(0);
         assertThat(firstEncryption.getEncryptedValue(),
             not(equalTo(secondEncryption.getEncryptedValue())));
-        assertThat(firstEncryption.getEncryptedGenerationParameters(),
-            not(equalTo(secondEncryption.getEncryptedGenerationParameters())));
 
         final MockHttpServletRequestBuilder get = get("/api/v1/data?name=cred1")
             .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN);

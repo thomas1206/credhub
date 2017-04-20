@@ -1,6 +1,5 @@
 package io.pivotal.security.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.entity.NamedCertificateSecretData;
 import io.pivotal.security.entity.NamedPasswordSecretData;
@@ -8,7 +7,6 @@ import io.pivotal.security.entity.NamedRsaSecretData;
 import io.pivotal.security.entity.NamedSecretData;
 import io.pivotal.security.entity.NamedSshSecretData;
 import io.pivotal.security.entity.NamedValueSecretData;
-import io.pivotal.security.request.StringGenerationParameters;
 import io.pivotal.security.service.Encryption;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.service.RetryingEncryptionService;
@@ -35,8 +33,6 @@ public class NamedSecretRotationTest {
 
   private UUID activeEncryptionKeyUuid;
   private UUID oldEncryptionKeyUuid;
-
-  private String stringifiedParameters;
 
   private RetryingEncryptionService encryptionService;
   private Encryptor encryptor;
@@ -104,7 +100,7 @@ public class NamedSecretRotationTest {
         });
 
         describe("when the secret is a NamedPasswordSecretData", () -> {
-          it("should re-encrypt the password and the parameters with the active encryption key",
+          it("should re-encrypt the password with the active encryption key",
               () -> {
             NamedPasswordSecretData namedPasswordSecretData =
                 new NamedPasswordSecretData("some-name");
@@ -114,31 +110,12 @@ public class NamedSecretRotationTest {
             NamedPasswordSecret password = new NamedPasswordSecret(namedPasswordSecretData);
             password.setEncryptor(encryptor);
 
-            namedPasswordSecretData.setEncryptedGenerationParameters("old-encrypted-parameters".getBytes());
-            namedPasswordSecretData.setParametersNonce("old-parameters-nonce".getBytes());
-
-            stringifiedParameters = new ObjectMapper()
-                .writeValueAsString(new StringGenerationParameters());
-
-            when(encryptionService
-                .decrypt(oldEncryptionKeyUuid, "old-encrypted-parameters".getBytes(),
-                    "old-parameters-nonce".getBytes()))
-                .thenReturn(stringifiedParameters);
-            when(encryptionService.encrypt(activeEncryptionKeyUuid, stringifiedParameters))
-                .thenReturn(new Encryption(activeEncryptionKeyUuid,
-                    "new-encrypted-parameters".getBytes(), "new-nonce-parameters".getBytes()));
-
             password.rotate();
             assertThat(namedPasswordSecretData.getEncryptionKeyUuid(),
                 equalTo(activeEncryptionKeyUuid));
             assertThat(namedPasswordSecretData.getEncryptedValue(),
                 equalTo("new-encrypted-value".getBytes()));
             assertThat(namedPasswordSecretData.getNonce(), equalTo("new-nonce".getBytes()));
-
-            assertThat(namedPasswordSecretData.getEncryptedGenerationParameters(),
-                equalTo("new-encrypted-parameters".getBytes()));
-            assertThat(namedPasswordSecretData.getParametersNonce(),
-                equalTo("new-nonce-parameters".getBytes()));
           });
         });
       });

@@ -177,7 +177,7 @@ public class SecretsControllerTypeSpecificSetTest {
         },
         () -> new NamedPasswordSecret(secretName)
             .setEncryptor(encryptor)
-            .setPasswordAndGenerationParameters(password, null)
+            .setPassword(password)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime.minusSeconds(1))
     ));

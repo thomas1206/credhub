@@ -13,12 +13,12 @@ import io.pivotal.security.generator.RsaGenerator;
 import io.pivotal.security.generator.SshGenerator;
 import io.pivotal.security.repository.EventAuditRecordRepository;
 import io.pivotal.security.repository.RequestAuditRecordRepository;
-import io.pivotal.security.request.StringGenerationParameters;
 import io.pivotal.security.request.RsaGenerationParameters;
 import io.pivotal.security.request.SshGenerationParameters;
-import io.pivotal.security.secret.StringSecret;
+import io.pivotal.security.request.StringGenerationParameters;
 import io.pivotal.security.secret.RsaKey;
 import io.pivotal.security.secret.SshKey;
+import io.pivotal.security.secret.StringSecret;
 import io.pivotal.security.service.EncryptionKeyCanaryMapper;
 import io.pivotal.security.util.CurrentTimeProvider;
 import io.pivotal.security.util.DatabaseProfileResolver;
@@ -124,12 +124,11 @@ public class SecretsControllerRegenerateTest {
       beforeEach(() -> {
         when(passwordGenerator.generateSecret(any(StringGenerationParameters.class)))
             .thenReturn(new StringSecret("generated-secret"));
+
         NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
         originalSecret.setEncryptor(encryptor);
-        StringGenerationParameters generationParameters = new StringGenerationParameters();
-        generationParameters.setExcludeNumber(true);
-        originalSecret
-            .setPasswordAndGenerationParameters("original-password", generationParameters);
+
+        originalSecret.setPassword("original-password");
         originalSecret.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
@@ -302,35 +301,6 @@ public class SecretsControllerRegenerateTest {
       });
     });
 
-    describe("when attempting to regenerate a non-generated password", () -> {
-      beforeEach(() -> {
-        NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
-        originalSecret.setEncryptor(encryptor);
-        originalSecret.setPasswordAndGenerationParameters("abcde", null);
-        doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
-
-        response = mockMvc.perform(post("/api/v1/data")
-            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
-            .accept(APPLICATION_JSON)
-            .contentType(APPLICATION_JSON)
-            .content("{\"regenerate\":true,\"name\":\"my-password\"}"));
-      });
-
-      it("returns an error", () -> {
-        String cannotRegenerateJson = "{" +
-            "  \"error\": \"The password could not be regenerated because the value was " +
-            "statically set. Only generated passwords may be regenerated.\"" +
-            "}";
-
-        response.andExpect(content().json(cannotRegenerateJson));
-      });
-
-      it("persists an audit entry", () -> {
-        // https://www.pivotaltracker.com/story/show/139762105
-        verifyAuditing(requestAuditRecordRepository, eventAuditRecordRepository, CREDENTIAL_UPDATE, null, "/api/v1/data", 400);
-      });
-    });
-
     describe("when attempting to regenerate a password with parameters that can't be decrypted",
         () -> {
           beforeEach(() -> {
@@ -339,7 +309,7 @@ public class SecretsControllerRegenerateTest {
             NamedPasswordSecret originalSecret = new NamedPasswordSecret(namedPasswordSecretData);
             originalSecret.setEncryptor(encryptor);
             originalSecret
-                .setPasswordAndGenerationParameters("abcde", new StringGenerationParameters());
+                .setPassword("abcde");
 
             namedPasswordSecretData.setEncryptionKeyUuid(UUID.randomUUID());
             doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");

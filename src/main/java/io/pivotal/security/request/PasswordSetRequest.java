@@ -33,7 +33,6 @@ public class PasswordSetRequest extends BaseSecretSetRequest<NamedPasswordSecret
         existing,
         getName(),
         getPassword(),
-        generationParameters,
         encryptor,
         getAccessControlEntries()
     );

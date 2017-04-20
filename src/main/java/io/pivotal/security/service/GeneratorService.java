@@ -13,6 +13,7 @@ import io.pivotal.security.request.UserGenerationParameters;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.secret.RsaKey;
 import io.pivotal.security.secret.SshKey;
+import io.pivotal.security.secret.StringSecret;
 import io.pivotal.security.secret.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,7 +42,9 @@ public class GeneratorService {
   }
 
   public String generatePassword(StringGenerationParameters passwordParameters) {
-    return passwordGenerator.generateSecret(passwordParameters).getStringSecret();
+    final StringSecret stringSecret = passwordGenerator.generateSecret(passwordParameters);
+
+    return stringSecret.getStringSecret();
   }
 
   public SshKey generateSshKeys(SshGenerationParameters generationParameters) {

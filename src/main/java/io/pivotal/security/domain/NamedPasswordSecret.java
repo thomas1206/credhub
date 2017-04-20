@@ -1,26 +1,25 @@
 package io.pivotal.security.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pivotal.security.entity.NamedPasswordSecretData;
+import io.pivotal.security.generator.CredHubCharacterData;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.StringGenerationParameters;
 import io.pivotal.security.service.Encryption;
-import org.springframework.util.Assert;
+import org.passay.CharacterRule;
+import org.passay.EnglishCharacterData;
+import org.passay.PasswordData;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
 
   private NamedPasswordSecretData delegate;
-  private ObjectMapper objectMapper;
   private String password;
 
   public NamedPasswordSecret(NamedPasswordSecretData delegate) {
     super(delegate);
     this.delegate = delegate;
-    this.objectMapper = new ObjectMapper();
   }
 
   public NamedPasswordSecret(String name) {
@@ -35,7 +34,6 @@ public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
       NamedPasswordSecret existing,
       String name,
       String password,
-      StringGenerationParameters generationParameters,
       Encryptor encryptor,
       List<AccessControlEntry> accessControlEntries) {
     NamedPasswordSecret secret;
@@ -54,7 +52,7 @@ public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
     secret.setAccessControlList(accessControlEntries);
 
     secret.setEncryptor(encryptor);
-    secret.setPasswordAndGenerationParameters(password, generationParameters);
+    secret.setPassword(password);
     return secret;
   }
 
@@ -69,21 +67,12 @@ public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
     return password;
   }
 
-  public NamedPasswordSecret setPasswordAndGenerationParameters(String password,
-                                                                StringGenerationParameters generationParameters) {
+  public NamedPasswordSecret setPassword(String password) {
     if (password == null) {
       throw new IllegalArgumentException("password cannot be null");
     }
 
     try {
-      String generationParameterJson =
-          generationParameters != null ? objectMapper.writeValueAsString(generationParameters)
-              : null;
-
-      Encryption encryptedParameters = encryptor.encrypt(generationParameterJson);
-      delegate.setEncryptedGenerationParameters(encryptedParameters.encryptedValue);
-      delegate.setParametersNonce(encryptedParameters.nonce);
-
       Encryption encryptedPassword = encryptor.encrypt(password);
       delegate.setEncryptedValue(encryptedPassword.encryptedValue);
       delegate.setNonce(encryptedPassword.nonce);
@@ -96,28 +85,23 @@ public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
   }
 
   public StringGenerationParameters getGenerationParameters() {
-    String password = getPassword();
-    Assert.notNull(password,
-        "Password length generation parameter cannot be restored without an existing password");
+    final String password = getPassword();
+    final PasswordData passwordData = new PasswordData(password);
 
-    String parameterJson = encryptor.decrypt(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedGenerationParameters(),
-        delegate.getParametersNonce()
-    );
+    final StringGenerationParameters stringGenerationParameters = new StringGenerationParameters();
 
-    if (parameterJson == null) {
-      return null;
-    }
+    final CharacterRule specialRule = new CharacterRule(CredHubCharacterData.Special);
+    final CharacterRule digitRule = new CharacterRule(EnglishCharacterData.Digit);
+    final CharacterRule upperCaseRule = new CharacterRule(EnglishCharacterData.UpperCase);
+    final CharacterRule lowerCaseRule = new CharacterRule(EnglishCharacterData.LowerCase);
 
-    try {
-      StringGenerationParameters passwordGenerationParameters = objectMapper
-          .readValue(parameterJson, StringGenerationParameters.class);
-      passwordGenerationParameters.setLength(password.length());
-      return passwordGenerationParameters;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    stringGenerationParameters.setLength(password.length());
+    stringGenerationParameters.setIncludeSpecial(specialRule.validate(passwordData).isValid());
+    stringGenerationParameters.setExcludeNumber(!digitRule.validate(passwordData).isValid());
+    stringGenerationParameters.setExcludeUpper(!upperCaseRule.validate(passwordData).isValid());
+    stringGenerationParameters.setExcludeLower(!lowerCaseRule.validate(passwordData).isValid());
+
+    return stringGenerationParameters;
   }
 
   @Override
@@ -127,7 +111,6 @@ public class NamedPasswordSecret extends NamedSecret<NamedPasswordSecret> {
 
   public void rotate() {
     String decryptedPassword = this.getPassword();
-    StringGenerationParameters decryptedGenerationParameters = this.getGenerationParameters();
-    this.setPasswordAndGenerationParameters(decryptedPassword, decryptedGenerationParameters);
+    this.setPassword(decryptedPassword);
   }
 }
