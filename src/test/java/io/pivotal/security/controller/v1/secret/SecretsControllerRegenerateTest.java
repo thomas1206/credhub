@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.fit;
 import static com.greghaskins.spectrum.Spectrum.it;
 import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
 import static io.pivotal.security.helper.AuditingHelper.verifyAuditing;
@@ -124,12 +125,11 @@ public class SecretsControllerRegenerateTest {
       beforeEach(() -> {
         when(passwordGenerator.generateSecret(any(StringGenerationParameters.class)))
             .thenReturn(new StringSecret("generated-secret"));
+
         NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
         originalSecret.setEncryptor(encryptor);
-        StringGenerationParameters generationParameters = new StringGenerationParameters();
-        generationParameters.setExcludeNumber(true);
-        originalSecret
-            .setPasswordAndGenerationParameters("original-password", generationParameters);
+
+        originalSecret.setPassword("original-password");
         originalSecret.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
@@ -304,10 +304,24 @@ public class SecretsControllerRegenerateTest {
 
     describe("when attempting to regenerate a non-generated password", () -> {
       beforeEach(() -> {
+        when(passwordGenerator.generateSecret(any(StringGenerationParameters.class)))
+            .thenReturn(new StringSecret("generated-secret"));
+
         NamedPasswordSecret originalSecret = new NamedPasswordSecret("my-password");
         originalSecret.setEncryptor(encryptor);
-        originalSecret.setPasswordAndGenerationParameters("abcde", null);
+
+        originalSecret.setPassword("abcde");
+        originalSecret.setVersionCreatedAt(frozenTime.plusSeconds(1));
+
         doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");
+
+        doAnswer(invocation -> {
+          NamedPasswordSecret newSecret = invocation.getArgumentAt(0, NamedPasswordSecret.class);
+          uuid = UUID.randomUUID();
+          newSecret.setUuid(uuid);
+          newSecret.setVersionCreatedAt(frozenTime.plusSeconds(10));
+          return newSecret;
+        }).when(secretDataService).save(any(NamedPasswordSecret.class));
 
         response = mockMvc.perform(post("/api/v1/data")
             .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
@@ -339,7 +353,7 @@ public class SecretsControllerRegenerateTest {
             NamedPasswordSecret originalSecret = new NamedPasswordSecret(namedPasswordSecretData);
             originalSecret.setEncryptor(encryptor);
             originalSecret
-                .setPasswordAndGenerationParameters("abcde", new StringGenerationParameters());
+                .setPassword("abcde");
 
             namedPasswordSecretData.setEncryptionKeyUuid(UUID.randomUUID());
             doReturn(originalSecret).when(secretDataService).findMostRecent("my-password");

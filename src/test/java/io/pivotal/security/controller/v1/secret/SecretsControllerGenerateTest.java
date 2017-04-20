@@ -202,7 +202,7 @@ public class SecretsControllerGenerateTest {
         beforeEach(() -> {
           final NamedPasswordSecret expectedSecret = new NamedPasswordSecret(secretName);
           expectedSecret.setEncryptor(encryptor);
-          expectedSecret.setPasswordAndGenerationParameters(fakePassword, null);
+          expectedSecret.setPassword(fakePassword);
 
           Mockito.reset(secretDataService);
 

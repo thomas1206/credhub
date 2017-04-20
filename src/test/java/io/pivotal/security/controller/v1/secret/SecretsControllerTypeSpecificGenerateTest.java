@@ -196,7 +196,7 @@ public class SecretsControllerTypeSpecificGenerateTest {
         },
         () -> new NamedPasswordSecret(secretName)
             .setEncryptor(encryptor)
-            .setPasswordAndGenerationParameters(fakePassword, new StringGenerationParameters().setExcludeNumber(true))
+            .setPassword(fakePassword)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime.minusSeconds(1))
     ));

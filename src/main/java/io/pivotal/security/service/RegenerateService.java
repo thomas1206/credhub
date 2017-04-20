@@ -42,6 +42,7 @@ public class RegenerateService {
       SecretRegenerateRequest requestBody,
       AccessControlEntry currentUserAccessControlEntry) {
     NamedSecret secret = secretDataService.findMostRecent(requestBody.getName());
+
     eventAuditRecordParameters.setAuditingOperationCode(CREDENTIAL_UPDATE);
     if (secret == null) {
       throw new EntryNotFoundException("error.credential_not_found");
@@ -51,7 +52,9 @@ public class RegenerateService {
         .getOrDefault(secret.getSecretType(), NotRegeneratable::new)
         .get();
 
-    return generateService
-        .performGenerate(eventAuditRecordParameters, regeneratable.createGenerateRequest(secret), currentUserAccessControlEntry);
+    return generateService.performGenerate(
+        eventAuditRecordParameters,
+        regeneratable.createGenerateRequest(secret),
+        currentUserAccessControlEntry);
   }
 }

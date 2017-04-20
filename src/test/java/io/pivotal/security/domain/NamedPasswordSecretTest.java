@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -83,14 +84,19 @@ public class NamedPasswordSecretTest {
 
     describe("#getGenerationParameters", () -> {
       beforeEach(() -> {
-        subject.setPasswordAndGenerationParameters(PASSWORD, null);
+        subject.setPassword(PASSWORD);
         subject.getPassword();
       });
 
       it("should call decrypt twice: once for password and once for parameters", () -> {
-        subject.getGenerationParameters();
+        StringGenerationParameters expected = new StringGenerationParameters();
 
-        verify(encryptor, times(2)).decrypt(any(), any(), any());
+        expected.setLength(PASSWORD.length());
+        expected.setExcludeUpper(true);
+        expected.setExcludeNumber(true);
+        expected.setIncludeSpecial(true);
+
+        assertThat(subject.getGenerationParameters(), samePropertyValuesAs(expected));
       });
     });
 
@@ -100,47 +106,47 @@ public class NamedPasswordSecretTest {
         subject.setEncryptor(encryptor);
         when(encryptor.encrypt(null))
             .thenReturn(new Encryption(canaryUuid, null, null));
-        subject.setPasswordAndGenerationParameters(PASSWORD, null);
+        subject.setPassword(PASSWORD);
         subject.getGenerationParameters();
       });
 
       it("should call decrypt twice: once for password and once for parameters", () -> {
         subject.getPassword();
 
-        verify(encryptor, times(2)).decrypt(any(), any(), any());
+        verify(encryptor, times(1)).decrypt(any(), any(), any());
       });
     });
 
-    describe("#setPasswordAndGenerationParameters", () -> {
+    describe("#setPassword", () -> {
       it("sets the nonce and the encrypted value", () -> {
-        subject.setPasswordAndGenerationParameters(PASSWORD, null);
+        subject.setPassword(PASSWORD);
         assertThat(namedPasswordSecretData.getEncryptedValue(), notNullValue());
         assertThat(namedPasswordSecretData.getNonce(), notNullValue());
       });
 
       it("can decrypt values", () -> {
-        subject.setPasswordAndGenerationParameters(PASSWORD, generationParameters);
+        subject.setPassword(PASSWORD);
 
         assertThat(subject.getPassword(), equalTo(PASSWORD));
 
         assertThat(subject.getGenerationParameters().getLength(), equalTo(11));
-        assertThat(subject.getGenerationParameters().isExcludeLower(), equalTo(true));
-        assertThat(subject.getGenerationParameters().isExcludeUpper(), equalTo(false));
+        assertThat(subject.getGenerationParameters().isExcludeLower(), equalTo(false));
+        assertThat(subject.getGenerationParameters().isExcludeUpper(), equalTo(true));
       });
 
       itThrows("when setting a value that is null", IllegalArgumentException.class, () -> {
-        subject.setPasswordAndGenerationParameters(null, null);
+        subject.setPassword(null);
       });
 
       it("sets the parametersNonce and the encryptedGenerationParameters", () -> {
-        subject.setPasswordAndGenerationParameters(PASSWORD, generationParameters);
+        subject.setPassword(PASSWORD);
         assertThat(namedPasswordSecretData.getEncryptedGenerationParameters(), notNullValue());
         assertThat(namedPasswordSecretData.getParametersNonce(), notNullValue());
       });
 
       it("should set encrypted generation parameters and nonce to null if parameters are null",
           () -> {
-            subject.setPasswordAndGenerationParameters(PASSWORD, null);
+            subject.setPassword(PASSWORD);
             assertThat(namedPasswordSecretData.getEncryptedGenerationParameters(), nullValue());
             assertThat(namedPasswordSecretData.getParametersNonce(), nullValue());
           });
