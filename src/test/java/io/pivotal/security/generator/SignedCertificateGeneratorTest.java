@@ -1,25 +1,22 @@
 package io.pivotal.security.generator;
 
-import static com.greghaskins.spectrum.Spectrum.beforeEach;
-import static com.greghaskins.spectrum.Spectrum.describe;
-import static com.greghaskins.spectrum.Spectrum.it;
-import static io.pivotal.security.helper.SpectrumHelper.getBouncyCastleProvider;
-import static io.pivotal.security.helper.SpectrumHelper.injectMocks;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.domain.CertificateParameters;
 import io.pivotal.security.request.CertificateGenerationParameters;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509ExtensionUtils;
+import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.springframework.data.auditing.DateTimeProvider;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -40,19 +37,23 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509ExtensionUtils;
-import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.springframework.data.auditing.DateTimeProvider;
+
+import static com.greghaskins.spectrum.Spectrum.beforeEach;
+import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.it;
+import static io.pivotal.security.helper.SpectrumHelper.getBouncyCastleProvider;
+import static io.pivotal.security.helper.SpectrumHelper.injectMocks;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(Spectrum.class)
 public class SignedCertificateGeneratorTest {
@@ -213,8 +214,6 @@ public class SignedCertificateGeneratorTest {
               nullValue());
         });
       });
-
-
     };
 
     describe("a generated issuer-signed childCertificate", () -> {
@@ -234,7 +233,7 @@ public class SignedCertificateGeneratorTest {
         inputParameters.setDuration(10);
         isCa = "[]";
         subjectDistinguishedName = new X500Name("CN=my test cert,C=US,ST=CA,O=credhub");
-        ;
+
         issuerDistinguishedName = new X500Name(SEPARATE_ISSUER_PRINCIPAL_STRING);
         generationParameters = new CertificateParameters(inputParameters);
       });
@@ -242,7 +241,7 @@ public class SignedCertificateGeneratorTest {
       final ThrowingRunnable makeCert = () -> {
         generatedCert = subject
             .getSignedByIssuer(issuerDistinguishedName, issuerPrivateKey, certKeyPair,
-                generationParameters);
+                generationParameters, generatedCert);
       };
 
       describe("must behave like", validCertificateSuite.build(makeCert));

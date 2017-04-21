@@ -4,6 +4,15 @@ import io.pivotal.security.data.CertificateAuthorityService;
 import io.pivotal.security.domain.CertificateParameters;
 import io.pivotal.security.secret.Certificate;
 import io.pivotal.security.util.CertificateFormatter;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,14 +23,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class CertificateGenerator implements
@@ -59,11 +60,14 @@ public class CertificateGenerator implements
       Certificate ca = certificateAuthorityService.findMostRecent(params.getCaName());
 
       String caCertificate = ca.getPublicKeyCertificate();
-      X500Name issuerDn = getSubjectNameOfCa(caCertificate);
+
+      X509Certificate caCert = getX509Certificate(caCertificate);
+      X500Name issuerDn = new X500Name(caCert.getSubjectDN().getName());
+
       PrivateKey issuerKey = getPrivateKey(ca.getPrivateKey());
 
       X509Certificate cert = signedCertificateGenerator
-          .getSignedByIssuer(issuerDn, issuerKey, keyPair, params);
+          .getSignedByIssuer(issuerDn, issuerKey, keyPair, params, caCert);
 
         String certPem = CertificateFormatter.pemOf(cert);
         String privatePem = CertificateFormatter.pemOf(keyPair.getPrivate());
@@ -82,10 +86,9 @@ public class CertificateGenerator implements
     return new JcaPEMKeyConverter().getPrivateKey(privateKeyInfo);
   }
 
-  private X500Name getSubjectNameOfCa(String ca) throws IOException, CertificateException {
-    X509Certificate certificate = (X509Certificate) CertificateFactory
+  private X509Certificate getX509Certificate(String certificate) throws CertificateException {
+    return (X509Certificate) CertificateFactory
         .getInstance("X.509", provider)
-        .generateCertificate(new ByteArrayInputStream(ca.getBytes()));
-    return new X500Name(certificate.getSubjectDN().getName());
+        .generateCertificate(new ByteArrayInputStream(certificate.getBytes()));
   }
 }

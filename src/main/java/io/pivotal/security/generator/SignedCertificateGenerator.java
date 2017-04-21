@@ -1,13 +1,11 @@
 package io.pivotal.security.generator;
 
 import io.pivotal.security.domain.CertificateParameters;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -18,9 +16,19 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.cryptacular.EncodingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.stereotype.Component;
+
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+
+import static org.cryptacular.x509.ExtensionType.SubjectKeyIdentifier;
 
 @Component
 public class SignedCertificateGenerator {
@@ -45,14 +53,14 @@ public class SignedCertificateGenerator {
 
   X509Certificate getSelfSigned(KeyPair keyPair, CertificateParameters params)
       throws Exception {
-    return getSignedByIssuer(params.getX500Name(), keyPair.getPrivate(), keyPair, params);
+    return getSignedByIssuer(params.getX500Name(), keyPair.getPrivate(), keyPair, params, null);
   }
 
   X509Certificate getSignedByIssuer(
       X500Name issuerDn,
       PrivateKey issuerKey,
       KeyPair keyPair,
-      CertificateParameters params) throws Exception {
+      CertificateParameters params, X509Certificate caCertificate) throws Exception {
     Instant now = timeProvider.getNow().toInstant();
     SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo
         .getInstance(keyPair.getPublic().getEncoded());
@@ -66,7 +74,25 @@ public class SignedCertificateGenerator {
         publicKeyInfo
     );
 
-    certificateBuilder.addExtension(Extension.subjectKeyIdentifier, false, x509ExtensionUtils.createSubjectKeyIdentifier(publicKeyInfo));
+    AuthorityKeyIdentifier authorityKeyIdentifier = null;
+
+    if (caCertificate != null) {
+      ASN1Encodable subjectKeyIdentifier = extractSubjectKeyIdentifier(caCertificate);
+      if (subjectKeyIdentifier != null) {
+        authorityKeyIdentifier = x509ExtensionUtils
+            .createAuthorityKeyIdentifier(SubjectPublicKeyInfo
+                .getInstance(caCertificate.getPublicKey().getEncoded()));
+      }
+    } else {
+      authorityKeyIdentifier = x509ExtensionUtils.createAuthorityKeyIdentifier(publicKeyInfo);
+    }
+
+    certificateBuilder.addExtension(Extension.subjectKeyIdentifier, false,
+        x509ExtensionUtils.createSubjectKeyIdentifier(publicKeyInfo));
+
+    certificateBuilder
+        .addExtension(Extension.authorityKeyIdentifier, false, authorityKeyIdentifier);
+
     if (params.getAlternativeNames() != null) {
       certificateBuilder
           .addExtension(Extension.subjectAlternativeName, false, params.getAlternativeNames());
@@ -90,5 +116,23 @@ public class SignedCertificateGenerator {
     X509CertificateHolder holder = certificateBuilder.build(contentSigner);
 
     return new JcaX509CertificateConverter().setProvider(provider).getCertificate(holder);
+  }
+
+  private ASN1Encodable extractSubjectKeyIdentifier(X509Certificate caCertificate) {
+    byte[] data = caCertificate.getExtensionValue(SubjectKeyIdentifier.getOid());
+    if (data == null) {
+      return null;
+    }
+    try {
+      ASN1Encodable der = ASN1Primitive.fromByteArray(data);
+      if (der instanceof ASN1OctetString) {
+        // Strip off octet string "wrapper"
+        data = ((ASN1OctetString) der).getOctets();
+        der = ASN1Primitive.fromByteArray(data);
+      }
+      return der;
+    } catch (Exception e) {
+      throw new EncodingException("ASN.1 parse error", e);
+    }
   }
 }
