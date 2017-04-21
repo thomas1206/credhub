@@ -87,7 +87,7 @@ public class CredentialsControllerAuditLogTest {
     describe("when getting a credential", () -> {
       describe("by name", () -> {
         it("makes a credential_access audit log entry", () -> {
-          doReturn(Arrays.asList(new PasswordCredential("/foo").setEncryptor(encryptor)))
+          doReturn(Arrays.asList(new PasswordCredential("/foo")))
               .when(credentialDataService).findAllByName(eq("foo"));
 
           mockMvc.perform(get(API_V1_DATA + "?name=foo")
@@ -109,7 +109,7 @@ public class CredentialsControllerAuditLogTest {
 
       describe("by id", () -> {
         it("makes a credential_access audit log entry", () -> {
-          doReturn(new PasswordCredential("/foo").setEncryptor(encryptor))
+          doReturn(new PasswordCredential("/foo"))
               .when(credentialDataService).findByUuid(eq("foo-id"));
 
           mockMvc.perform(get(API_V1_DATA + "/foo-id")
@@ -134,7 +134,6 @@ public class CredentialsControllerAuditLogTest {
       beforeEach(() -> {
         when(credentialDataService.save(any(Credential.class))).thenAnswer(invocation -> {
           ValueCredential valueCredential = invocation.getArgumentAt(0, ValueCredential.class);
-          valueCredential.setEncryptor(encryptor);
           valueCredential.setUuid(UUID.randomUUID());
           return valueCredential;
         });

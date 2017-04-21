@@ -28,7 +28,7 @@ public class SshCredential extends Credential<SshCredential> {
   }
 
   public static SshCredential createNewVersion(SshCredential existing, String name,
-                                               SshKey sshKeyValue, Encryptor encryptor,
+                                               SshKey sshKeyValue,
                                                List<AccessControlEntry> accessControlEntries) {
     SshCredential credential;
 
@@ -45,7 +45,6 @@ public class SshCredential extends Credential<SshCredential> {
 
     credential.setAccessControlList(accessControlEntries);
 
-    credential.setEncryptor(encryptor);
     credential.setPrivateKey(sshKeyValue.getPrivateKey());
     credential.setPublicKey(sshKeyValue.getPublicKey());
 

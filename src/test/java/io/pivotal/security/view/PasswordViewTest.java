@@ -29,7 +29,6 @@ public class PasswordViewTest {
       encryptor = mock(Encryptor.class);
       uuid = UUID.randomUUID();
       entity = new PasswordCredential("/foo")
-          .setEncryptor(encryptor)
           .setUuid(uuid);
 
       when(encryptor.decrypt(any()))

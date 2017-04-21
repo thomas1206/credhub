@@ -41,7 +41,6 @@ public class JsonViewTest {
       encryptor = mock(Encryptor.class);
       uuid = UUID.randomUUID();
       entity = new JsonCredential("/foo")
-          .setEncryptor(encryptor)
           .setUuid(uuid);
 
       when(encryptor.decrypt(any()))

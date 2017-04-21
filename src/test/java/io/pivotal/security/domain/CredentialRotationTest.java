@@ -111,7 +111,6 @@ public class CredentialRotationTest {
             passwordCredentialData.setEncryptedValue("old-encrypted-value".getBytes());
             passwordCredentialData.setNonce("old-nonce".getBytes());
             PasswordCredential password = new PasswordCredential(passwordCredentialData);
-            password.setEncryptor(encryptor);
 
             passwordCredentialData.setEncryptedGenerationParameters("old-encrypted-parameters".getBytes());
             passwordCredentialData.setParametersNonce("old-parameters-nonce".getBytes());
@@ -145,7 +144,6 @@ public class CredentialRotationTest {
 
 
   private void assertRotation(Credential credential, CredentialData delegate) {
-    credential.setEncryptor(encryptor);
     delegate.setEncryptionKeyUuid(oldEncryptionKeyUuid);
     delegate.setEncryptedValue("old-encrypted-value".getBytes());
     delegate.setNonce("old-nonce".getBytes());

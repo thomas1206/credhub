@@ -76,7 +76,6 @@ public class PasswordCredentialTest {
 
       passwordCredentialData = new PasswordCredentialData("/Foo");
       subject = new PasswordCredential(passwordCredentialData);
-      subject.setEncryptor(encryptor);
     });
 
     it("returns type password", () -> {
@@ -99,7 +98,6 @@ public class PasswordCredentialTest {
     describe("#getPassword", () -> {
       beforeEach(() -> {
         subject = new PasswordCredential("/Foo");
-        subject.setEncryptor(encryptor);
         when(encryptor.encrypt(null))
             .thenReturn(new Encryption(canaryUuid, null, null));
         subject.setPasswordAndGenerationParameters(PASSWORD, null);
@@ -157,7 +155,6 @@ public class PasswordCredentialTest {
             .setEncryptedGenerationParameters("old-encrypted-parameters".getBytes());
         passwordCredentialData.setParametersNonce("old-parameters-nonce".getBytes());
         subject = new PasswordCredential(passwordCredentialData);
-        subject.setEncryptor(encryptor);
 
         ArrayList<AccessControlOperation> operations = newArrayList(AccessControlOperation.READ,
             AccessControlOperation.WRITE);
@@ -169,7 +166,7 @@ public class PasswordCredentialTest {
       it("copies values from existing, except password", () -> {
         PasswordCredential newCredential = PasswordCredential
             .createNewVersion(subject, "anything I AM IGNORED", PASSWORD, NO_PASSWORD_PARAMS,
-                encryptor, EMPTY_ENTRIES_LIST);
+                EMPTY_ENTRIES_LIST);
 
         assertThat(newCredential.getName(), equalTo("/existingName"));
         assertThat(newCredential.getPassword(), equalTo(PASSWORD));
@@ -181,7 +178,6 @@ public class PasswordCredentialTest {
             "/newName",
             PASSWORD,
             NO_PASSWORD_PARAMS,
-            encryptor,
             EMPTY_ENTRIES_LIST);
 
         assertThat(newCredential.getName(), equalTo("/newName"));
@@ -191,7 +187,7 @@ public class PasswordCredentialTest {
       it("ignores ACEs if not provided", () -> {
         PasswordCredential newCredential = PasswordCredential
             .createNewVersion(subject, "anything I AM IGNORED", PASSWORD, NO_PASSWORD_PARAMS,
-                encryptor, NULL_ENTRIES_LIST);
+                NULL_ENTRIES_LIST);
         assertThat(newCredential.getCredentialName().getAccessControlList(), hasSize(0));
       });
     });

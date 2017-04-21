@@ -39,7 +39,6 @@ public class CertificateCredentialTest {
       credentialName = "/foo";
       uuid = UUID.randomUUID();
       entity = new CertificateCredential(credentialName)
-          .setEncryptor(encryptor)
           .setCa("ca")
           .setCertificate("cert")
           .setPrivateKey("priv")
@@ -77,7 +76,7 @@ public class CertificateCredentialTest {
 
     it("includes keys with null values", () -> {
       final CredentialView subject = CertificateView
-          .fromEntity(new CertificateCredential(credentialName).setEncryptor(encryptor).setUuid(uuid));
+          .fromEntity(new CertificateCredential(credentialName).setUuid(uuid));
       final String json = JsonHelper.serializeToString(subject);
 
       assertThat(json, equalTo("{"

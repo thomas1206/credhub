@@ -195,7 +195,6 @@ public class CredentialsControllerTypeSpecificGenerateTest {
           assertThat(passwordCredential.getPassword(), equalTo(fakePassword));
         },
         () -> new PasswordCredential(credentialName)
-            .setEncryptor(encryptor)
             .setPasswordAndGenerationParameters(fakePassword, new StringGenerationParameters().setExcludeNumber(true))
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime.minusSeconds(1))
@@ -211,7 +210,6 @@ public class CredentialsControllerTypeSpecificGenerateTest {
         assertThat(userCredential.getPassword(), equalTo(fakePassword));
       },
       () -> new UserCredential(credentialName)
-        .setEncryptor(encryptor)
         .setPassword(fakePassword)
         .setUsername(user)
         .setUuid(uuid)
@@ -231,7 +229,6 @@ public class CredentialsControllerTypeSpecificGenerateTest {
           assertThat(certificateCredential.getPrivateKey(), equalTo(privateKey));
         },
         () -> new CertificateCredential(credentialName)
-            .setEncryptor(encryptor)
             .setCa(ca)
             .setCertificate(certificate)
             .setPrivateKey(privateKey)
@@ -251,7 +248,6 @@ public class CredentialsControllerTypeSpecificGenerateTest {
           assertThat(sshCredential.getPrivateKey(), equalTo(privateKey));
         },
         () -> new SshCredential(credentialName)
-            .setEncryptor(encryptor)
             .setPrivateKey(privateKey)
             .setPublicKey(publicKey)
             .setUuid(uuid)
@@ -269,7 +265,6 @@ public class CredentialsControllerTypeSpecificGenerateTest {
           assertThat(rsaCredential.getPrivateKey(), equalTo(privateKey));
         },
         () -> new RsaCredential(credentialName)
-            .setEncryptor(encryptor)
             .setPrivateKey(privateKey)
             .setPublicKey(publicKey)
             .setUuid(uuid)

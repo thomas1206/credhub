@@ -32,7 +32,6 @@ public class UserViewTest {
       UserView actual = (UserView) UserView.fromEntity(
           new UserCredential("/foo")
               .setUuid(uuid)
-              .setEncryptor(encryptor)
               .setUsername("test-username"));
       assertThat(json(actual), equalTo("{"
           + "\"type\":\"user\","

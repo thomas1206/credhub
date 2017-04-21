@@ -64,7 +64,7 @@ public class JsonCredentialTest {
 
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
-        subject = new JsonCredential(jsonCredentialData).setEncryptor(encryptor);
+        subject = new JsonCredential(jsonCredentialData);
       });
 
       it("sets the nonce and the encrypted value", () -> {
@@ -95,7 +95,6 @@ public class JsonCredentialTest {
             .thenReturn("new value");
 
         subject = new JsonCredential("/existingName");
-        subject.setEncryptor(encryptor);
         jsonCredentialData.setEncryptedValue("old encrypted value".getBytes());
       });
 

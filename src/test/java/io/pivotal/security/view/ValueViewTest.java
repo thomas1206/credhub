@@ -33,7 +33,6 @@ public class ValueViewTest {
       when(encryptor.decrypt(any()))
           .thenReturn("fake-plaintext-value");
       entity = new ValueCredential("/foo")
-          .setEncryptor(encryptor)
           .setUuid(uuid);
     });
 

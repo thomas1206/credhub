@@ -27,7 +27,7 @@ public class RsaCredential extends Credential<RsaCredential> {
   }
 
   public static RsaCredential createNewVersion(RsaCredential existing, String name,
-                                               RsaKey rsaKey, Encryptor encryptor,
+                                               RsaKey rsaKey,
                                                List<AccessControlEntry> accessControlEntries) {
     RsaCredential credential;
 
@@ -44,7 +44,6 @@ public class RsaCredential extends Credential<RsaCredential> {
 
     credential.setAccessControlList(accessControlEntries);
 
-    credential.setEncryptor(encryptor);
     credential.setPrivateKey(rsaKey.getPrivateKey());
     credential.setPublicKey(rsaKey.getPublicKey());
 

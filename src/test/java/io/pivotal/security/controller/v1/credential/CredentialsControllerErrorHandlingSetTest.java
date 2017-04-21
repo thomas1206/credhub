@@ -80,7 +80,6 @@ public class CredentialsControllerErrorHandlingSetTest {
         describe("error handling", () -> {
           it("returns 400 when the handler raises an exception", () -> {
             ValueCredential valueCredential = new ValueCredential(credentialName);
-            valueCredential.setEncryptor(encryptor);
             valueCredential.setValue(credentialValue);
             doReturn(
                 valueCredential

@@ -46,11 +46,6 @@ public abstract class Credential<Z extends Credential> {
     return (Z) this;
   }
 
-  public Z setEncryptor(Encryptor encryptor) {
-    this.encryptor = encryptor;
-    return (Z) this;
-  }
-
   public <Z extends Credential> Z save(CredentialDataService credentialDataService) {
     return (Z) credentialDataService.save(delegate);
   }

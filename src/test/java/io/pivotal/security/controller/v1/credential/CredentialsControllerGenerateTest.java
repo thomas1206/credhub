@@ -201,7 +201,6 @@ public class CredentialsControllerGenerateTest {
       describe("when another thread wins a race to write a new value", () -> {
         beforeEach(() -> {
           final PasswordCredential expectCredential = new PasswordCredential(credentialName);
-          expectCredential.setEncryptor(encryptor);
           expectCredential.setPasswordAndGenerationParameters(fakePassword, null);
 
           Mockito.reset(credentialDataService);

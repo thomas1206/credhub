@@ -30,7 +30,6 @@ public class RsaSetRequest extends BaseCredentialSetRequest<RsaCredential> {
             existing,
             getName(),
             getRsaKeyValue(),
-            encryptor,
             getAccessControlEntries());
   }
 }

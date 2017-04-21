@@ -41,7 +41,6 @@ public class JsonCredential extends Credential<JsonCredential> {
     }
 
     credential.setAccessControlList(accessControlEntries);
-    credential.setEncryptor(encryptor);
     credential.setValue(value);
 
     return credential;

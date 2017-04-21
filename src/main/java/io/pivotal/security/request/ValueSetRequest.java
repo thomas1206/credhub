@@ -20,7 +20,7 @@ public class ValueSetRequest extends BaseCredentialSetRequest<ValueCredential> {
   @Override
   public ValueCredential createNewVersion(ValueCredential existing, Encryptor encryptor) {
     return ValueCredential
-        .createNewVersion(existing, getName(), this.getValue(), encryptor,
+        .createNewVersion(existing, getName(), this.getValue(),
             this.getAccessControlEntries());
   }
 }

@@ -114,11 +114,9 @@ public class CredentialsControllerGetTest {
       beforeEach(() -> {
         uuid = UUID.randomUUID();
         ValueCredential valueCredential1 = new ValueCredential(credentialName)
-            .setEncryptor(encryptor)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime);
         ValueCredential valueCredential2 = new ValueCredential(credentialName)
-            .setEncryptor(encryptor)
             .setUuid(uuid)
             .setVersionCreatedAt(frozenTime);
 
@@ -248,7 +246,6 @@ public class CredentialsControllerGetTest {
         uuid = UUID.randomUUID();
         ValueCredential valueCredential =
             new ValueCredential(credentialName)
-                .setEncryptor(encryptor)
                 .setUuid(uuid)
                 .setVersionCreatedAt(frozenTime);
 

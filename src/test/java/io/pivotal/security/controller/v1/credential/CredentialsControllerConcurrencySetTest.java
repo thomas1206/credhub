@@ -4,7 +4,6 @@ import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.CredentialManagerApp;
 import io.pivotal.security.data.CredentialDataService;
 import io.pivotal.security.domain.Credential;
-import io.pivotal.security.domain.Encryptor;
 import io.pivotal.security.domain.ValueCredential;
 import io.pivotal.security.util.DatabaseProfileResolver;
 import org.junit.runner.RunWith;
@@ -51,9 +50,6 @@ public class CredentialsControllerConcurrencySetTest {
 
   @SpyBean
   CredentialDataService credentialDataService;
-
-  @Autowired
-  private Encryptor encryptor;
 
   private final String credentialName = "/my-namespace/secretForSetTest/credential-name";
   private final String credentialValue = "credential-value";
@@ -137,7 +133,6 @@ public class CredentialsControllerConcurrencySetTest {
           uuid = UUID.randomUUID();
 
           ValueCredential valueCredential = new ValueCredential(credentialName);
-          valueCredential.setEncryptor(encryptor);
           valueCredential.setValue(credentialValue);
           valueCredential.setUuid(uuid);
 

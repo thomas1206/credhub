@@ -15,7 +15,6 @@ public class UserCredential extends Credential<UserCredential> {
       UserCredential existing,
       String name,
       User userValue,
-      Encryptor encryptor,
       List<AccessControlEntry> accessControlEntries) {
     UserCredential credential;
     if (existing == null) {
@@ -24,8 +23,6 @@ public class UserCredential extends Credential<UserCredential> {
       credential = new UserCredential();
       credential.copyNameReferenceFrom(existing);
     }
-
-    credential.setEncryptor(encryptor);
 
     credential.setUsername(userValue.getUsername());
     credential.setPassword(userValue.getPassword());

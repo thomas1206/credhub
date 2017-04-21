@@ -46,13 +46,12 @@ public class SshCredentialTest {
         SshCredentialData sshCredentialData = new SshCredentialData("/existingName");
         sshCredentialData.setEncryptedValue("old encrypted private key".getBytes());
         subject = new SshCredential(sshCredentialData);
-        subject.setEncryptor(encryptor);
       });
 
       it("copies name from existing", () -> {
         SshKey fields = new SshKey("public key", "new private key", null);
         SshCredential newCredential = SshCredential
-            .createNewVersion(subject, "anything I AM IGNORED", fields, encryptor,
+            .createNewVersion(subject, "anything I AM IGNORED", fields,
                 new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/existingName"));
@@ -63,7 +62,7 @@ public class SshCredentialTest {
       it("creates new if no existing", () -> {
         SshKey sshKey = new SshKey("public key", "new private key", null);
         SshCredential newCredential = SshCredential
-            .createNewVersion(null, "/newName", sshKey, encryptor, new ArrayList<>());
+            .createNewVersion(null, "/newName", sshKey, new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/newName"));
         assertThat(newCredential.getPrivateKey(), equalTo("new private key"));

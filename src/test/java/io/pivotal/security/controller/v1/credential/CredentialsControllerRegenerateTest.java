@@ -125,7 +125,6 @@ public class CredentialsControllerRegenerateTest {
         when(passwordGenerator.generateCredential(any(StringGenerationParameters.class)))
             .thenReturn(new StringCredential("generated-credential"));
         PasswordCredential originalCredential = new PasswordCredential("my-password");
-        originalCredential.setEncryptor(encryptor);
         StringGenerationParameters generationParameters = new StringGenerationParameters();
         generationParameters.setExcludeNumber(true);
         originalCredential
@@ -179,7 +178,6 @@ public class CredentialsControllerRegenerateTest {
         when(rsaGenerator.generateCredential(any(RsaGenerationParameters.class)))
             .thenReturn(new RsaKey("public_key", "private_key"));
         RsaCredential originalCredential = new RsaCredential("my-rsa");
-        originalCredential.setEncryptor(encryptor);
         originalCredential.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalCredential).when(credentialDataService).findMostRecent("my-rsa");
@@ -229,7 +227,6 @@ public class CredentialsControllerRegenerateTest {
         when(sshGenerator.generateCredential(any(SshGenerationParameters.class)))
             .thenReturn(new SshKey("public_key", "private_key", null));
         SshCredential originalCredential = new SshCredential("my-ssh");
-        originalCredential.setEncryptor(encryptor);
         originalCredential.setVersionCreatedAt(frozenTime.plusSeconds(1));
 
         doReturn(originalCredential).when(credentialDataService).findMostRecent("my-ssh");
@@ -305,7 +302,6 @@ public class CredentialsControllerRegenerateTest {
     describe("when attempting to regenerate a non-generated password", () -> {
       beforeEach(() -> {
         PasswordCredential originalCredential = new PasswordCredential("my-password");
-        originalCredential.setEncryptor(encryptor);
         originalCredential.setPasswordAndGenerationParameters("abcde", null);
         doReturn(originalCredential).when(credentialDataService).findMostRecent("my-password");
 
@@ -337,7 +333,6 @@ public class CredentialsControllerRegenerateTest {
             PasswordCredentialData passwordCredentialData = new PasswordCredentialData(
                 "my-password");
             PasswordCredential originalCredential = new PasswordCredential(passwordCredentialData);
-            originalCredential.setEncryptor(encryptor);
             originalCredential
                 .setPasswordAndGenerationParameters("abcde", new StringGenerationParameters());
 

@@ -116,7 +116,6 @@ public class EncryptionKeyRotatorTest {
       beforeEach(() -> {
         credentialWithCurrentKey = new CertificateCredential("/current-key");
         credentialWithCurrentKey
-            .setEncryptor(encryptor)
             .setCa("my-ca")
             .setCertificate("my-cert")
             .setPrivateKey("cert-private-key");
@@ -156,7 +155,6 @@ public class EncryptionKeyRotatorTest {
             "/unknown-key");
         credentialWithUnknownKey = new CertificateCredential(certificateCredentialData2);
         credentialWithUnknownKey
-            .setEncryptor(encryptor)
             .setPrivateKey("cert-private-key");
         certificateCredentialData2.setEncryptionKeyUuid(unknownCanary.getUuid());
         credentialDataService.save(credentialWithUnknownKey);

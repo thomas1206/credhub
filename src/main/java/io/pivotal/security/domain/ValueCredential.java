@@ -24,7 +24,7 @@ public class ValueCredential extends Credential<ValueCredential> {
   }
 
   public static ValueCredential createNewVersion(ValueCredential existing, String name,
-                                                 String value, Encryptor encryptor, List<AccessControlEntry> accessControlEntries) {
+                                                 String value, List<AccessControlEntry> accessControlEntries) {
     ValueCredential credential;
 
     if (existing == null) {
@@ -35,7 +35,6 @@ public class ValueCredential extends Credential<ValueCredential> {
     }
 
     credential.setAccessControlList(accessControlEntries);
-    credential.setEncryptor(encryptor);
     credential.setValue(value);
     return credential;
   }

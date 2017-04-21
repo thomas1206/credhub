@@ -44,7 +44,6 @@ public class CertificateCredential extends Credential<CertificateCredential> {
 
     credential.setAccessControlList(accessControlEntries);
 
-    credential.setEncryptor(encryptor);
     credential.setPrivateKey(certificateValue.getPrivateKey());
     credential.setCertificate(certificateValue.getCertificate());
     credential.setCa(certificateValue.getCa());

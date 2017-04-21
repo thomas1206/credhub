@@ -47,7 +47,7 @@ public class ValueCredentialTest {
     describe("with or without alternative names", () -> {
       beforeEach(() -> {
         valueCredentialData = new ValueCredentialData("foo");
-        subject = new ValueCredential(valueCredentialData).setEncryptor(encryptor);
+        subject = new ValueCredential(valueCredentialData);
       });
 
       it("encrypts the value", () -> {
@@ -73,13 +73,12 @@ public class ValueCredentialTest {
             .thenReturn("new value");
 
         subject = new ValueCredential("/existingName");
-        subject.setEncryptor(encryptor);
         valueCredentialData.setEncryptedValue("old encrypted value".getBytes());
       });
 
       it("copies values from existing, except value", () -> {
         ValueCredential newCredential = ValueCredential
-            .createNewVersion(subject, "anything I AM IGNORED", "new value", encryptor,
+            .createNewVersion(subject, "anything I AM IGNORED", "new value",
                 new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/existingName"));
@@ -91,7 +90,7 @@ public class ValueCredentialTest {
             null,
             "/newName",
             "new value",
-            encryptor, new ArrayList<>());
+            new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/newName"));
         assertThat(newCredential.getValue(), equalTo("new value"));

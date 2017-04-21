@@ -45,7 +45,6 @@ public class CertificateCredentialTest {
 
       certificateCredentialData = new CertificateCredentialData("/Foo");
       subject = new CertificateCredential(certificateCredentialData)
-          .setEncryptor(encryptor)
           .setCa("my-ca")
           .setCertificate("my-cert")
           .setPrivateKey("my-priv");

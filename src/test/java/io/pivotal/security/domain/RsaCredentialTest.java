@@ -48,13 +48,12 @@ public class RsaCredentialTest {
         RsaCredentialData delegate = new RsaCredentialData("/existingName");
         delegate.setEncryptedValue("old encrypted private key".getBytes());
         subject = new RsaCredential(delegate);
-        subject.setEncryptor(encryptor);
       });
 
       it("copies name from existing", () -> {
         RsaKey fields = new RsaKey("public key", "new private key");
         RsaCredential newCredential = RsaCredential
-            .createNewVersion(subject, "anything I AM IGNORED", fields, encryptor,
+            .createNewVersion(subject, "anything I AM IGNORED", fields,
                 new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/existingName"));
@@ -65,7 +64,7 @@ public class RsaCredentialTest {
       it("creates new if no existing", () -> {
         RsaKey fields = new RsaKey("public key", "new private key");
         RsaCredential newCredential = RsaCredential
-            .createNewVersion(null, "/newName", fields, encryptor, new ArrayList<>());
+            .createNewVersion(null, "/newName", fields, new ArrayList<>());
 
         assertThat(newCredential.getName(), equalTo("/newName"));
         assertThat(newCredential.getPrivateKey(), equalTo("new private key"));

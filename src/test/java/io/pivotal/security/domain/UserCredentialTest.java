@@ -81,8 +81,7 @@ public class UserCredentialTest {
             .setEncryptedValue(ENCRYPTED_PASSWORD)
             .setNonce(NONCE)
             .setEncryptionKeyUuid(ENCRYPTION_KEY_UUID);
-        subject = new UserCredential(userCredentialData)
-            .setEncryptor(encryptor);
+        subject = new UserCredential(userCredentialData);
       });
 
       it("should return decrypted password", () -> {
@@ -100,8 +99,7 @@ public class UserCredentialTest {
         when(encryptor.encrypt(eq(USER_PASSWORD)))
             .thenReturn(new Encryption(ENCRYPTION_KEY_UUID, ENCRYPTED_PASSWORD, NONCE));
         userCredentialData = new UserCredentialData(CREDENTIAL_NAME);
-        subject = new UserCredential(userCredentialData)
-            .setEncryptor(encryptor);
+        subject = new UserCredential(userCredentialData);
         subject.setPassword(USER_PASSWORD);
       });
 
@@ -131,7 +129,6 @@ public class UserCredentialTest {
               new UserCredential(existingUserCredentialData),
               CREDENTIAL_NAME,
               new User(USERNAME, USER_PASSWORD),
-              encryptor,
               newArrayList());
 
           assertThat(subject.getCredentialName(), equalTo(existingUserCredentialData.getCredentialName()));
@@ -144,7 +141,6 @@ public class UserCredentialTest {
               NO_EXISTING_CREDENTIAL,
               CREDENTIAL_NAME,
               new User(USERNAME, USER_PASSWORD),
-              encryptor,
               Arrays.asList(
                   new AccessControlEntry("test-user", Arrays.asList(READ, WRITE))
               ));
@@ -186,8 +182,7 @@ public class UserCredentialTest {
             .setEncryptionKeyUuid(oldEncryptionKeyUuid)
             .setEncryptedValue(oldEncryptedPassword)
             .setNonce(oldNonce);
-        subject = new UserCredential(userCredentialData)
-            .setEncryptor(encryptor);
+        subject = new UserCredential(userCredentialData);
         when(encryptor.decrypt(new Encryption(oldEncryptionKeyUuid, oldEncryptedPassword, oldNonce)))
             .thenReturn(USER_PASSWORD);
         when(encryptor.encrypt(eq(USER_PASSWORD)))

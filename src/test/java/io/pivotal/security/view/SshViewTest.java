@@ -41,7 +41,6 @@ public class SshViewTest {
       when(encryptor.decrypt(encryption))
           .thenReturn(TestConstants.PRIVATE_KEY_4096);
       entity = new SshCredential(credentialName)
-          .setEncryptor(encryptor)
           .setPublicKey(TestConstants.SSH_PUBLIC_KEY_4096_WITH_COMMENT)
           .setPrivateKey(TestConstants.PRIVATE_KEY_4096);
       entity.setUuid(uuid);

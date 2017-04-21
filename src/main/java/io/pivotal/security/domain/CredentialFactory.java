@@ -40,64 +40,19 @@ public class CredentialFactory {
     final String decryptedValue = encryptor.decrypt(encryption);
 
     if (credentialData instanceof CertificateCredentialData) {
-      final CertificateCredential certificateCredential = new CertificateCredential((CertificateCredentialData) credentialData);
-      certificateCredential.setPrivateKey(decryptedValue);
-
-      return certificateCredential;
+      return makeCertificateCredential((CertificateCredentialData) credentialData, decryptedValue);
     } else if (credentialData instanceof PasswordCredentialData) {
-      final PasswordCredential passwordCredential = new PasswordCredential((PasswordCredentialData) credentialData);
-      final Encryption parametersEncryption = new Encryption(
-          credentialData.getEncryptionKeyUuid(),
-          ((PasswordCredentialData) credentialData).getEncryptedGenerationParameters(),
-          ((PasswordCredentialData) credentialData).getParametersNonce());
-      final String parametersJson = encryptor.decrypt(parametersEncryption);
-
-      if (parametersJson != null) {
-        Assert.notNull(decryptedValue,
-            "Password length generation parameter cannot be restored without an existing password");
-
-        try {
-          final StringGenerationParameters generationParameters = objectMapper.readValue(parametersJson, StringGenerationParameters.class);
-          generationParameters.setLength(decryptedValue.length());
-          passwordCredential.setPasswordAndGenerationParameters(decryptedValue, generationParameters);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-      return passwordCredential;
+      return makePasswordCredential(credentialData, decryptedValue);
     } else if (credentialData instanceof RsaCredentialData) {
-      final RsaCredential rsaCredential = new RsaCredential((RsaCredentialData) credentialData);
-      rsaCredential.setPrivateKey(decryptedValue);
-
-      return rsaCredential;
+      return makeRsaCredential((RsaCredentialData) credentialData, decryptedValue);
     } else if (credentialData instanceof SshCredentialData) {
-      final SshCredential sshCredential = new SshCredential((SshCredentialData) credentialData);
-      sshCredential.setPrivateKey(decryptedValue);
-
-      return sshCredential;
+      return makeSshCredential((SshCredentialData) credentialData, decryptedValue);
     } else if (credentialData instanceof ValueCredentialData) {
-      final ValueCredential valueCredential = new ValueCredential((ValueCredentialData) credentialData);
-      valueCredential.setValue(decryptedValue);
-
-      return valueCredential;
+      return makeValueCredential((ValueCredentialData) credentialData, decryptedValue);
     } else if (credentialData instanceof JsonCredentialData) {
-      final JsonCredential jsonCredential = new JsonCredential((JsonCredentialData) credentialData);
-
-      if (decryptedValue != null) {
-        try {
-          jsonCredential.setValue(objectMapper.readValue(decryptedValue, Map.class));
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-      return jsonCredential;
+      return makeJsonCredential((JsonCredentialData) credentialData, decryptedValue);
     } else if (credentialData instanceof UserCredentialData) {
-      final UserCredential userCredential = new UserCredential((UserCredentialData) credentialData);
-      userCredential.setPassword(decryptedValue);
-
-      return userCredential;
+      return makeUserCredential((UserCredentialData) credentialData, decryptedValue);
     } else {
       throw new RuntimeException("Unrecognized type: " + credentialData.getClass().getName());
     }
@@ -105,5 +60,78 @@ public class CredentialFactory {
 
   public List<Credential> makeCredentialsFromEntities(List<CredentialData> daos) {
     return daos.stream().map(this::makeCredentialFromEntity).collect(Collectors.toList());
+  }
+
+  private Credential makeCertificateCredential(CertificateCredentialData credentialData, String decryptedValue) {
+    final CertificateCredential certificateCredential = new CertificateCredential(credentialData);
+    certificateCredential.setPrivateKey(decryptedValue);
+
+    return certificateCredential;
+  }
+
+  private Credential makePasswordCredential(CredentialData credentialData, String decryptedValue) {
+    final PasswordCredential passwordCredential = new PasswordCredential((PasswordCredentialData) credentialData);
+    final Encryption parametersEncryption = new Encryption(
+        credentialData.getEncryptionKeyUuid(),
+        ((PasswordCredentialData) credentialData).getEncryptedGenerationParameters(),
+        ((PasswordCredentialData) credentialData).getParametersNonce());
+    final String parametersJson = encryptor.decrypt(parametersEncryption);
+
+    if (parametersJson != null) {
+      Assert.notNull(decryptedValue,
+          "Password length generation parameter cannot be restored without an existing password");
+
+      try {
+        final StringGenerationParameters generationParameters = objectMapper.readValue(parametersJson, StringGenerationParameters.class);
+        generationParameters.setLength(decryptedValue.length());
+        passwordCredential.setPasswordAndGenerationParameters(decryptedValue, generationParameters);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    return passwordCredential;
+  }
+
+  private Credential makeRsaCredential(RsaCredentialData credentialData, String decryptedValue) {
+    final RsaCredential rsaCredential = new RsaCredential(credentialData);
+    rsaCredential.setPrivateKey(decryptedValue);
+
+    return rsaCredential;
+  }
+
+  private Credential makeSshCredential(SshCredentialData credentialData, String decryptedValue) {
+    final SshCredential sshCredential = new SshCredential(credentialData);
+    sshCredential.setPrivateKey(decryptedValue);
+
+    return sshCredential;
+  }
+
+  private Credential makeValueCredential(ValueCredentialData credentialData, String decryptedValue) {
+    final ValueCredential valueCredential = new ValueCredential(credentialData);
+    valueCredential.setValue(decryptedValue);
+
+    return valueCredential;
+  }
+
+  private Credential makeJsonCredential(JsonCredentialData credentialData, String decryptedValue) {
+    final JsonCredential jsonCredential = new JsonCredential(credentialData);
+
+    if (decryptedValue != null) {
+      try {
+        jsonCredential.setValue(objectMapper.readValue(decryptedValue, Map.class));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    return jsonCredential;
+  }
+
+  private Credential makeUserCredential(UserCredentialData credentialData, String decryptedValue) {
+    final UserCredential userCredential = new UserCredential(credentialData);
+    userCredential.setPassword(decryptedValue);
+
+    return userCredential;
   }
 }

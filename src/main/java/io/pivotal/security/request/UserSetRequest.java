@@ -30,7 +30,6 @@ public class UserSetRequest extends BaseCredentialSetRequest<UserCredential> {
         existing,
         getName(),
         getUserValue(),
-        encryptor,
         getAccessControlEntries());
   }
 }
