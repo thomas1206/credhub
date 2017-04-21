@@ -1,6 +1,7 @@
 package io.pivotal.security.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.pivotal.security.credential.Certificate;
 import io.pivotal.security.entity.CertificateCredentialData;
 import io.pivotal.security.entity.CredentialData;
 import io.pivotal.security.entity.JsonCredentialData;
@@ -9,6 +10,7 @@ import io.pivotal.security.entity.RsaCredentialData;
 import io.pivotal.security.entity.SshCredentialData;
 import io.pivotal.security.entity.UserCredentialData;
 import io.pivotal.security.entity.ValueCredentialData;
+import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.StringGenerationParameters;
 import io.pivotal.security.service.Encryption;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,34 @@ public class CredentialFactory {
 
   public List<Credential> makeCredentialsFromEntities(List<CredentialData> daos) {
     return daos.stream().map(this::makeCredentialFromEntity).collect(Collectors.toList());
+  }
+
+  public Credential createNewVersion(
+      Credential existing,
+      String name,
+      Credential credentialValue,
+      List<AccessControlEntry> accessControlEntries
+  ) {
+    if (credentialValue instanceof Certificate) {
+
+    }
+    CertificateCredential credential;
+
+    if (existing == null) {
+      credential = new CertificateCredential(name);
+    } else {
+      credential = new CertificateCredential();
+      credential.copyNameReferenceFrom(existing);
+      credential.setCaName(existing.getCaName());
+    }
+
+    credential.setAccessControlList(accessControlEntries);
+
+    credential.setPrivateKey(credentialValue.getPrivateKey());
+    credential.setCertificate(credentialValue.getCertificate());
+    credential.setCa(credentialValue.getCa());
+    credential.setCaName(credentialValue.getCaName());
+    return credential;
   }
 
   private Credential makeCertificateCredential(CertificateCredentialData credentialData, String decryptedValue) {
