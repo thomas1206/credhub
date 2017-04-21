@@ -10,6 +10,7 @@ import java.util.List;
 public class CertificateCredential extends Credential<CertificateCredential> {
 
   private CertificateCredentialData delegate;
+  private String privateKey;
 
   public CertificateCredential(CertificateCredentialData delegate) {
     super(delegate);
@@ -70,19 +71,11 @@ public class CertificateCredential extends Credential<CertificateCredential> {
   }
 
   public String getPrivateKey() {
-    return encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
+    return privateKey;
   }
 
   public CertificateCredential setPrivateKey(String privateKey) {
-    final Encryption encryption = encryptor.encrypt(privateKey);
-
-    delegate.setNonce(encryption.nonce);
-    delegate.setEncryptedValue(encryption.encryptedValue);
-    delegate.setEncryptionKeyUuid(encryption.canaryUuid);
-
+    this.privateKey = privateKey;
     return this;
   }
 

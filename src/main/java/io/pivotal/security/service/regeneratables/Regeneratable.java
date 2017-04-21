@@ -3,7 +3,7 @@ package io.pivotal.security.service.regeneratables;
 import io.pivotal.security.domain.Credential;
 import io.pivotal.security.request.BaseCredentialGenerateRequest;
 
-public interface Regeneratable {
+public interface Regeneratable<T extends Credential> {
 
-  BaseCredentialGenerateRequest createGenerateRequest(Credential credential);
+  BaseCredentialGenerateRequest createGenerateRequest(T credential);
 }

@@ -11,6 +11,7 @@ import java.util.List;
 public class RsaCredential extends Credential<RsaCredential> {
 
   private RsaCredentialData delegate;
+  private String privateKey;
 
   public RsaCredential(RsaCredentialData delegate) {
     super(delegate);
@@ -64,19 +65,11 @@ public class RsaCredential extends Credential<RsaCredential> {
   }
 
   public String getPrivateKey() {
-    return encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
+    return privateKey;
   }
 
   public RsaCredential setPrivateKey(String privateKey) {
-    final Encryption encryption = encryptor.encrypt(privateKey);
-
-    delegate.setEncryptedValue(encryption.encryptedValue);
-    delegate.setNonce(encryption.nonce);
-    delegate.setEncryptionKeyUuid(encryption.canaryUuid);
-
+    this.privateKey = privateKey;
     return this;
   }
 

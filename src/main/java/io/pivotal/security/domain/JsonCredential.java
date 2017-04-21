@@ -1,20 +1,15 @@
 package io.pivotal.security.domain;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pivotal.security.entity.JsonCredentialData;
-import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.service.Encryption;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class JsonCredential extends Credential<JsonCredential> {
 
-  private final ObjectMapper objectMapper;
   private final JsonCredentialData delegate;
+  private Map<String, Object> value;
 
   public JsonCredential() {
     this(new JsonCredentialData());
@@ -23,7 +18,6 @@ public class JsonCredential extends Credential<JsonCredential> {
   public JsonCredential(JsonCredentialData delegate) {
     super(delegate);
     this.delegate = delegate;
-    this.objectMapper = new ObjectMapper();
   }
 
   public JsonCredential(String name) {
@@ -66,32 +60,11 @@ public class JsonCredential extends Credential<JsonCredential> {
   }
 
   public Map<String, Object> getValue() {
-    String serializedValue = encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
-    try {
-      return objectMapper.readValue(serializedValue, Map.class);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return value;
   }
 
   public JsonCredential setValue(Map<String, Object> value) {
-    if (value == null) {
-      throw new ParameterizedValidationException("error.missing_value");
-    }
-
-    try {
-      String serializedString = objectMapper.writeValueAsString(value);
-      Encryption encryption = encryptor.encrypt(serializedString);
-
-      delegate.setEncryptedValue(encryption.encryptedValue);
-      delegate.setNonce(encryption.nonce);
-      delegate.setEncryptionKeyUuid(encryption.canaryUuid);
-      return this;
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    this.value = value;
+    return this;
   }
 }

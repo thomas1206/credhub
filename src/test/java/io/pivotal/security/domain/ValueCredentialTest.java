@@ -11,7 +11,6 @@ import java.util.UUID;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
 import static com.greghaskins.spectrum.Spectrum.describe;
 import static com.greghaskins.spectrum.Spectrum.it;
-import static io.pivotal.security.helper.SpectrumHelper.itThrows;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -60,10 +59,6 @@ public class ValueCredentialTest {
       it("can decrypt values", () -> {
         subject.setValue("my-value");
         assertThat(subject.getValue(), equalTo("my-value"));
-      });
-
-      itThrows("when setting a value that is null", IllegalArgumentException.class, () -> {
-        subject.setValue(null);
       });
     });
 

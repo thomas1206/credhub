@@ -2,7 +2,6 @@ package io.pivotal.security.service.regeneratables;
 
 import io.pivotal.security.domain.CertificateCredential;
 import io.pivotal.security.domain.CertificateParameters;
-import io.pivotal.security.domain.Credential;
 import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.request.BaseCredentialGenerateRequest;
 import io.pivotal.security.request.CertificateGenerateRequest;
@@ -10,11 +9,10 @@ import io.pivotal.security.util.CertificateReader;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
-public class CertificateCredentialRegeneratable implements Regeneratable {
+public class CertificateCredentialRegeneratable implements Regeneratable<CertificateCredential> {
 
   @Override
-  public BaseCredentialGenerateRequest createGenerateRequest(Credential credential) {
-    CertificateCredential certificateCredential = (CertificateCredential) credential;
+  public BaseCredentialGenerateRequest createGenerateRequest(CertificateCredential certificateCredential) {
     CertificateReader reader = new CertificateReader(certificateCredential.getCertificate());
 
     if (!reader.isValid() || (isEmpty(certificateCredential.getCaName()) && !reader.isSelfSigned())) {

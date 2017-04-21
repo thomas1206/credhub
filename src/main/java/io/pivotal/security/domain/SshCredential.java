@@ -12,6 +12,7 @@ import java.util.List;
 public class SshCredential extends Credential<SshCredential> {
 
   private SshCredentialData delegate;
+  private String privateKey;
 
   public SshCredential(SshCredentialData delegate) {
     super(delegate);
@@ -61,18 +62,11 @@ public class SshCredential extends Credential<SshCredential> {
   }
 
   public String getPrivateKey() {
-    return encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
+    return privateKey;
   }
 
   public SshCredential setPrivateKey(String privateKey) {
-    final Encryption encryption = encryptor.encrypt(privateKey);
-
-    delegate.setEncryptedValue(encryption.encryptedValue);
-    delegate.setNonce(encryption.nonce);
-    delegate.setEncryptionKeyUuid(encryption.canaryUuid);
+    this.privateKey = privateKey;
 
     return this;
   }

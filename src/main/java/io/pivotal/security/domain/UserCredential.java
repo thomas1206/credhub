@@ -9,6 +9,7 @@ import java.util.List;
 
 public class UserCredential extends Credential<UserCredential> {
   private final UserCredentialData delegate;
+  private String password;
 
   public static UserCredential createNewVersion(
       UserCredential existing,
@@ -59,18 +60,12 @@ public class UserCredential extends Credential<UserCredential> {
   }
 
   public UserCredential setPassword(String password) {
-    Encryption passwordEncryption = encryptor.encrypt(password);
-    delegate.setEncryptionKeyUuid(passwordEncryption.canaryUuid);
-    delegate.setEncryptedValue(passwordEncryption.encryptedValue);
-    delegate.setNonce(passwordEncryption.nonce);
+    this.password = password;
     return this;
   }
 
   public String getPassword() {
-    return encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
+    return password;
   }
 
   public UserCredential setUsername(String username) {

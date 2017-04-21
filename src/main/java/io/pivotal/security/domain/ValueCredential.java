@@ -2,13 +2,13 @@ package io.pivotal.security.domain;
 
 import io.pivotal.security.entity.ValueCredentialData;
 import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.service.Encryption;
 
 import java.util.List;
 
 public class ValueCredential extends Credential<ValueCredential> {
 
   private ValueCredentialData delegate;
+  private String value;
 
   public ValueCredential(ValueCredentialData delegate) {
     super(delegate);
@@ -41,22 +41,11 @@ public class ValueCredential extends Credential<ValueCredential> {
   }
 
   public String getValue() {
-    return encryptor.decrypt(new Encryption(
-        delegate.getEncryptionKeyUuid(),
-        delegate.getEncryptedValue(),
-        delegate.getNonce()));
+    return value;
   }
 
   public ValueCredential setValue(String value) {
-    if (value == null) {
-      throw new IllegalArgumentException("value cannot be null");
-    }
-
-    final Encryption encryption = encryptor.encrypt(value);
-    delegate.setEncryptedValue(encryption.encryptedValue);
-    delegate.setNonce(encryption.nonce);
-    delegate.setEncryptionKeyUuid(encryption.canaryUuid);
-
+    this.value = value;
     return this;
   }
 

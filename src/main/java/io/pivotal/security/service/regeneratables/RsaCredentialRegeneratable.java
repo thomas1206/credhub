@@ -1,18 +1,13 @@
 package io.pivotal.security.service.regeneratables;
 
 import io.pivotal.security.domain.RsaCredential;
-import io.pivotal.security.domain.Credential;
 import io.pivotal.security.request.BaseCredentialGenerateRequest;
 import io.pivotal.security.request.RsaGenerateRequest;
 
-public class RsaCredentialRegeneratable implements Regeneratable {
-
-  public RsaCredentialRegeneratable() {
-  }
+public class RsaCredentialRegeneratable implements Regeneratable<RsaCredential> {
 
   @Override
-  public BaseCredentialGenerateRequest createGenerateRequest(Credential credential) {
-    RsaCredential rsaCredential = (RsaCredential) credential;
+  public BaseCredentialGenerateRequest createGenerateRequest(RsaCredential rsaCredential) {
     RsaGenerateRequest generateRequest = new RsaGenerateRequest();
     generateRequest.setName(rsaCredential.getName());
     generateRequest.setType(rsaCredential.getCredentialType());
