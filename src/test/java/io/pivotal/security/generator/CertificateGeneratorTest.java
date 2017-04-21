@@ -127,8 +127,7 @@ public class CertificateGeneratorTest {
 
           when(
               signedCertificateGenerator
-                  .getSignedByIssuer(rootCaDn, rootCaKeyPair.getPrivate(),
-                      childCertificateKeyPair.get(), inputParameters)
+                  .getSignedByIssuer(childCertificateKeyPair.get(), inputParameters, rootCa)
           ).thenReturn(childX509Certificate);
         });
 
@@ -153,8 +152,7 @@ public class CertificateGeneratorTest {
 
           when(
               signedCertificateGenerator
-                  .getSignedByIssuer(rootCaDn, rootCaKeyPair.getPrivate(),
-                      childCertificateKeyPair.get(), params)
+                  .getSignedByIssuer(childCertificateKeyPair.get(), params, rootCa)
           ).thenReturn(childX509Certificate);
 
           Certificate certificate = subject.generateCredential(
@@ -195,8 +193,7 @@ public class CertificateGeneratorTest {
 
           when(
               signedCertificateGenerator
-                  .getSignedByIssuer(intermediateCaDn, intermediateCaKeyPair.getPrivate(),
-                      childCertificateKeyPair.get(), inputParameters)
+                  .getSignedByIssuer(childCertificateKeyPair.get(), inputParameters, intermediateCa)
           ).thenReturn(childX509Certificate);
         });
 

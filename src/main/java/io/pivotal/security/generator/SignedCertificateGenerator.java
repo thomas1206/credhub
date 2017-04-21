@@ -1,12 +1,8 @@
 package io.pivotal.security.generator;
 
+import io.pivotal.security.credential.Certificate;
 import io.pivotal.security.domain.CertificateParameters;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -16,11 +12,28 @@ import org.bouncycastle.cert.X509ExtensionUtils;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.stereotype.Component;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 @Component
 public class SignedCertificateGenerator {
@@ -45,20 +58,19 @@ public class SignedCertificateGenerator {
 
   X509Certificate getSelfSigned(KeyPair keyPair, CertificateParameters params)
       throws Exception {
-    return getSignedByIssuer(params.getX500Name(), keyPair.getPrivate(), keyPair, params);
+    //(params.getX500Name(), keyPair.getPrivate(), keyPair, params);
+    return getSignedByIssuer(keyPair, params, null);
   }
 
   X509Certificate getSignedByIssuer(
-      X500Name issuerDn,
-      PrivateKey issuerKey,
       KeyPair keyPair,
-      CertificateParameters params) throws Exception {
+      CertificateParameters params, Certificate caCertificate) throws Exception {
     Instant now = timeProvider.getNow().toInstant();
     SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo
         .getInstance(keyPair.getPublic().getEncoded());
 
     final X509v3CertificateBuilder certificateBuilder = new X509v3CertificateBuilder(
-        issuerDn,
+        getSubjectNameOfCa(caCertificate.getPublicKeyCertificate()),
         serialNumberGenerator.generate(),
         Date.from(now),
         Date.from(now.plus(Duration.ofDays(params.getDuration()))),
@@ -85,10 +97,26 @@ public class SignedCertificateGenerator {
         .addExtension(Extension.basicConstraints, true, new BasicConstraints(params.isCa()));
 
     ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withRSA").setProvider(provider)
-        .build(issuerKey);
+        .build(getPrivateKey(caCertificate.getPrivateKey()));
 
     X509CertificateHolder holder = certificateBuilder.build(contentSigner);
 
     return new JcaX509CertificateConverter().setProvider(provider).getCertificate(holder);
+  }
+
+
+  private PrivateKey getPrivateKey(String privateKey)
+      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    PEMParser pemParser = new PEMParser(new StringReader(privateKey));
+    PEMKeyPair pemKeyPair = (PEMKeyPair) pemParser.readObject();
+    PrivateKeyInfo privateKeyInfo = pemKeyPair.getPrivateKeyInfo();
+    return new JcaPEMKeyConverter().getPrivateKey(privateKeyInfo);
+  }
+
+  private X500Name getSubjectNameOfCa(String ca) throws IOException, CertificateException {
+    X509Certificate certificate = (X509Certificate) CertificateFactory
+        .getInstance("X.509", provider)
+        .generateCertificate(new ByteArrayInputStream(ca.getBytes()));
+    return new X500Name(certificate.getSubjectDN().getName());
   }
 }
