@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_ACCESS;
 import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
+import static io.pivotal.security.domain.CredentialFactory.createNewVersion;
 
 @Service
 public class SetService {
@@ -46,7 +47,9 @@ public class SetService {
 
     Credential storedEntity = existingCredential;
     if (shouldWriteNewEntity) {
-      Credential newEntity = (Credential) requestBody.createNewVersion(existingCredential, encryptor);
+      Credential newEntity = createNewVersion(
+          existingCredential,
+          requestBody);
       storedEntity = credentialDataService.save(newEntity);
     }
     eventAuditRecordParameters.setCredentialName(storedEntity.getName());

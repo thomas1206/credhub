@@ -26,6 +26,10 @@ public class PasswordSetRequest extends BaseCredentialSetRequest<PasswordCredent
     this.generationParameters = generationParameters;
   }
 
+  public StringGenerationParameters getGenerationParameters() {
+    return generationParameters;
+  }
+
   @Override
   @JsonIgnore
   public PasswordCredential createNewVersion(PasswordCredential existing, Encryptor encryptor) {

@@ -55,10 +55,20 @@ public class PasswordCredential extends Credential<PasswordCredential> {
     return password;
   }
 
+  public PasswordCredential setPassword(String password) {
+    this.password = password;
+    return this;
+  }
+
+  public PasswordCredential setGenerationParameters(StringGenerationParameters generationParameters) {
+    this.generationParameters = generationParameters;
+    return this;
+  }
+
   public PasswordCredential setPasswordAndGenerationParameters(String password,
                                                                StringGenerationParameters generationParameters) {
-    this.password = password;
-    this.generationParameters = generationParameters;
+    setPassword(password);
+    setGenerationParameters(generationParameters);
 
     return this;
   }
