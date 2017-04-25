@@ -1,5 +1,29 @@
 package io.pivotal.security.data;
 
+import io.pivotal.security.aspect.CredentialNameAspect;
+import io.pivotal.security.entity.CredentialName;
+import io.pivotal.security.entity.ValueCredentialData;
+import io.pivotal.security.exceptions.EntryNotFoundException;
+import io.pivotal.security.repository.AccessEntryRepository;
+import io.pivotal.security.repository.CredentialNameRepository;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.request.AccessControlOperation;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.List;
+
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -13,30 +37,12 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-import io.pivotal.security.entity.ValueCredentialData;
-import io.pivotal.security.entity.CredentialName;
-import io.pivotal.security.exceptions.EntryNotFoundException;
-import io.pivotal.security.repository.AccessEntryRepository;
-import io.pivotal.security.repository.CredentialNameRepository;
-import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.request.AccessControlOperation;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import java.util.List;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestDatabase.Replace;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
-
 @RunWith(SpringRunner.class)
 @ActiveProfiles(value = "unit-test", resolver = DatabaseProfileResolver.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = Replace.NONE)
+@EnableAspectJAutoProxy
+@Import(CredentialNameAspect.class)
 public class AccessControlDataServiceTest {
 
   private AccessControlDataService subject;
@@ -153,37 +159,49 @@ public class AccessControlDataServiceTest {
 
   @Test
   public void hasAclReadPermission_whenActorHasAclRead_returnsTrue() {
-    assertThat(subject.hasReadAclPermission("HanSolo", "/lightsaber"),
+    assertThat(subject.hasReadAclPermission("HanSolo", new CredentialName("/lightsaber")),
+        is(true));
+  }
+
+  @Test
+  public void hasAclReadPermission_givenNameWithoutLeadingSlashAndHasAclRead_returnsTrue() {
+    assertThat(subject.hasReadAclPermission("HanSolo", new CredentialName("lightsaber")),
         is(true));
   }
 
   @Test
   public void hasAclReadPermission_whenActorHasAclRead_returnsTrueRegardlessOfCredentialNameCase() {
-    assertThat(subject.hasReadAclPermission("HanSolo", "/LIGHTSABER"),
+    assertThat(subject.hasReadAclPermission("HanSolo", new CredentialName("/LIGHTSABER")),
         is(true));
   }
 
   @Test
   public void hasAclReadPermission_whenActorHasReadButNotReadAcl_returnsFalse() {
-    assertThat(subject.hasReadAclPermission("Luke", "/lightsaber"),
+    assertThat(subject.hasReadAclPermission("Luke", new CredentialName("/lightsaber")),
         is(false));
   }
 
   @Test
   public void hasAclReadPermission_whenActorHasNoPermissions_returnsFalse() {
-    assertThat(subject.hasReadAclPermission("Chewie", "/lightsaber"),
+    assertThat(subject.hasReadAclPermission("Chewie", new CredentialName("/lightsaber")),
         is(false));
   }
 
   @Test
   public void hasAclReadPermission_whenCredentialDoesNotExist_returnsFalse() {
-    assertThat(subject.hasReadAclPermission("Luke", "/crossbow"),
+    assertThat(subject.hasReadAclPermission("Luke", new CredentialName("/crossbow")),
         is(false));
   }
 
   @Test
   public void hasReadPermission_whenActorHasRead_returnsTrue() {
     assertThat(subject.hasReadPermission("Leia", "/lightsaber"),
+        is(true));
+  }
+
+  @Test
+  public void hasReadPermission_givenNameWithoutLeadingSlashAndHasRead_returnsTrue() {
+    assertThat(subject.hasReadPermission("Leia", "lightsaber"),
         is(true));
   }
 

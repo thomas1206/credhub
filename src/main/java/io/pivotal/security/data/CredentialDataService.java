@@ -115,7 +115,7 @@ public class CredentialDataService {
 
   public Credential findMostRecent(String name) {
     CredentialName credentialName = credentialNameRepository
-        .findOneByNameIgnoreCase(StringUtils.prependIfMissing(name, "/"));
+        .findOneByNameIgnoreCase(name);
 
     if (credentialName == null) {
       return null;
@@ -141,14 +141,13 @@ public class CredentialDataService {
   }
 
   public boolean delete(String name) {
-    long numDeleted = credentialNameRepository.deleteByNameIgnoreCase(
-        StringUtils.prependIfMissing(name, "/"));
+    long numDeleted = credentialNameRepository.deleteByNameIgnoreCase(name);
     return numDeleted > 0;
   }
 
   public List<Credential> findAllByName(String name) {
     CredentialName credentialName = credentialNameRepository
-        .findOneByNameIgnoreCase(StringUtils.prependIfMissing(name, "/"));
+        .findOneByNameIgnoreCase(name);
 
     return credentialName != null ? credentialFactory.makeCredentialsFromEntities(credentialRepository.findAllByCredentialNameUuid(credentialName.getUuid()))
         : newArrayList();

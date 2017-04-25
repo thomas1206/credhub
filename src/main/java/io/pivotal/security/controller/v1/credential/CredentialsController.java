@@ -328,15 +328,15 @@ public class CredentialsController {
           }
           try {
             List<Credential> credentials = finder.apply(identifier);
-            if (credentials.isEmpty()) {
-              throw new EntryNotFoundException("error.credential_not_found");
-            } else {
+            if (!credentials.isEmpty()) {
               String name = credentials.get(0).getName();
               eventAuditRecordParameters.setCredentialName(name);
               //The permission check is done this late to allow the audit log to distinguish between
               //404s caused by permission errors and actual 404s.
               permissionService.verifyReadPermission(userContext, identifier);
               return credentials;
+            } else {
+              throw new EntryNotFoundException("error.credential_not_found");
             }
           } catch (PermissionException e) {
             throw new EntryNotFoundException("error.credential_not_found");

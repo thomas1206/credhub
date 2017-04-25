@@ -3,12 +3,17 @@ package io.pivotal.security.handler;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
+import io.pivotal.security.entity.CredentialName;
+import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
 import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
@@ -24,15 +29,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RunWith(Spectrum.class)
 public class AccessControlHandlerTest {
   private AccessControlHandler subject;
 
   private PermissionService permissionService;
   private AccessControlDataService accessControlDataService;
+  private CredentialNameRepository credentialNameRepository;
 
   private final UserContext userContext = mock(UserContext.class);
 
@@ -40,7 +43,8 @@ public class AccessControlHandlerTest {
     beforeEach(() -> {
       permissionService = mock(PermissionService.class);
       accessControlDataService = mock(AccessControlDataService.class);
-      subject = new AccessControlHandler(permissionService, accessControlDataService);
+      credentialNameRepository = mock(CredentialNameRepository.class);
+      subject = new AccessControlHandler(permissionService, accessControlDataService, credentialNameRepository);
     });
 
     describe("#getAccessControlListResponse", () -> {
@@ -49,6 +53,8 @@ public class AccessControlHandlerTest {
           List<AccessControlEntry> accessControlList = newArrayList();
           when(accessControlDataService.getAccessControlList(any(String.class)))
               .thenReturn(accessControlList);
+          when(credentialNameRepository.findOneByNameIgnoreCase(any(String.class)))
+              .thenReturn(new CredentialName("/test-credential"));
         });
 
         it("should ensure the response contains the corrected name", () -> {
@@ -79,7 +85,7 @@ public class AccessControlHandlerTest {
           subject.getAccessControlListResponse(userContext, "/test-credential");
 
           verify(permissionService, times(1))
-              .verifyAclReadPermission(userContext, "/test-credential");
+              .verifyAclReadPermission(userContext, new CredentialName("/test-credential"));
         });
 
         it("should return the ACL response", () -> {

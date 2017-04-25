@@ -7,7 +7,6 @@ import io.pivotal.security.repository.AccessEntryRepository;
 import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +35,11 @@ public class AccessControlDataService {
     return createViewsForAllAcesWithName(credentialName);
   }
 
+
+  public List<AccessControlEntry> getAccessControlList(CredentialName credentialName) {
+    return createViewsForAllAcesWithName(credentialName);
+  }
+
   public List<AccessControlEntry> setAccessControlEntries(
       String name,
       List<AccessControlEntry> entries
@@ -58,9 +62,7 @@ public class AccessControlDataService {
     accessEntryRepository.deleteByCredentialNameUuidAndActor(credentialName.getUuid(), actor);
   }
 
-  public boolean hasReadAclPermission(String actor, String name) {
-    CredentialName credentialName = credentialNameRepository.findOneByNameIgnoreCase(name);
-
+  public boolean hasReadAclPermission(String actor, CredentialName credentialName) {
     if (credentialName == null) {
       return false;
     }
@@ -107,7 +109,6 @@ public class AccessControlDataService {
   }
 
   private CredentialName findCredentialName(String name) {
-    name = StringUtils.prependIfMissing(name, "/");
     final CredentialName credentialName = credentialNameRepository
         .findOneByNameIgnoreCase(name);
 
