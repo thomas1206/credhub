@@ -2,6 +2,7 @@ package io.pivotal.security.service;
 
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
+import io.pivotal.security.entity.CredentialName;
 import io.pivotal.security.exceptions.PermissionException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class PermissionService {
     this.accessControlDataService = accessControlDataService;
   }
 
-  public void verifyAclReadPermission(UserContext user, String credentialName) {
+  public void verifyAclReadPermission(UserContext user, CredentialName credentialName) {
     if (enforcePermissions) {
       String actor = getActorFromUserContext(user);
       if (StringUtils.isEmpty(actor) || !accessControlDataService.hasReadAclPermission(actor, credentialName)) {
@@ -30,7 +31,7 @@ public class PermissionService {
     }
   }
 
-  public void verifyReadPermission(UserContext user, String credentialName) {
+  public void verifyReadPermission(UserContext user, CredentialName credentialName) {
     if (enforcePermissions) {
       String actor = getActorFromUserContext(user);
       if (StringUtils.isEmpty(actor) || !accessControlDataService.hasReadPermission(actor, credentialName)) {

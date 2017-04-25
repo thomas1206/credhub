@@ -11,6 +11,8 @@ import io.pivotal.security.audit.RequestUuid;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.CredentialDataService;
 import io.pivotal.security.domain.Credential;
+import io.pivotal.security.entity.CredentialData;
+import io.pivotal.security.entity.CredentialName;
 import io.pivotal.security.exceptions.EntryNotFoundException;
 import io.pivotal.security.exceptions.InvalidQueryParameterException;
 import io.pivotal.security.exceptions.PermissionException;
@@ -154,25 +156,29 @@ public class CredentialsController {
     });
   }
 
+  // GET /api/v1/data/{id}
   @RequestMapping(path = "/{id}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public CredentialView getCredentialById(
-      @PathVariable String id,
+      @PathVariable CredentialData id,
       RequestUuid requestUuid,
       UserContext userContext) {
 
     return CredentialView.fromEntity(retrieveCredentialWithAuditing(
-        id,
+        id.getUuid().toString(),
         findAsList(credentialDataService::findByUuid),
         requestUuid,
         userContext
     ).get(0));
   }
 
+
+  // GET /api/v1/data?name=foo&current=false
+
   @RequestMapping(path = "", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public DataResponse getCredential(
-      @RequestParam(value = "name", required = false) String credentialName,
+      @RequestParam(value = "name", required = false) CredentialName credentialName,
       @RequestParam(value = "current", required = false, defaultValue = "false") boolean current,
       RequestUuid requestUuid,
       UserContext userContext) {
@@ -323,11 +329,11 @@ public class CredentialsController {
     return eventAuditLogService.auditEvent(requestUuid, userContext, eventAuditRecordParameters -> {
       eventAuditRecordParameters.setAuditingOperationCode(AuditingOperationCode.CREDENTIAL_ACCESS);
 
-          if (StringUtils.isEmpty(identifier)) {
+          if (StringUtils.isEmpty(credentialName.getName())) {
             throw new InvalidQueryParameterException("error.missing_query_parameter", "name");
           }
           try {
-            List<Credential> credentials = finder.apply(identifier);
+            List<Credential> credentials = finder.apply(credentialName.getName());
             if (credentials.isEmpty()) {
               throw new EntryNotFoundException("error.credential_not_found");
             } else {
@@ -335,7 +341,7 @@ public class CredentialsController {
               eventAuditRecordParameters.setCredentialName(name);
               //The permission check is done this late to allow the audit log to distinguish between
               //404s caused by permission errors and actual 404s.
-              permissionService.verifyReadPermission(userContext, identifier);
+              permissionService.verifyReadPermission(userContext, credentialName);
               return credentials;
             }
           } catch (PermissionException e) {

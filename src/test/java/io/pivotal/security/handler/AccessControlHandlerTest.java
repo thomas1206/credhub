@@ -3,12 +3,17 @@ package io.pivotal.security.handler;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
+import io.pivotal.security.entity.CredentialName;
+import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
 import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.greghaskins.spectrum.Spectrum.beforeEach;
@@ -24,9 +29,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RunWith(Spectrum.class)
 public class AccessControlHandlerTest {
   private AccessControlHandler subject;
@@ -36,18 +38,25 @@ public class AccessControlHandlerTest {
 
   private final UserContext userContext = mock(UserContext.class);
 
+  private CredentialNameRepository credentialNameRepository;
+
+  public static final CredentialName CREDENTIAL_NAME = new CredentialName("/test-credential");
+
   {
     beforeEach(() -> {
       permissionService = mock(PermissionService.class);
       accessControlDataService = mock(AccessControlDataService.class);
-      subject = new AccessControlHandler(permissionService, accessControlDataService);
+      credentialNameRepository = mock(CredentialNameRepository.class);
+      subject = new AccessControlHandler(permissionService, accessControlDataService, credentialNameRepository);
+
+      when(credentialNameRepository.findOneByNameIgnoreCase(any(String.class))).thenReturn(CREDENTIAL_NAME);
     });
 
     describe("#getAccessControlListResponse", () -> {
       describe("when the requested credential name does not start with a slash", () -> {
         beforeEach(() -> {
           List<AccessControlEntry> accessControlList = newArrayList();
-          when(accessControlDataService.getAccessControlList(any(String.class)))
+          when(accessControlDataService.getAccessControlList(any(CredentialName.class)))
               .thenReturn(accessControlList);
         });
 
@@ -71,7 +80,7 @@ public class AccessControlHandlerTest {
               operations
           );
           List<AccessControlEntry> accessControlList = newArrayList(accessControlEntry);
-          when(accessControlDataService.getAccessControlList("/test-credential"))
+          when(accessControlDataService.getAccessControlList(CREDENTIAL_NAME))
              .thenReturn(accessControlList);
         });
 
@@ -79,7 +88,7 @@ public class AccessControlHandlerTest {
           subject.getAccessControlListResponse(userContext, "/test-credential");
 
           verify(permissionService, times(1))
-              .verifyAclReadPermission(userContext, "/test-credential");
+              .verifyAclReadPermission(userContext, CREDENTIAL_NAME);
         });
 
         it("should return the ACL response", () -> {

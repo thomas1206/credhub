@@ -31,8 +31,7 @@ public class AccessControlDataService {
     this.credentialNameRepository = credentialNameRepository;
   }
 
-  public List<AccessControlEntry> getAccessControlList(String name) {
-    CredentialName credentialName = findCredentialName(name);
+  public List<AccessControlEntry> getAccessControlList(CredentialName credentialName) {
     return createViewsForAllAcesWithName(credentialName);
   }
 
@@ -58,9 +57,7 @@ public class AccessControlDataService {
     accessEntryRepository.deleteByCredentialNameUuidAndActor(credentialName.getUuid(), actor);
   }
 
-  public boolean hasReadAclPermission(String actor, String name) {
-    CredentialName credentialName = credentialNameRepository.findOneByNameIgnoreCase(name);
-
+  public boolean hasReadAclPermission(String actor, CredentialName credentialName) {
     if (credentialName == null) {
       return false;
     }
@@ -76,9 +73,7 @@ public class AccessControlDataService {
     }
   }
 
-  public boolean hasReadPermission(String actor, String name) {
-    CredentialName credentialName = credentialNameRepository.findOneByNameIgnoreCase(name);
-
+  public boolean hasReadPermission(String actor, CredentialName credentialName) {
     if (credentialName == null) {
       return false;
     }

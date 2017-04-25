@@ -2,8 +2,10 @@ package io.pivotal.security.handler;
 
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
+import io.pivotal.security.entity.CredentialName;
 import io.pivotal.security.exceptions.EntryNotFoundException;
 import io.pivotal.security.exceptions.PermissionException;
+import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.service.PermissionService;
@@ -18,26 +20,37 @@ import java.util.List;
 public class AccessControlHandler {
   private final PermissionService permissionService;
   private final AccessControlDataService accessControlDataService;
+  private final CredentialNameRepository credentialNameRepository;
 
   @Autowired
   AccessControlHandler(
       PermissionService permissionService,
-      AccessControlDataService accessControlDataService
+      AccessControlDataService accessControlDataService,
+      CredentialNameRepository credentialNameRepository
   ) {
     this.permissionService = permissionService;
     this.accessControlDataService = accessControlDataService;
+    this.credentialNameRepository = credentialNameRepository;
   }
 
-  public AccessControlListResponse getAccessControlListResponse(UserContext userContext, String credentialName) {
+  public AccessControlListResponse getAccessControlListResponse(UserContext userContext, String name) {
     AccessControlListResponse response = null;
 
     try {
-      credentialName = addLeadingSlashIfMissing(credentialName);
+      name = StringUtils.prependIfMissing(name, "/");
+
+      final CredentialName credentialName = credentialNameRepository
+          .findOneByNameIgnoreCase(name);
+
+      if (credentialName == null) {
+        throw new EntryNotFoundException("error.resource_not_found");
+      }
+
       permissionService.verifyAclReadPermission(userContext, credentialName);
 
       List<AccessControlEntry> accessControlList = accessControlDataService.getAccessControlList(credentialName);
       response = new AccessControlListResponse();
-      response.setCredentialName(credentialName);
+      response.setCredentialName(credentialName.getName());
       response.setAccessControlList(accessControlList);
     } catch (PermissionException pe){
       // lack of permissions should be indistinguishable from not found.
