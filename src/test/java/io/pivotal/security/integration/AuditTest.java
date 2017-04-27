@@ -1,14 +1,35 @@
 package io.pivotal.security.integration;
 
+import static io.pivotal.security.helper.AuditingHelper.verifyAuditing;
+import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.audit.AuditingOperationCode;
+import io.pivotal.security.audit.EventAuditRecordParameters;
 import io.pivotal.security.data.EventAuditRecordDataService;
 import io.pivotal.security.data.RequestAuditRecordDataService;
 import io.pivotal.security.entity.EventAuditRecord;
 import io.pivotal.security.entity.RequestAuditRecord;
+import io.pivotal.security.repository.CredentialRepository;
 import io.pivotal.security.repository.EventAuditRecordRepository;
 import io.pivotal.security.repository.RequestAuditRecordRepository;
-import io.pivotal.security.repository.CredentialRepository;
 import io.pivotal.security.util.DatabaseProfileResolver;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,22 +44,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.util.List;
-
-import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles(profiles = {"unit-test"}, resolver = DatabaseProfileResolver.class)
@@ -121,6 +126,84 @@ public class AuditTest {
     EventAuditRecord eventAuditRecord = eventAuditRecordRepository.findAll().get(0);
     assertThat(eventAuditRecord.getCredentialName(), equalTo("/TEST/SECRET"));
     assertThat(eventAuditRecord.getActor(), equalTo("uaa-user:df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"));
+  }
+
+  @Test
+  public void normally_logs_event_and_request_for_vcap() throws Exception {
+    mockMvc.perform(put("/api/v1/data")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content(
+            "{\"type\":\"json\","
+                + "\"name\":\"cred1\","
+                + "\"value\":{\"key\": 1}}"))
+        .andDo(print())
+    .andExpect(status().isOk());
+
+    mockMvc.perform(put("/api/v1/data")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content("{\"type\":\"json\",\"name\":\"cred2\",\"value\":{\"key\": 2}}"))
+    .andExpect(status().isOk());
+
+    mockMvc.perform(post("/api/v1/vcap")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content(
+              "{"
+            + "  \"VCAP_SERVICES\": {"
+            + "    \"pp-config-server\": ["
+            + "      {"
+            + "        \"credentials\": {"
+            + "          \"credhub-ref\": \"((/cred1))\""
+            + "        },"
+            + "        \"label\": \"pp-config-server\""
+            + "      }"
+            + "    ],"
+            + "    \"pp-something-else\": ["
+            + "      {"
+            + "        \"credentials\": {"
+            + "          \"credhub-ref\": \"((/cred2))\""
+            + "        },"
+            + "        \"something\": [\"pp-config-server\"]"
+            + "      }"
+            + "    ]"
+            + "  }"
+            + "}"
+        )
+    )
+        .andDo(print())
+        .andExpect(status().isOk());
+
+    EventAuditRecordParameters parameters = new EventAuditRecordParameters(
+        AuditingOperationCode.CREDENTIAL_ACCESS,
+        "/cred1");
+
+    EventAuditRecordParameters parameters1 = new EventAuditRecordParameters(
+        AuditingOperationCode.CREDENTIAL_ACCESS,
+        "/cred2");
+
+    verifyAuditing(requestAuditRecordRepository,
+        eventAuditRecordRepository,
+        "/api/v1/vcap",
+        200,
+        Arrays.asList(parameters, parameters1)
+    );
+
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    verify(logger, times(2)).info(captor.capture());
+    assertThat(captor.getValue(), containsString("cs4=200"));
+
+    EventAuditRecord eventAuditRecord = eventAuditRecordRepository.findAll().get(2);
+    assertThat(eventAuditRecord.getCredentialName(), equalTo("/cred1"));
+    assertThat(eventAuditRecord.getActor(), equalTo("uaa-user:df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"));
+
+    EventAuditRecord eventAuditRecord1 = eventAuditRecordRepository.findAll().get(3);
+    assertThat(eventAuditRecord1.getCredentialName(), equalTo("/cred2"));
+    assertThat(eventAuditRecord1.getActor(), equalTo("uaa-user:df0c1a26-2875-4bf5-baf9-716c6bb5ea6d"));
   }
 
   @Test

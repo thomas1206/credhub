@@ -4,6 +4,7 @@ import io.pivotal.security.domain.CertificateParameters;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509ExtensionUtils;
@@ -91,6 +92,12 @@ public class SignedCertificateGenerator {
 
     X509CertificateHolder holder = certificateBuilder.build(contentSigner);
 
-    return jcaX509CertificateConverter.getCertificate(holder);
+    X509Certificate certificate = jcaX509CertificateConverter.getCertificate(holder);
+
+    byte[] extensionValue = certificate.getExtensionValue(Extension.subjectKeyIdentifier.getId());
+    new SubjectKeyIdentifier(extensionValue);
+
+    return certificate;
+
   }
 }
