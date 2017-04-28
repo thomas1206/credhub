@@ -1,5 +1,9 @@
 package io.pivotal.security.service;
 
+import static io.pivotal.security.audit.AuditingOperationCode.ACL_UPDATE;
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_ACCESS;
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
+
 import io.pivotal.security.audit.EventAuditRecordParameters;
 import io.pivotal.security.data.CredentialDataService;
 import io.pivotal.security.domain.Credential;
@@ -8,11 +12,9 @@ import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.BaseCredentialSetRequest;
 import io.pivotal.security.view.CredentialView;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_ACCESS;
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
 
 @Service
 public class SetService {
@@ -28,18 +30,22 @@ public class SetService {
   }
 
   public CredentialView performSet(
-      EventAuditRecordParameters eventAuditRecordParameters,
+      List<EventAuditRecordParameters> parametersList,
       BaseCredentialSetRequest requestBody,
-      AccessControlEntry currentUserAccessControlEntry) {
-    final String credentialName = requestBody.getName();
-
-    Credential existingCredential = credentialDataService.findMostRecent(credentialName);
+      AccessControlEntry currentUserAccessControlEntry
+    ) {
+    Credential existingCredential = credentialDataService.findMostRecent(requestBody.getName());
 
     if (existingCredential == null) { requestBody.addCurrentUser(currentUserAccessControlEntry); }
 
     boolean shouldWriteNewEntity = existingCredential == null || requestBody.isOverwrite();
+    String credentialName = existingCredential != null ? existingCredential.getName() :
+        requestBody.getName();
 
-    eventAuditRecordParameters.setAuditingOperationCode(shouldWriteNewEntity ? CREDENTIAL_UPDATE : CREDENTIAL_ACCESS);
+    parametersList.add(new EventAuditRecordParameters(
+        shouldWriteNewEntity ? CREDENTIAL_UPDATE : CREDENTIAL_ACCESS,
+        credentialName
+    ));
 
     final String type = requestBody.getType();
     validateCredentialType(existingCredential, type);
@@ -49,7 +55,15 @@ public class SetService {
       Credential newEntity = (Credential) requestBody.createNewVersion(existingCredential, encryptor);
       storedEntity = credentialDataService.save(newEntity);
     }
-    eventAuditRecordParameters.setCredentialName(storedEntity.getName());
+    final String currentActor = currentUserAccessControlEntry.getActor();
+
+    currentUserAccessControlEntry
+        .getAllowedOperations()
+        .stream()
+        .forEach(operation -> {
+          parametersList.add(new EventAuditRecordParameters(ACL_UPDATE, credentialName, operation,
+              currentActor));
+        });
 
     return CredentialView.fromEntity(storedEntity);
   }

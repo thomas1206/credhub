@@ -1,5 +1,8 @@
 package io.pivotal.security.controller.v1.credential;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_FIND;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import com.jayway.jsonpath.JsonPath;
@@ -28,6 +31,12 @@ import io.pivotal.security.view.DataResponse;
 import io.pivotal.security.view.FindCredentialResult;
 import io.pivotal.security.view.FindCredentialResults;
 import io.pivotal.security.view.FindPathResults;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,16 +54,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.function.Function;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_FIND;
 
 @RestController
 @RequestMapping(
@@ -228,17 +227,17 @@ public class CredentialsController {
       AccessControlEntry currentUserAccessControlEntry
   ) {
     return eventAuditLogService
-        .auditEvent(requestUuid, userContext, (auditRecordParameters -> {
+        .auditEvents(requestUuid, userContext, (parametersList -> {
           return deserializeAndHandlePostRequest(
               inputStream,
-              auditRecordParameters,
+              parametersList,
               currentUserAccessControlEntry);
         }));
   }
 
   private CredentialView deserializeAndHandlePostRequest(
       InputStream inputStream,
-      EventAuditRecordParameters eventAuditRecordParameters,
+      List<EventAuditRecordParameters> parametersList,
       AccessControlEntry currentUserAccessControlEntry
   ) {
     try {
@@ -251,10 +250,10 @@ public class CredentialsController {
         // would be nice if Jackson could pick a subclass based on an arbitrary function, since
         // we want to consider both type and .regenerate. We could do custom deserialization but
         // then we'd have to do the entire job by hand.
-        return handleRegenerateRequest(eventAuditRecordParameters, requestString,
+        return handleRegenerateRequest(parametersList, requestString,
             currentUserAccessControlEntry);
       } else {
-        return handleGenerateRequest(eventAuditRecordParameters, requestString,
+        return handleGenerateRequest(parametersList, requestString,
             currentUserAccessControlEntry);
       }
     } catch (IOException e) {
@@ -263,7 +262,7 @@ public class CredentialsController {
   }
 
   private CredentialView handleGenerateRequest(
-      EventAuditRecordParameters eventAuditRecordParameters,
+      List<EventAuditRecordParameters> parametersList,
       String requestString,
       AccessControlEntry currentUserAccessControlEntry
   ) throws IOException {
@@ -272,11 +271,11 @@ public class CredentialsController {
     requestBody.validate();
 
     return generateService
-        .performGenerate(eventAuditRecordParameters, requestBody, currentUserAccessControlEntry);
+        .performGenerate(parametersList, requestBody, currentUserAccessControlEntry);
   }
 
   private CredentialView handleRegenerateRequest(
-      EventAuditRecordParameters eventAuditRecordParameters,
+      List<EventAuditRecordParameters> parametersList,
       String requestString,
       AccessControlEntry currentUserAccessControlEntry
   ) throws IOException {
@@ -284,7 +283,7 @@ public class CredentialsController {
         .readValue(requestString, CredentialRegenerateRequest.class);
 
     return regenerateService
-        .performRegenerate(eventAuditRecordParameters, requestBody, currentUserAccessControlEntry);
+        .performRegenerate(parametersList, requestBody, currentUserAccessControlEntry);
   }
 
   private CredentialView auditedHandlePutRequest(
@@ -293,17 +292,17 @@ public class CredentialsController {
       UserContext userContext,
       AccessControlEntry currentUserAccessControlEntry
   ) {
-    return eventAuditLogService.auditEvent(requestUuid, userContext, eventAuditRecordParameters ->
-        handlePutRequest(requestBody, eventAuditRecordParameters, currentUserAccessControlEntry));
+    return eventAuditLogService.auditEvents(requestUuid, userContext, parametersList ->
+        handlePutRequest(requestBody, parametersList, currentUserAccessControlEntry));
   }
 
   private CredentialView handlePutRequest(
       @RequestBody BaseCredentialSetRequest requestBody,
-      EventAuditRecordParameters eventAuditRecordParameters,
+      List<EventAuditRecordParameters> parametersList,
       AccessControlEntry currentUserAccessControlEntry
   ) {
     return setService
-        .performSet(eventAuditRecordParameters, requestBody, currentUserAccessControlEntry);
+        .performSet(parametersList, requestBody, currentUserAccessControlEntry);
   }
 
   private Function<String, List<Credential>> selectLookupFunction(boolean current) {

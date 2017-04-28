@@ -86,7 +86,7 @@ public class AuditingHelper {
             StringUtils.equals(actual.getAceOperation(), expectedAceOperation) &&
             StringUtils.equals(actual.getAceActor(), parameters.getAceActor()) &&
             actual.isSuccess() == expectedSuccess &&
-            actual.getRequestUuid() == requestUuid;
+            actual.getRequestUuid().equals(requestUuid);
       }
 
       @Override
