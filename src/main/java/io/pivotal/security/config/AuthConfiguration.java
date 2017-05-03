@@ -4,11 +4,13 @@ import io.pivotal.security.auth.AuditOAuth2AccessDeniedHandler;
 import io.pivotal.security.auth.AuditOAuth2AuthenticationExceptionHandler;
 import io.pivotal.security.auth.PreAuthenticationFailureFilter;
 import io.pivotal.security.auth.X509AuthenticationProvider;
+import io.pivotal.security.exceptionHandlers.ActorAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -23,6 +25,7 @@ import org.springframework.security.web.authentication.preauth.x509.X509Authenti
 @Configuration
 @EnableResourceServer
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled=true)
 public class AuthConfiguration extends ResourceServerConfigurerAdapter {
   // Only valid for v4 UUID by design.
   private static final String VALID_MTLS_ID =
@@ -32,18 +35,21 @@ public class AuthConfiguration extends ResourceServerConfigurerAdapter {
   private final AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler;
   private final AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler;
   private final PreAuthenticationFailureFilter preAuthenticationFailureFilter;
+  private final ActorAccessDeniedHandler actorAccessDeniedHandler;
 
 
   @Autowired
   AuthConfiguration(
-    ResourceServerProperties resourceServerProperties,
-    AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler,
-    AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler,
-    PreAuthenticationFailureFilter preAuthenticationFailureFilter) {
+      ResourceServerProperties resourceServerProperties,
+      AuditOAuth2AuthenticationExceptionHandler auditOAuth2AuthenticationExceptionHandler,
+      AuditOAuth2AccessDeniedHandler auditOAuth2AccessDeniedHandler,
+      PreAuthenticationFailureFilter preAuthenticationFailureFilter,
+      ActorAccessDeniedHandler actorAccessDeniedHandler) {
     this.resourceServerProperties = resourceServerProperties;
     this.auditOAuth2AuthenticationExceptionHandler = auditOAuth2AuthenticationExceptionHandler;
     this.auditOAuth2AccessDeniedHandler = auditOAuth2AccessDeniedHandler;
     this.preAuthenticationFailureFilter = preAuthenticationFailureFilter;
+    this.actorAccessDeniedHandler = actorAccessDeniedHandler;
   }
 
   @Override

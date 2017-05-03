@@ -1,7 +1,5 @@
 package io.pivotal.security.controller.v1.credential;
 
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_FIND;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import com.jayway.jsonpath.JsonPath;
@@ -27,12 +25,6 @@ import io.pivotal.security.view.DataResponse;
 import io.pivotal.security.view.FindCredentialResult;
 import io.pivotal.security.view.FindCredentialResults;
 import io.pivotal.security.view.FindPathResults;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,6 +34,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,6 +43,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.function.Function;
+
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_FIND;
 
 @RestController
 @RequestMapping(
@@ -111,12 +113,12 @@ public class CredentialsController {
 
   @RequestMapping(path = "", method = RequestMethod.PUT)
   @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("@authorization.hasAccess(#requestBody, #userContext)")
   public CredentialView set(@RequestBody BaseCredentialSetRequest requestBody,
                             RequestUuid requestUuid,
                             UserContext userContext,
                             AccessControlEntry currentUserAccessControlEntry) {
     requestBody.validate();
-
     try {
       return auditedHandlePutRequest(requestBody, requestUuid, userContext,
           currentUserAccessControlEntry);

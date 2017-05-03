@@ -1,4 +1,4 @@
-package io.pivotal.security.controller.v1;
+package io.pivotal.security.exceptionHandlers;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.jayway.jsonpath.InvalidJsonException;
 import io.pivotal.security.exceptions.AuditSaveFailureException;
 import io.pivotal.security.exceptions.EntryNotFoundException;
-import io.pivotal.security.exceptions.KeyNotFoundException;
 import io.pivotal.security.exceptions.InvalidQueryParameterException;
+import io.pivotal.security.exceptions.KeyNotFoundException;
 import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.exceptions.PermissionException;
 import io.pivotal.security.view.ResponseError;
