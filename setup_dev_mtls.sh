@@ -67,9 +67,26 @@ generate_client_ca() {
       -out client_ca_cert.pem
 }
 
+generate_expired_client_ca() {
+    echo "Generating expired root CA for the client certificates into client_ca_expired_cert.pem and client_ca_expired_private.pem"
+    openssl req \
+      -x509 \
+      -newkey rsa:2048 \
+      -days -365 \
+      -sha256 \
+      -nodes \
+      -subj "/CN=credhub_expired_client_ca" \
+      -keyout client_ca_expired_private.pem \
+      -out client_ca_expired_cert.pem
+}
+
 add_client_ca_to_truststore() {
     echo "Adding root CA to servers trust store for mTLS..."
     keytool -import -trustcacerts -noprompt -alias client_ca -file client_ca_cert.pem \
+	    -keystore ${TRUST_STORE} -storepass ${KEYSTORE_PASSWORD}
+
+	  echo "Adding expired root CA to servers trust store for mTLS..."
+    keytool -import -trustcacerts -noprompt -alias expired_client_ca -file client_ca_expired_cert.pem \
 	    -keystore ${TRUST_STORE} -storepass ${KEYSTORE_PASSWORD}
 }
 
@@ -77,6 +94,7 @@ pushd ${DIRNAME}/src/test/resources >/dev/null
     clean
     generate_server_ca
     generate_client_ca
+    generate_expired_client_ca
     add_client_ca_to_truststore
     setup_tls_key_store
 
