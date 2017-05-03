@@ -1,5 +1,7 @@
 package io.pivotal.security.handler;
 
+import io.pivotal.security.audit.AuditingOperationCode;
+import io.pivotal.security.audit.EventAuditRecordParameters;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
 import io.pivotal.security.entity.CredentialName;
@@ -7,9 +9,9 @@ import io.pivotal.security.exceptions.EntryNotFoundException;
 import io.pivotal.security.exceptions.PermissionException;
 import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,12 +48,25 @@ public class AccessControlHandler {
     }
   }
 
-  public AccessControlListResponse setAccessControlEntries(AccessEntriesRequest request) {
-    final CredentialName credentialName = getCredentialName(request.getCredentialName());
-    accessControlDataService
-        .setAccessControlEntries(credentialName, request.getAccessControlEntries());
+  public AccessControlListResponse setAccessControlEntries(
+      List<EventAuditRecordParameters> parametersList,
+      String credential,
+      List<AccessControlEntry> accessControlEntries
+  ) {
+    CredentialName credentialName = getCredentialName(credential);
+    updateAccessControlEntries(parametersList, credentialName, accessControlEntries);
+    return new AccessControlListResponse(credential, accessControlDataService.getAccessControlList(credentialName));
+  }
 
-    return new AccessControlListResponse(credentialName.getName(), accessControlDataService.getAccessControlList(credentialName));
+  public void updateAccessControlEntries(
+      List<EventAuditRecordParameters> parametersList,
+      CredentialName credentialName,
+      List<AccessControlEntry> accessControlEntries
+  ) {
+    addAuditParameters(parametersList, credentialName, accessControlEntries);
+
+    accessControlDataService
+        .setAccessControlEntries(credentialName, accessControlEntries);
   }
 
   public AccessControlEntry deleteAccessControlEntries(String actor, String name) {
@@ -67,5 +82,25 @@ public class AccessControlHandler {
       throw new EntryNotFoundException("error.resource_not_found");
     }
     return credentialName;
+  }
+
+  private void addAuditParameters(
+      List<EventAuditRecordParameters> parametersList,
+      CredentialName credentialName,
+      List<AccessControlEntry> accessControlEntries
+  ) {
+    accessControlEntries
+        .stream()
+        .forEach(entry -> {
+          entry.getAllowedOperations()
+              .stream()
+              .forEach(operation -> {
+                parametersList.add(new EventAuditRecordParameters(
+                    AuditingOperationCode.ACL_UPDATE,
+                    credentialName.getName(),
+                    operation,
+                    entry.getActor()));
+              });
+        });
   }
 }

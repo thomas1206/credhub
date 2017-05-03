@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,9 +28,10 @@ import io.pivotal.security.audit.RequestUuid;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.handler.AccessControlHandler;
 import io.pivotal.security.helper.JsonHelper;
+import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
-import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.view.AccessControlListResponse;
+import java.util.List;
 import java.util.function.Function;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -96,7 +98,7 @@ public class AccessControlEntryControllerTest {
               "  ]\n" +
               "}";
 
-          when(accessControlHandler.setAccessControlEntries(any(AccessEntriesRequest.class)))
+          when(accessControlHandler.setAccessControlEntries(any(), any(), any()))
               .thenReturn(JsonHelper.deserialize(expectedResponse, AccessControlListResponse.class));
 
           MockHttpServletRequestBuilder request = post("/api/v1/aces")
@@ -107,13 +109,12 @@ public class AccessControlEntryControllerTest {
               .andExpect(status().isOk())
               .andExpect(content().json(expectedResponse));
 
-          ArgumentCaptor<AccessEntriesRequest> captor = ArgumentCaptor
-              .forClass(AccessEntriesRequest.class);
-          verify(accessControlHandler, times(1)).setAccessControlEntries(captor.capture());
+          ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+          verify(accessControlHandler, times(1))
+              .setAccessControlEntries(any(), eq("test-credential-name"), captor.capture());
 
-          AccessEntriesRequest actualRequest = captor.getValue();
-          assertThat(actualRequest.getCredentialName(), equalTo("test-credential-name"));
-          assertThat(actualRequest.getAccessControlEntries(),
+          List<AccessControlEntry> actualEntries = captor.getValue();
+          assertThat(actualEntries,
               hasItem(allOf(hasProperty("actor", equalTo("test-actor")),
                   hasProperty("allowedOperations",
                       hasItems(AccessControlOperation.READ, AccessControlOperation.WRITE)))));

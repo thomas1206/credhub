@@ -1,8 +1,11 @@
 package io.pivotal.security.handler;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static io.pivotal.security.audit.AuditingOperationCode.ACL_UPDATE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
@@ -11,13 +14,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.pivotal.security.audit.EventAuditRecordParameters;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
 import io.pivotal.security.entity.CredentialName;
 import io.pivotal.security.repository.CredentialNameRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
-import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
 import java.util.ArrayList;
@@ -102,7 +105,9 @@ public class AccessControlHandlerTest {
   }
 
   @Test
-  public void setAccessControlListResponse_setsAndReturnsTheAces() {
+  public void setAccessControlListResponse_setsAndReturnsTheAces_andAuditsTheEvents() {
+    ArrayList<EventAuditRecordParameters> parametersList = newArrayList();
+
     ArrayList<AccessControlOperation> operations = newArrayList(
         AccessControlOperation.READ,
         AccessControlOperation.WRITE
@@ -116,11 +121,10 @@ public class AccessControlHandlerTest {
     );
     List<AccessControlEntry> expectedControlList = newArrayList(accessControlEntry, preexistingAccessControlEntry);
 
-    AccessEntriesRequest request = new AccessEntriesRequest("/test-credential", accessControlList);
     when(accessControlDataService.getAccessControlList(CREDENTIAL_NAME))
         .thenReturn(expectedControlList);
 
-    AccessControlListResponse response = subject.setAccessControlEntries(request);
+    AccessControlListResponse response = subject.setAccessControlEntries(parametersList, "/test-credential", accessControlList);
 
     List<AccessControlEntry> accessControlEntries = response.getAccessControlList();
 
@@ -137,6 +141,16 @@ public class AccessControlHandlerTest {
     AccessControlEntry entry2 = accessControlEntries.get(1);
     assertThat(entry2.getActor(), equalTo("someone-else"));
     assertThat(entry2.getAllowedOperations(), contains(equalTo(AccessControlOperation.READ)));
+
+    assertThat(parametersList, hasSize(2));
+    assertThat(parametersList, containsInAnyOrder(
+        samePropertyValuesAs(new EventAuditRecordParameters(
+          ACL_UPDATE, CREDENTIAL_NAME.getName(), AccessControlOperation.READ, "test-actor"
+        )),
+        samePropertyValuesAs(new EventAuditRecordParameters(
+          ACL_UPDATE, CREDENTIAL_NAME.getName(), AccessControlOperation.WRITE, "test-actor"
+        ))
+    ));
   }
 
   @Test

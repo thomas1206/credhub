@@ -9,7 +9,6 @@ import io.pivotal.security.handler.AccessControlHandler;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessEntriesRequest;
 import io.pivotal.security.view.AccessControlListResponse;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,10 +44,13 @@ public class AccessControlEntryController {
       UserContext userContext,
       @Validated @RequestBody AccessEntriesRequest accessEntriesRequest
   ) {
-    return eventAuditLogService.auditEvents(requestUuid, userContext, parametersList -> {
-      addAuditParameters(accessEntriesRequest, parametersList);
-      return accessControlHandler.setAccessControlEntries(accessEntriesRequest);
-    });
+    return eventAuditLogService.auditEvents(requestUuid, userContext, parametersList ->
+        accessControlHandler.setAccessControlEntries(
+            parametersList,
+            accessEntriesRequest.getCredentialName(),
+            accessEntriesRequest.getAccessControlEntries()
+        )
+    );
   }
 
   @DeleteMapping
@@ -72,24 +74,5 @@ public class AccessControlEntryController {
       }
       return entry;
     });
-  }
-
-  private void addAuditParameters(
-      AccessEntriesRequest accessEntriesRequest,
-      List<EventAuditRecordParameters> parametersList
-  ) {
-    accessEntriesRequest.getAccessControlEntries()
-        .stream()
-        .forEach(entry -> {
-          entry.getAllowedOperations()
-              .stream()
-              .forEach(operation -> {
-                parametersList.add(new EventAuditRecordParameters(
-                    AuditingOperationCode.ACL_UPDATE,
-                    accessEntriesRequest.getCredentialName(),
-                    operation,
-                    entry.getActor()));
-              });
-        });
   }
 }
