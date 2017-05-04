@@ -1,9 +1,7 @@
 package io.pivotal.security.service;
 
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_ACCESS;
-import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
-
 import io.pivotal.security.audit.EventAuditRecordParameters;
+import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.data.AccessControlDataService;
 import io.pivotal.security.data.CredentialDataService;
 import io.pivotal.security.domain.Credential;
@@ -12,28 +10,36 @@ import io.pivotal.security.exceptions.ParameterizedValidationException;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.BaseCredentialSetRequest;
 import io.pivotal.security.view.CredentialView;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_ACCESS;
+import static io.pivotal.security.audit.AuditingOperationCode.CREDENTIAL_UPDATE;
 
 @Service
 public class SetService {
   private final CredentialDataService credentialDataService;
   private final AccessControlDataService accessControlDataService;
+  private PermissionService permissionService;
   private final Encryptor encryptor;
 
   @Autowired
   public SetService(
       CredentialDataService credentialDataService,
       AccessControlDataService accessControlDataService,
+      PermissionService permissionService,
       Encryptor encryptor
   ) {
     this.credentialDataService = credentialDataService;
     this.accessControlDataService = accessControlDataService;
+    this.permissionService = permissionService;
     this.encryptor = encryptor;
   }
 
   public CredentialView performSet(
+      UserContext userContext,
       EventAuditRecordParameters eventAuditRecordParameters,
       BaseCredentialSetRequest requestBody,
       AccessControlEntry currentUserAccessControlEntry) {
@@ -44,6 +50,10 @@ public class SetService {
     boolean shouldWriteNewEntity = existingCredential == null || requestBody.isOverwrite();
 
     eventAuditRecordParameters.setAuditingOperationCode(shouldWriteNewEntity ? CREDENTIAL_UPDATE : CREDENTIAL_ACCESS);
+
+    if (existingCredential != null) {
+      permissionService.verifyCredentialWritePermission(userContext, existingCredential.getCredentialName());
+    }
 
     final String type = requestBody.getType();
     validateCredentialType(existingCredential, type);

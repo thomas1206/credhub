@@ -72,6 +72,12 @@ public class AccessControlDataService {
     return false;
   }
 
+  public boolean hasCredentialWritePermission(String actor, CredentialName credentialName) {
+    AccessEntryData accessEntryData =
+        accessEntryRepository.findByCredentialNameUuidAndActor(credentialName.getUuid(), actor);
+    return accessEntryData != null && accessEntryData.hasWritePermission();
+  }
+
   private void upsertAccessEntryOperations(CredentialName credentialName,
       List<AccessEntryData> accessEntries, String actor, List<AccessControlOperation> operations) {
     AccessEntryData entry = findAccessEntryForActor(accessEntries, actor);
@@ -106,5 +112,4 @@ public class AccessControlDataService {
         .findFirst();
     return temp.orElse(null);
   }
-
 }
