@@ -5,11 +5,12 @@ import io.pivotal.security.entity.CredentialName;
 import io.pivotal.security.repository.AccessEntryRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AccessControlDataService {
@@ -27,7 +28,7 @@ public class AccessControlDataService {
     return createViewsForAllAcesWithName(credentialName);
   }
 
-  public void setAccessControlEntries(
+  public void saveAccessControlEntries(
       CredentialName credentialName,
       List<AccessControlEntry> entries
   ) {

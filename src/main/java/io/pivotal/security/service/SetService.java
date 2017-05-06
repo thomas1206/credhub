@@ -89,15 +89,14 @@ public class SetService {
               generationParameters);
       storedCredentialVersion = credentialDataService.save(newVersion);
 
+      accessControlDataService.saveAccessControlEntries(
+          storedCredentialVersion.getCredentialName(),
+          accessControlEntries);
       parametersList.addAll(createPermissionsEventAuditParameters(
           ACL_UPDATE,
           storedCredentialVersion.getName(),
           accessControlEntries
       ));
-
-      accessControlDataService.setAccessControlEntries(
-          storedCredentialVersion.getCredentialName(),
-          accessControlEntries);
     }
 
     return CredentialView.fromEntity(storedCredentialVersion);

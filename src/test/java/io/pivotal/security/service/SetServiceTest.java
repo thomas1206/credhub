@@ -248,4 +248,46 @@ public class SetServiceTest {
 
     verify(credentialDataService).save(newVersion);
   }
+
+  @Test
+  public void performSet_whenOverwriteIsTrue_itShouldSaveAccessContolEntries() {
+    PasswordCredential credential = new PasswordCredential().setEncryptor(encryptor);
+    when(credentialDataService.save(any(Credential.class))).thenReturn(credential);
+
+    subject.performSet(
+        userContext,
+        parametersList,
+        CREDENTIAL_NAME,
+        true,
+        "password",
+        generationParameters,
+        credentialValue,
+        accessControlEntries,
+        currentUserPermissions);
+
+    verify(accessControlDataService).saveAccessControlEntries(credential.getCredentialName(), accessControlEntries);
+  }
+
+  @Test
+  public void performSet_whenOverwriteIsTrue_itLogsACL_UPDATE() {
+    PasswordCredential credential = new PasswordCredential().setEncryptor(encryptor);
+    when(credentialDataService.save(any(Credential.class))).thenReturn(credential);
+
+    accessControlEntries.addAll(Arrays.asList(
+        new AccessControlEntry("Spock", Arrays.asList(WRITE)),
+        new AccessControlEntry("McCoy", Arrays.asList(DELETE))
+    ));
+
+    subject.performSet(
+        userContext,
+        parametersList,
+        CREDENTIAL_NAME,
+        true,
+        "password",
+        generationParameters,
+        credentialValue,
+        accessControlEntries,
+        currentUserPermissions);
+
+  }
 }
