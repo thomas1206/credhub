@@ -1,25 +1,5 @@
 package io.pivotal.security.controller.v1.permissions;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.greghaskins.spectrum.Spectrum.beforeEach;
-import static com.greghaskins.spectrum.Spectrum.describe;
-import static com.greghaskins.spectrum.Spectrum.it;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greghaskins.spectrum.Spectrum;
 import io.pivotal.security.audit.EventAuditLogService;
@@ -29,8 +9,8 @@ import io.pivotal.security.handler.AccessControlHandler;
 import io.pivotal.security.helper.JsonHelper;
 import io.pivotal.security.request.AccessControlOperation;
 import io.pivotal.security.request.AccessEntriesRequest;
+import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
-import java.util.function.Function;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -39,6 +19,30 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.function.Function;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static com.greghaskins.spectrum.Spectrum.beforeEach;
+import static com.greghaskins.spectrum.Spectrum.describe;
+import static com.greghaskins.spectrum.Spectrum.it;
+import static io.pivotal.security.util.AuthConstants.UAA_OAUTH2_PASSWORD_GRANT_TOKEN;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @RunWith(Spectrum.class)
 public class AccessControlEntryControllerTest {
 
@@ -46,16 +50,19 @@ public class AccessControlEntryControllerTest {
   private AccessControlHandler accessControlHandler;
   private EventAuditLogService eventAuditLogService;
   private MockMvc mockMvc;
+  private PermissionService permissionService;
 
   {
     beforeEach(() -> {
       accessControlHandler = mock(AccessControlHandler.class);
       eventAuditLogService = mock(EventAuditLogService.class);
+      permissionService = mock(PermissionService.class);
 
       when(eventAuditLogService.auditEvents(any(RequestUuid.class), any(UserContext.class), any(Function.class)))
           .thenAnswer(invocation -> invocation.getArgumentAt(2, Function.class).apply(newArrayList()));
 
-      subject = new AccessControlEntryController(accessControlHandler, eventAuditLogService);
+      doNothing().when(permissionService).verifyAclDeletePermission(any(), any());
+      subject = new AccessControlEntryController(accessControlHandler, eventAuditLogService, permissionService);
 
       MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter =
           new MappingJackson2HttpMessageConverter();
@@ -96,7 +103,7 @@ public class AccessControlEntryControllerTest {
               "  ]\n" +
               "}";
 
-          when(accessControlHandler.setAccessControlEntries(any(AccessEntriesRequest.class)))
+          when(accessControlHandler.setAccessControlEntries(any(UserContext.class), any(AccessEntriesRequest.class)))
               .thenReturn(JsonHelper.deserialize(expectedResponse, AccessControlListResponse.class));
 
           MockHttpServletRequestBuilder request = post("/api/v1/aces")
@@ -109,7 +116,7 @@ public class AccessControlEntryControllerTest {
 
           ArgumentCaptor<AccessEntriesRequest> captor = ArgumentCaptor
               .forClass(AccessEntriesRequest.class);
-          verify(accessControlHandler, times(1)).setAccessControlEntries(captor.capture());
+          verify(accessControlHandler, times(1)).setAccessControlEntries(any(UserContext.class), captor.capture());
 
           AccessEntriesRequest actualRequest = captor.getValue();
           assertThat(actualRequest.getCredentialName(), equalTo("test-credential-name"));
@@ -145,7 +152,8 @@ public class AccessControlEntryControllerTest {
 
       describe("#DELETE", () -> {
         it("removes ACE, returns 204", () -> {
-          mockMvc.perform(delete("/api/v1/aces?credential_name=test-name&actor=test-actor"))
+          mockMvc.perform(delete("/api/v1/aces?credential_name=test-name&actor=test-actor")
+              .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN))
               .andExpect(status().isNoContent())
               .andExpect(content().string(""));
 

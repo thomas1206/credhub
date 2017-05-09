@@ -41,6 +41,18 @@ public class PermissionServiceTest {
   }
 
   @Test
+  public void verifyAclDeletePermission_withEnforcement_whenTheUserHasPermission_throwsException() {
+    initializeEnforcement(true);
+
+    try {
+      subject.verifyAclDeletePermission(userContext, "test-actor");
+      fail("should throw exception");
+    } catch (PermissionException e) {
+      assertThat(e.getMessage(), equalTo("error.acl.invalid_self_modification"));
+    }
+  }
+
+  @Test
   public void verifyAclReadPermission_withEnforcement_whenTheUserHasPermission_doesNothing() {
     initializeEnforcement(true);
 

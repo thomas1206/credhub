@@ -1,5 +1,30 @@
 package io.pivotal.security.integration;
 
+import io.pivotal.security.CredentialManagerApp;
+import io.pivotal.security.audit.AuditingOperationCode;
+import io.pivotal.security.audit.EventAuditRecordParameters;
+import io.pivotal.security.helper.AuditingHelper;
+import io.pivotal.security.helper.JsonHelper;
+import io.pivotal.security.repository.EventAuditRecordRepository;
+import io.pivotal.security.repository.RequestAuditRecordRepository;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.util.DatabaseProfileResolver;
+import io.pivotal.security.view.AccessControlListResponse;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static io.pivotal.security.audit.AuditingOperationCode.ACL_ACCESS;
 import static io.pivotal.security.audit.AuditingOperationCode.ACL_UPDATE;
@@ -27,31 +52,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import io.pivotal.security.CredentialManagerApp;
-import io.pivotal.security.audit.AuditingOperationCode;
-import io.pivotal.security.audit.EventAuditRecordParameters;
-import io.pivotal.security.helper.AuditingHelper;
-import io.pivotal.security.helper.JsonHelper;
-import io.pivotal.security.repository.EventAuditRecordRepository;
-import io.pivotal.security.repository.RequestAuditRecordRepository;
-import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.util.DatabaseProfileResolver;
-import io.pivotal.security.view.AccessControlListResponse;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = CredentialManagerApp.class)
@@ -258,6 +258,27 @@ public class AccessControlEndpointTest {
   }
 
   @Test
+  public void DELETE_whenTheActorIsAllowedToDeleteACEs_theActorCannotDeleteThemselves() throws Exception {
+    final MockHttpServletRequestBuilder putReq = put("/api/v1/data")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content("{"
+            + "  \"type\":\"value\","
+            + "  \"name\":\"test-credential\","
+            + "  \"value\":\"test-value-for-credential\"}");
+
+    mockMvc.perform(putReq).andExpect(status().isOk());
+
+    mockMvc.perform(
+        delete("/api/v1/aces?credential_name=test-credential&actor=uaa-user:df0c1a26-2875-4bf5-baf9-716c6bb5ea6d")
+            .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+    )
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.error").value("Modification of access control for the authenticated user is not allowed. Please contact an administrator."));
+  }
+
+  @Test
   public void DELETE_whenTheCredentialDoesntExist_shouldReturnNotFound() throws Exception {
     mockMvc.perform(
         delete("/api/v1/aces?credential_name=/not-valid&actor=something")
@@ -321,6 +342,39 @@ public class AccessControlEndpointTest {
             new EventAuditRecordParameters(ACL_UPDATE, credentialName, DELETE, "isobel")
         )
     );
+  }
+
+  @Test
+  public void POST_whenTheUserHasPermissionToWriteACEs_canNotModifyOwnACE () throws Exception {
+    final MockHttpServletRequestBuilder post = post("/api/v1/aces")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_PASSWORD_GRANT_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content("{"
+            + "  \"credential_name\": \"" + credentialName + "\","
+            + "  \"access_control_entries\": ["
+            + "     {"
+            + "       \"actor\": \"uaa-client:credhub_test\","
+            + "       \"operations\": [\"write_acl\"]"
+            + "     }" +
+            "]"
+            + "}");
+
+    this.mockMvc.perform(post).andExpect(status().isOk());
+    final MockHttpServletRequestBuilder update = post("/api/v1/aces")
+        .header("Authorization", "Bearer " + UAA_OAUTH2_CLIENT_CREDENTIALS_TOKEN)
+        .accept(APPLICATION_JSON)
+        .contentType(APPLICATION_JSON)
+        .content("{"
+            + "  \"credential_name\": \"" + credentialName + "\","
+            + "  \"access_control_entries\": ["
+            + "     {"
+            + "       \"actor\": \"uaa-client:credhub_test\","
+            + "       \"operations\": [\"write\"]"
+            + "     }" +
+            "]"
+            + "}");
+    this.mockMvc.perform(post).andExpect(status().isForbidden());
   }
 
   @Test

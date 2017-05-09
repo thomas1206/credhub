@@ -1,16 +1,12 @@
 package io.pivotal.security.controller.v1.permissions;
 
-import static io.pivotal.security.audit.AuditingOperationCode.ACL_DELETE;
-import static io.pivotal.security.audit.AuditingOperationCode.ACL_UPDATE;
-import static io.pivotal.security.audit.EventAuditRecordParametersFactory.createPermissionEventAuditRecordParameters;
-import static io.pivotal.security.audit.EventAuditRecordParametersFactory.createPermissionsEventAuditParameters;
-
 import io.pivotal.security.audit.EventAuditLogService;
 import io.pivotal.security.audit.RequestUuid;
 import io.pivotal.security.auth.UserContext;
 import io.pivotal.security.handler.AccessControlHandler;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessEntriesRequest;
+import io.pivotal.security.service.PermissionService;
 import io.pivotal.security.view.AccessControlListResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,20 +20,28 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import static io.pivotal.security.audit.AuditingOperationCode.ACL_DELETE;
+import static io.pivotal.security.audit.AuditingOperationCode.ACL_UPDATE;
+import static io.pivotal.security.audit.EventAuditRecordParametersFactory.createPermissionEventAuditRecordParameters;
+import static io.pivotal.security.audit.EventAuditRecordParametersFactory.createPermissionsEventAuditParameters;
+
 @RestController
 @RequestMapping(path = "/api/v1/aces", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class AccessControlEntryController {
 
   private AccessControlHandler accessControlHandler;
   private final EventAuditLogService eventAuditLogService;
+  private PermissionService permissionService;
 
   @Autowired
   public AccessControlEntryController(
       AccessControlHandler accessControlHandler,
-      EventAuditLogService eventAuditLogService
+      EventAuditLogService eventAuditLogService,
+      PermissionService permissionService
   ) {
     this.accessControlHandler = accessControlHandler;
     this.eventAuditLogService = eventAuditLogService;
+    this.permissionService = permissionService;
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -53,7 +57,7 @@ public class AccessControlEntryController {
           accessEntriesRequest.getCredentialName(),
           accessEntriesRequest.getAccessControlEntries())
       );
-      return accessControlHandler.setAccessControlEntries(accessEntriesRequest);
+      return accessControlHandler.setAccessControlEntries(userContext, accessEntriesRequest);
     });
   }
 
@@ -67,6 +71,7 @@ public class AccessControlEntryController {
 
   ) {
     eventAuditLogService.auditEvents(requestUuid, userContext, parameterList -> {
+      permissionService.verifyAclDeletePermission(userContext, actor);
       AccessControlEntry entry = accessControlHandler.deleteAccessControlEntries(actor, credentialName);
       if (entry != null) {
         parameterList.addAll(createPermissionEventAuditRecordParameters(

@@ -53,4 +53,12 @@ public class PermissionService {
   private String getActorFromUserContext(UserContext user) {
     return user.getAclUser();
   }
+
+  public void verifyAclDeletePermission(UserContext userContext, String actor) {
+    if (enforcePermissions) {
+      if (userContext.getAclUser().equals(actor)) {
+        throw new PermissionException("error.acl.invalid_self_modification");
+      }
+    }
+  }
 }

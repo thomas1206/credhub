@@ -2,6 +2,7 @@ package io.pivotal.security.data;
 
 import io.pivotal.security.entity.AccessEntryData;
 import io.pivotal.security.entity.CredentialName;
+import io.pivotal.security.exceptions.PermissionException;
 import io.pivotal.security.repository.AccessEntryRepository;
 import io.pivotal.security.request.AccessControlEntry;
 import io.pivotal.security.request.AccessControlOperation;
@@ -29,6 +30,7 @@ public class AccessControlDataService {
   }
 
   public void saveAccessControlEntries(
+      String aclUser,
       CredentialName credentialName,
       List<AccessControlEntry> entries
   ) {
@@ -36,6 +38,10 @@ public class AccessControlDataService {
         .findAllByCredentialNameUuid(credentialName.getUuid());
 
     for (AccessControlEntry ace : entries) {
+      if (aclUser.equals(ace.getActor())) {
+        throw new PermissionException("error.acl.invalid_self_modification");
+      }
+
       upsertAccessEntryOperations(credentialName, existingAccessEntries, ace.getActor(),
           ace.getAllowedOperations());
     }

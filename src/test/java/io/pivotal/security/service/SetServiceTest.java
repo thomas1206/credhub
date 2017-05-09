@@ -275,7 +275,7 @@ public class SetServiceTest {
         currentUserPermissions);
 
     verify(accessControlDataService)
-        .saveAccessControlEntries(credential.getCredentialName(), accessControlEntries);
+        .saveAccessControlEntries(userContext.getAclUser(), credential.getCredentialName(), accessControlEntries);
   }
 
   @Test

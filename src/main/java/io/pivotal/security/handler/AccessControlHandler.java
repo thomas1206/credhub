@@ -46,10 +46,11 @@ public class AccessControlHandler {
     }
   }
 
-  public AccessControlListResponse setAccessControlEntries(AccessEntriesRequest request) {
+  public AccessControlListResponse setAccessControlEntries(UserContext userContext, AccessEntriesRequest request) {
     final CredentialName credentialName = getCredentialName(request.getCredentialName());
+
     accessControlDataService
-        .saveAccessControlEntries(credentialName, request.getAccessControlEntries());
+        .saveAccessControlEntries(userContext.getAclUser(), credentialName, request.getAccessControlEntries());
 
     return new AccessControlListResponse(credentialName.getName(), accessControlDataService.getAccessControlList(credentialName));
   }

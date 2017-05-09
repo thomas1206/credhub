@@ -90,6 +90,7 @@ public class SetService {
       storedCredentialVersion = credentialDataService.save(newVersion);
 
       accessControlDataService.saveAccessControlEntries(
+          userContext.getAclUser(),
           storedCredentialVersion.getCredentialName(),
           accessControlEntries);
       parametersList.addAll(createPermissionsEventAuditParameters(

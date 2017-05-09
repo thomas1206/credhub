@@ -1,5 +1,22 @@
 package io.pivotal.security.handler;
 
+import io.pivotal.security.auth.UserContext;
+import io.pivotal.security.data.AccessControlDataService;
+import io.pivotal.security.entity.CredentialName;
+import io.pivotal.security.repository.CredentialNameRepository;
+import io.pivotal.security.request.AccessControlEntry;
+import io.pivotal.security.request.AccessControlOperation;
+import io.pivotal.security.request.AccessEntriesRequest;
+import io.pivotal.security.service.PermissionService;
+import io.pivotal.security.view.AccessControlListResponse;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -10,22 +27,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import io.pivotal.security.auth.UserContext;
-import io.pivotal.security.data.AccessControlDataService;
-import io.pivotal.security.entity.CredentialName;
-import io.pivotal.security.repository.CredentialNameRepository;
-import io.pivotal.security.request.AccessControlEntry;
-import io.pivotal.security.request.AccessControlOperation;
-import io.pivotal.security.request.AccessEntriesRequest;
-import io.pivotal.security.service.PermissionService;
-import io.pivotal.security.view.AccessControlListResponse;
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class AccessControlHandlerTest {
@@ -120,7 +121,7 @@ public class AccessControlHandlerTest {
     when(accessControlDataService.getAccessControlList(CREDENTIAL_NAME))
         .thenReturn(expectedControlList);
 
-    AccessControlListResponse response = subject.setAccessControlEntries(request);
+    AccessControlListResponse response = subject.setAccessControlEntries(any(UserContext.class), request);
 
     List<AccessControlEntry> accessControlEntries = response.getAccessControlList();
 
